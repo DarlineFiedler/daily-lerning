@@ -11,19 +11,21 @@ enum SeedData {
         context.insert(verbs)
         context.insert(food)
 
-        let samples: [(String, String, String?, VocabGroup)] = [
-            ("가다", "gehen", "학교에 가다 – zur Schule gehen", verbs),
-            ("먹다", "essen", "밥을 먹다 – Reis essen", verbs),
-            ("마시다", "trinken", nil, verbs),
-            ("보다", "sehen / schauen", nil, verbs),
-            ("사과", "Apfel", nil, food),
-            ("밥", "Reis / Mahlzeit", nil, food),
-            ("물", "Wasser", nil, food),
-            ("김치", "Kimchi", nil, food)
+        // Letztes Feld: fürs Lock-Screen-Widget vormarkiert (includeInWidget).
+        let samples: [(String, String, String?, VocabGroup, Bool)] = [
+            ("가다", "gehen", "학교에 가다 – zur Schule gehen", verbs, true),
+            ("먹다", "essen", "밥을 먹다 – Reis essen", verbs, true),
+            ("마시다", "trinken", nil, verbs, false),
+            ("보다", "sehen / schauen", nil, verbs, false),
+            ("사과", "Apfel", nil, food, true),
+            ("밥", "Reis / Mahlzeit", nil, food, false),
+            ("물", "Wasser", nil, food, true),
+            ("김치", "Kimchi", nil, food, false)
         ]
 
-        for (word, meaning, example, group) in samples {
+        for (word, meaning, example, group, inWidget) in samples {
             let vocab = Vocab(word: word, meaning: meaning, example: example, group: group)
+            vocab.includeInWidget = inWidget
             context.insert(vocab)
         }
 
