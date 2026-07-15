@@ -25,6 +25,7 @@ struct PracticeItem: Identifiable {
 }
 
 /// Steuert einen Lernvorgang: Reihenfolge, Fortschritt, Ergebnisverbuchung.
+@MainActor
 @Observable
 final class PracticeSession {
     let items: [PracticeItem]
