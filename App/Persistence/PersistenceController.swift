@@ -8,6 +8,13 @@ enum PersistenceController {
 
     static let schema = Schema([VocabGroup.self, Vocab.self])
 
+    /// True, wenn der App-Group-Container zur Laufzeit erreichbar ist (Entitlement
+    /// vorhanden und provisioniert). Verhindert den SwiftData-fatalError.
+    static var appGroupIsAvailable: Bool {
+        FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: AppGroup.identifier) != nil
+    }
+
     static func makeContainer(inMemory: Bool = false) -> ModelContainer {
         if inMemory {
             let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
@@ -15,12 +22,17 @@ enum PersistenceController {
         }
 
         // 1) Bevorzugt: App-Group-Container (für Widget-Datenaustausch via SwiftData).
-        let groupConfig = ModelConfiguration(
-            schema: schema,
-            groupContainer: .identifier(AppGroup.identifier)
-        )
-        if let container = try? ModelContainer(for: schema, configurations: groupConfig) {
-            return container
+        //    Nur nutzen, wenn die App-Group tatsächlich verfügbar ist. Fehlt das
+        //    Entitlement (unsignierter Simulator-Build, kostenloses Apple-Konto),
+        //    löst SwiftData sonst einen fatalError aus, den try? NICHT abfangen kann.
+        if appGroupIsAvailable {
+            let groupConfig = ModelConfiguration(
+                schema: schema,
+                groupContainer: .identifier(AppGroup.identifier)
+            )
+            if let container = try? ModelContainer(for: schema, configurations: groupConfig) {
+                return container
+            }
         }
 
         // 2) Fallback: lokaler Standard-Store.
