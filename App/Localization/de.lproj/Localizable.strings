@@ -1,0 +1,119 @@
+/* Tabs */
+"tab.groups" = "Gruppen";
+"tab.search" = "Suche";
+"tab.stats" = "Statistik";
+"tab.settings" = "Einstellungen";
+
+/* Status */
+"status.new" = "Neu";
+"status.learning" = "Am Lernen";
+"status.almostLearned" = "Fast gelernt";
+"status.learned" = "Gelernt";
+
+/* Allgemein */
+"common.cancel" = "Abbrechen";
+"common.save" = "Sichern";
+"common.done" = "Fertig";
+"common.delete" = "Löschen";
+"common.add" = "Hinzufügen";
+"common.edit" = "Bearbeiten";
+"common.next" = "Weiter";
+"common.close" = "Schließen";
+"common.all" = "Alle";
+"common.start" = "Starten";
+
+/* Gruppen */
+"groups.title" = "Gruppen";
+"groups.empty" = "Noch keine Gruppen.\nTippe auf +, um eine anzulegen.";
+"group.new" = "Neue Gruppe";
+"group.edit" = "Gruppe bearbeiten";
+"group.name" = "Name";
+"group.namePlaceholder" = "z.B. Verben, Essen …";
+"group.color" = "Farbe";
+"group.wordCount" = "%d Wörter";
+"group.deleteConfirm" = "Diese Gruppe und alle enthaltenen Vokabeln löschen?";
+
+/* Vokabeln */
+"vocab.new" = "Neue Vokabel";
+"vocab.edit" = "Vokabel bearbeiten";
+"vocab.word" = "Wort";
+"vocab.wordPlaceholder" = "Lernsprache (z.B. 가다)";
+"vocab.meaning" = "Bedeutung";
+"vocab.meaningPlaceholder" = "Muttersprache (z.B. gehen)";
+"vocab.example" = "Beispiel";
+"vocab.examplePlaceholder" = "Optionaler Beispielsatz";
+"vocab.status" = "Status";
+"vocab.details" = "Details";
+"vocab.widgetToggle" = "Auf dem Lock Screen anzeigen";
+"vocab.empty" = "Noch keine Vokabeln.\nTippe auf +, um eine hinzuzufügen.";
+"vocab.counterInfo" = "Geschafft: %d/%d";
+"vocab.deleteConfirm" = "Diese Vokabel löschen?";
+
+/* Lernen */
+"practice.start" = "Lernen starten";
+"practice.config.title" = "Lernvorgang";
+"practice.config.statuses" = "Welche Wörter?";
+"practice.config.direction" = "Richtung";
+"practice.config.modes" = "Lernmodi";
+"practice.config.modesHint" = "Mehrere wählbar (= Mix). Ohne Auswahl wird alles genutzt.";
+"practice.direction.wordToMeaning" = "Wort → Bedeutung";
+"practice.direction.meaningToWord" = "Bedeutung → Wort";
+"practice.direction.mixed" = "Gemischt";
+"practice.mode.multipleChoice" = "Multiple Choice";
+"practice.mode.review" = "Durchgehen";
+"practice.mode.writing" = "Schreiben";
+"practice.noWords" = "Keine Wörter für diese Auswahl.";
+"practice.iKnow" = "Weiß ich";
+"practice.iDontKnow" = "Weiß ich nicht";
+"practice.showAnswer" = "Antwort zeigen";
+"practice.correct" = "Richtig!";
+"practice.wrong" = "Falsch";
+"practice.markCorrect" = "Trotzdem richtig";
+"practice.typeAnswer" = "Antwort eingeben";
+"practice.check" = "Prüfen";
+"practice.finished" = "Geschafft!";
+"practice.finishedSummary" = "%d richtig · %d falsch";
+"practice.restart" = "Nochmal";
+"practice.swipeHint" = "Nach links: weiß ich · Nach rechts: weiß ich nicht";
+
+/* Statistik */
+"stats.title" = "Statistik";
+"stats.total" = "Vokabeln gesamt";
+"stats.overall" = "Gesamt";
+"stats.byGroup" = "Nach Gruppe";
+"stats.empty" = "Noch keine Daten.";
+
+/* Suche */
+"search.title" = "Suche";
+"search.placeholder" = "Wort oder Bedeutung suchen";
+"search.empty" = "Keine Treffer.";
+"search.prompt" = "Suche über alle Gruppen hinweg.";
+
+/* Einstellungen */
+"settings.title" = "Einstellungen";
+"settings.display.section" = "Anzeige";
+"settings.language" = "Sprache";
+"settings.widget.section" = "Lock-Screen-Widget";
+"settings.widget.interval" = "Wechsel-Intervall";
+"settings.widget.showMeaning" = "Bedeutung anzeigen";
+"settings.widget.showMeaningOnTap" = "Bedeutung erst beim Tippen";
+"settings.widget.count" = "%d Wörter aktiviert";
+"settings.widget.hint" = "Aktiviere Wörter über das Widget-Symbol auf der Vokabelkarte.";
+"settings.about.section" = "Über";
+"settings.about.version" = "Version";
+
+/* Sprachen */
+"lang.system" = "System";
+"lang.de" = "Deutsch";
+"lang.en" = "English";
+"lang.ko" = "한국어";
+
+/* Intervalle */
+"interval.min" = "%d Min";
+"interval.hour" = "%d Std";
+
+/* Widget */
+"widget.displayName" = "Vokabel";
+"widget.description" = "Zeigt ein Lernwort auf dem Lock Screen.";
+"widget.empty" = "Keine Wörter aktiviert";
+"widget.tapHint" = "Tippen für Bedeutung";

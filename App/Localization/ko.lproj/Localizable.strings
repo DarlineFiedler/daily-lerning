@@ -1,0 +1,119 @@
+/* Tabs */
+"tab.groups" = "그룹";
+"tab.search" = "검색";
+"tab.stats" = "통계";
+"tab.settings" = "설정";
+
+/* Status */
+"status.new" = "새 단어";
+"status.learning" = "학습 중";
+"status.almostLearned" = "거의 외움";
+"status.learned" = "외움";
+
+/* Common */
+"common.cancel" = "취소";
+"common.save" = "저장";
+"common.done" = "완료";
+"common.delete" = "삭제";
+"common.add" = "추가";
+"common.edit" = "편집";
+"common.next" = "다음";
+"common.close" = "닫기";
+"common.all" = "전체";
+"common.start" = "시작";
+
+/* Groups */
+"groups.title" = "그룹";
+"groups.empty" = "아직 그룹이 없습니다.\n+ 를 눌러 만드세요.";
+"group.new" = "새 그룹";
+"group.edit" = "그룹 편집";
+"group.name" = "이름";
+"group.namePlaceholder" = "예: 동사, 음식 …";
+"group.color" = "색상";
+"group.wordCount" = "단어 %d개";
+"group.deleteConfirm" = "이 그룹과 모든 단어를 삭제할까요?";
+
+/* Vocabulary */
+"vocab.new" = "새 단어";
+"vocab.edit" = "단어 편집";
+"vocab.word" = "단어";
+"vocab.wordPlaceholder" = "학습 언어 (예: 가다)";
+"vocab.meaning" = "뜻";
+"vocab.meaningPlaceholder" = "모국어 (예: gehen)";
+"vocab.example" = "예문";
+"vocab.examplePlaceholder" = "선택 예문";
+"vocab.status" = "상태";
+"vocab.details" = "세부 정보";
+"vocab.widgetToggle" = "잠금 화면에 표시";
+"vocab.empty" = "아직 단어가 없습니다.\n+ 를 눌러 추가하세요.";
+"vocab.counterInfo" = "연속 정답: %d/%d";
+"vocab.deleteConfirm" = "이 단어를 삭제할까요?";
+
+/* Practice */
+"practice.start" = "학습 시작";
+"practice.config.title" = "학습";
+"practice.config.statuses" = "어떤 단어?";
+"practice.config.direction" = "방향";
+"practice.config.modes" = "학습 모드";
+"practice.config.modesHint" = "여러 개 선택 가능 (= 혼합). 미선택 시 전체 사용.";
+"practice.direction.wordToMeaning" = "단어 → 뜻";
+"practice.direction.meaningToWord" = "뜻 → 단어";
+"practice.direction.mixed" = "혼합";
+"practice.mode.multipleChoice" = "객관식";
+"practice.mode.review" = "넘기기";
+"practice.mode.writing" = "쓰기";
+"practice.noWords" = "조건에 맞는 단어가 없습니다.";
+"practice.iKnow" = "알아요";
+"practice.iDontKnow" = "몰라요";
+"practice.showAnswer" = "정답 보기";
+"practice.correct" = "정답!";
+"practice.wrong" = "오답";
+"practice.markCorrect" = "정답 처리";
+"practice.typeAnswer" = "정답 입력";
+"practice.check" = "확인";
+"practice.finished" = "완료!";
+"practice.finishedSummary" = "정답 %d · 오답 %d";
+"practice.restart" = "다시";
+"practice.swipeHint" = "왼쪽: 알아요 · 오른쪽: 몰라요";
+
+/* Statistics */
+"stats.title" = "통계";
+"stats.total" = "전체 단어";
+"stats.overall" = "전체";
+"stats.byGroup" = "그룹별";
+"stats.empty" = "아직 데이터가 없습니다.";
+
+/* Search */
+"search.title" = "검색";
+"search.placeholder" = "단어 또는 뜻 검색";
+"search.empty" = "결과가 없습니다.";
+"search.prompt" = "모든 그룹에서 검색합니다.";
+
+/* Settings */
+"settings.title" = "설정";
+"settings.display.section" = "표시";
+"settings.language" = "언어";
+"settings.widget.section" = "잠금 화면 위젯";
+"settings.widget.interval" = "전환 간격";
+"settings.widget.showMeaning" = "뜻 표시";
+"settings.widget.showMeaningOnTap" = "탭하면 뜻 표시";
+"settings.widget.count" = "%d개 단어 활성화됨";
+"settings.widget.hint" = "각 단어 카드의 위젯 아이콘으로 활성화하세요.";
+"settings.about.section" = "정보";
+"settings.about.version" = "버전";
+
+/* Languages */
+"lang.system" = "시스템";
+"lang.de" = "Deutsch";
+"lang.en" = "English";
+"lang.ko" = "한국어";
+
+/* Intervals */
+"interval.min" = "%d분";
+"interval.hour" = "%d시간";
+
+/* Widget */
+"widget.displayName" = "단어";
+"widget.description" = "잠금 화면에 학습 단어를 표시합니다.";
+"widget.empty" = "활성화된 단어 없음";
+"widget.tapHint" = "탭하여 뜻 보기";

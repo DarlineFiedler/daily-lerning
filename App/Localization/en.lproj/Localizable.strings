@@ -1,0 +1,119 @@
+/* Tabs */
+"tab.groups" = "Groups";
+"tab.search" = "Search";
+"tab.stats" = "Statistics";
+"tab.settings" = "Settings";
+
+/* Status */
+"status.new" = "New";
+"status.learning" = "Learning";
+"status.almostLearned" = "Almost learned";
+"status.learned" = "Learned";
+
+/* Common */
+"common.cancel" = "Cancel";
+"common.save" = "Save";
+"common.done" = "Done";
+"common.delete" = "Delete";
+"common.add" = "Add";
+"common.edit" = "Edit";
+"common.next" = "Next";
+"common.close" = "Close";
+"common.all" = "All";
+"common.start" = "Start";
+
+/* Groups */
+"groups.title" = "Groups";
+"groups.empty" = "No groups yet.\nTap + to create one.";
+"group.new" = "New Group";
+"group.edit" = "Edit Group";
+"group.name" = "Name";
+"group.namePlaceholder" = "e.g. Verbs, Food …";
+"group.color" = "Color";
+"group.wordCount" = "%d words";
+"group.deleteConfirm" = "Delete this group and all its vocabulary?";
+
+/* Vocabulary */
+"vocab.new" = "New Word";
+"vocab.edit" = "Edit Word";
+"vocab.word" = "Word";
+"vocab.wordPlaceholder" = "Target language (e.g. 가다)";
+"vocab.meaning" = "Meaning";
+"vocab.meaningPlaceholder" = "Native language (e.g. to go)";
+"vocab.example" = "Example";
+"vocab.examplePlaceholder" = "Optional example sentence";
+"vocab.status" = "Status";
+"vocab.details" = "Details";
+"vocab.widgetToggle" = "Show on Lock Screen";
+"vocab.empty" = "No words yet.\nTap + to add one.";
+"vocab.counterInfo" = "Streak: %d/%d";
+"vocab.deleteConfirm" = "Delete this word?";
+
+/* Practice */
+"practice.start" = "Start Practice";
+"practice.config.title" = "Practice";
+"practice.config.statuses" = "Which words?";
+"practice.config.direction" = "Direction";
+"practice.config.modes" = "Modes";
+"practice.config.modesHint" = "Pick several (= Mix). None selected uses all.";
+"practice.direction.wordToMeaning" = "Word → Meaning";
+"practice.direction.meaningToWord" = "Meaning → Word";
+"practice.direction.mixed" = "Mixed";
+"practice.mode.multipleChoice" = "Multiple Choice";
+"practice.mode.review" = "Review";
+"practice.mode.writing" = "Writing";
+"practice.noWords" = "No words match this selection.";
+"practice.iKnow" = "I know it";
+"practice.iDontKnow" = "I don't know";
+"practice.showAnswer" = "Show answer";
+"practice.correct" = "Correct!";
+"practice.wrong" = "Wrong";
+"practice.markCorrect" = "Mark as correct";
+"practice.typeAnswer" = "Type your answer";
+"practice.check" = "Check";
+"practice.finished" = "Done!";
+"practice.finishedSummary" = "%d correct · %d wrong";
+"practice.restart" = "Again";
+"practice.swipeHint" = "Swipe left: I know · Swipe right: I don't";
+
+/* Statistics */
+"stats.title" = "Statistics";
+"stats.total" = "Total vocabulary";
+"stats.overall" = "Overall";
+"stats.byGroup" = "By group";
+"stats.empty" = "No data yet.";
+
+/* Search */
+"search.title" = "Search";
+"search.placeholder" = "Search word or meaning";
+"search.empty" = "No results.";
+"search.prompt" = "Search across all groups.";
+
+/* Settings */
+"settings.title" = "Settings";
+"settings.display.section" = "Display";
+"settings.language" = "Language";
+"settings.widget.section" = "Lock Screen Widget";
+"settings.widget.interval" = "Rotation interval";
+"settings.widget.showMeaning" = "Show meaning";
+"settings.widget.showMeaningOnTap" = "Show meaning on tap";
+"settings.widget.count" = "%d words enabled";
+"settings.widget.hint" = "Enable words via the widget icon on each vocabulary card.";
+"settings.about.section" = "About";
+"settings.about.version" = "Version";
+
+/* Languages */
+"lang.system" = "System";
+"lang.de" = "Deutsch";
+"lang.en" = "English";
+"lang.ko" = "한국어";
+
+/* Intervals */
+"interval.min" = "%d min";
+"interval.hour" = "%d h";
+
+/* Widget */
+"widget.displayName" = "Vocabulary";
+"widget.description" = "Shows a study word on the Lock Screen.";
+"widget.empty" = "No words enabled";
+"widget.tapHint" = "Tap for meaning";
