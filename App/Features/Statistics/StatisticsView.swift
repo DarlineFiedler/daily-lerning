@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-/// Tab 3: Statistik-Übersicht (global + pro Gruppe).
+/// Tab 4: Statistik-Übersicht (global + pro Gruppe) als bunte Kacheln und Karten.
 struct StatisticsView: View {
     @Query private var vocabs: [Vocab]
     @Query(sort: \VocabGroup.sortOrder) private var groups: [VocabGroup]
@@ -12,49 +12,88 @@ struct StatisticsView: View {
         })
     }
 
+    private var learnedCount: Int { overallCounts[.learned] ?? 0 }
+    private var rate: Int {
+        guard !vocabs.isEmpty else { return 0 }
+        return Int(round(Double(learnedCount) / Double(vocabs.count) * 100))
+    }
+
     var body: some View {
         NavigationStack {
             Group {
                 if vocabs.isEmpty {
-                    ContentUnavailableView {
-                        Label(L("tab.stats"), systemImage: "chart.bar")
-                    } description: {
-                        Text(L("stats.empty"))
-                    }
+                    emptyState
                 } else {
-                    List {
-                        Section(L("stats.overall")) {
-                            LabeledContent(L("stats.total"), value: "\(vocabs.count)")
-                            StatusDistributionBar(counts: overallCounts, height: 12)
-                                .padding(.vertical, 4)
-                            ForEach(LearningStatus.allCases) { status in
-                                HStack {
-                                    StatusDot(status: status, size: 12)
-                                    Text(L(status.titleKey))
-                                    Spacer()
-                                    Text("\(overallCounts[status] ?? 0)")
-                                        .foregroundStyle(.secondary)
-                                        .monospacedDigit()
-                                }
-                            }
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: Theme.Spacing.l) {
+                            overallSection
+                            if !groups.isEmpty { byGroupSection }
                         }
-
-                        if !groups.isEmpty {
-                            Section(L("stats.byGroup")) {
-                                ForEach(groups) { group in
-                                    GroupStatRow(group: group)
-                                }
-                            }
-                        }
+                        .padding(Theme.Spacing.m)
                     }
                 }
             }
+            .background(Theme.background.ignoresSafeArea())
             .navigationTitle(L("tab.stats"))
         }
     }
+
+    // MARK: - Gesamt
+
+    private var overallSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(L("stats.overall"))
+            HStack(spacing: Theme.Spacing.s) {
+                StatTile(value: "\(vocabs.count)", label: L("stats.total"),
+                         systemImage: "text.book.closed.fill", tint: Theme.brandStart)
+                StatTile(value: "\(learnedCount)", label: L("status.learned"),
+                         systemImage: "checkmark.seal.fill", tint: LearningStatus.learned.color)
+                StatTile(value: "\(rate)%", label: L("home.stat.rate"),
+                         systemImage: "chart.pie.fill", tint: Theme.brandEnd)
+            }
+            VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                StatusDistributionBar(counts: overallCounts, height: 14)
+                ForEach(LearningStatus.allCases) { status in
+                    HStack {
+                        StatusDot(status: status, size: 12)
+                        Text(L(status.titleKey)).font(.appBody)
+                        Spacer()
+                        Text("\(overallCounts[status] ?? 0)")
+                            .font(.appBody.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+                }
+            }
+            .cardStyle()
+        }
+    }
+
+    // MARK: - Nach Gruppe
+
+    private var byGroupSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(L("stats.byGroup"))
+            ForEach(groups) { group in
+                GroupStatRow(group: group)
+            }
+        }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: Theme.Spacing.m) {
+            Image(systemName: "chart.bar.xaxis")
+                .font(.system(size: 52))
+                .foregroundStyle(Theme.brandGradient)
+            Text(L("stats.empty"))
+                .font(.appBody)
+                .foregroundStyle(.secondary)
+        }
+        .padding(Theme.Spacing.l)
+    }
 }
 
-/// Statistikzeile für eine Gruppe.
+/// Statistikzeile für eine Gruppe als Karte.
 private struct GroupStatRow: View {
     let group: VocabGroup
 
@@ -63,13 +102,13 @@ private struct GroupStatRow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            HStack(spacing: Theme.Spacing.s) {
                 GroupColorDot(colorHex: group.colorHex)
-                Text(group.name).font(.subheadline.weight(.medium))
+                Text(group.name).font(.appHeadline)
                 Spacer()
                 Text("\(group.count(of: .learned))/\(group.vocabCount)")
-                    .font(.caption)
+                    .font(.appCaption.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
@@ -77,7 +116,7 @@ private struct GroupStatRow: View {
                 StatusDistributionBar(counts: counts)
             }
         }
-        .padding(.vertical, 2)
+        .cardStyle()
     }
 }
 

@@ -1,8 +1,25 @@
 /* Tabs */
+"tab.home" = "홈";
 "tab.groups" = "그룹";
 "tab.search" = "검색";
 "tab.stats" = "통계";
 "tab.settings" = "설정";
+
+/* Home */
+"home.greeting.morning" = "좋은 아침이에요";
+"home.greeting.afternoon" = "안녕하세요";
+"home.greeting.evening" = "좋은 저녁이에요";
+"home.subtitle" = "새 단어 몇 개 배워볼까요?";
+"home.wordOfDay" = "오늘의 단어";
+"home.startPractice" = "학습 시작";
+"home.progress" = "학습 현황";
+"home.stat.total" = "단어";
+"home.stat.learned" = "완료";
+"home.stat.rate" = "비율";
+"home.groups" = "내 그룹";
+"home.seeAll" = "전체";
+"home.empty" = "먼저 그룹을 만들어 시작하세요.";
+"home.emptyCTA" = "그룹 만들기";
 
 /* Status */
 "status.new" = "새 단어";

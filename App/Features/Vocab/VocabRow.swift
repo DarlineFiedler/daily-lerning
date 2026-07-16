@@ -16,15 +16,15 @@ struct VocabRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(vocab.word)
-                    .font(.headline)
+                    .font(.appHeadline)
                 Text(vocab.meaning)
-                    .font(.subheadline)
+                    .font(.appSubheadline)
                     .foregroundStyle(.secondary)
                 if showGroup, let group = vocab.group {
                     HStack(spacing: 4) {
                         GroupColorDot(colorHex: group.colorHex, size: 8)
                         Text(group.name)
-                            .font(.caption2)
+                            .font(.appCaption)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -35,6 +35,7 @@ struct VocabRow: View {
 
             Button(action: toggleWidget) {
                 Image(systemName: "lock.iphone")
+                    .font(.appHeadline)
                     .foregroundStyle(vocab.includeInWidget ? Color.accentColor : Color.secondary.opacity(0.35))
             }
             .buttonStyle(.borderless)

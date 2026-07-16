@@ -16,8 +16,11 @@ struct StatusBadge: View {
     let status: LearningStatus
     var body: some View {
         Label(L(status.titleKey), systemImage: status.systemImage)
-            .font(.caption)
+            .font(.appCaption.weight(.semibold))
             .foregroundStyle(status.color)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(status.color.opacity(0.14), in: Capsule())
     }
 }
 
