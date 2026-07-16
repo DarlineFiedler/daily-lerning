@@ -85,7 +85,7 @@ struct GroupListView: View {
 
     private func delete(_ group: VocabGroup) {
         context.delete(group)
-        try? context.save()
+        context.saveOrLog()
         pendingDelete = nil
         WidgetSnapshotWriter.refresh(context: context)
     }

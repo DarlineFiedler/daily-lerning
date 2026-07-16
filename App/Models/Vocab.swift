@@ -58,9 +58,9 @@ final class Vocab {
             timesPracticed = 0
             lastPracticedAt = nil
         case .learning:
-            successCounter = 1
+            successCounter = LearningStatus.learningThreshold
         case .almostLearned:
-            successCounter = 3
+            successCounter = LearningStatus.almostLearnedThreshold
         case .learned:
             successCounter = LearningStatus.masteredThreshold
         }

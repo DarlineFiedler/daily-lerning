@@ -71,3 +71,15 @@ targets:
         CFBundleDisplayName: DailyHangul
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
+
+  DailyHangulTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.darlinefiedler.DailyHangul.Tests
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: DailyHangul

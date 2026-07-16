@@ -93,7 +93,7 @@ struct VocabEditView: View {
             target.setStatusManually(status)
         }
 
-        try? context.save()
+        context.saveOrLog()
         WidgetSnapshotWriter.refresh(context: context)
         dismiss()
     }

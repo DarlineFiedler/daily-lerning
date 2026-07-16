@@ -46,7 +46,7 @@ struct VocabRow: View {
 
     private func toggleWidget() {
         vocab.includeInWidget.toggle()
-        try? context.save()
+        context.saveOrLog()
         WidgetSnapshotWriter.refresh(context: context)
     }
 }

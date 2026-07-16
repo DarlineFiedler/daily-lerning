@@ -72,8 +72,12 @@ struct ReviewSwipeView: View {
 
     private var dragGesture: some Gesture {
         DragGesture()
-            .onChanged { offset = $0.translation }
+            .onChanged { if !revealed { offset = $0.translation } }
             .onEnded { value in
+                // Nach dem Aufdecken nicht mehr wischen – die Antwort wurde bereits
+                // als „nicht gewusst“ verbucht; ein Links-Wisch dürfte sie sonst
+                // fälschlich als „gewusst“ markieren.
+                guard !revealed else { return }
                 if value.translation.width < -80 {
                     onAnswer(true)                 // nach links = weiß ich
                 } else if value.translation.width > 80 {

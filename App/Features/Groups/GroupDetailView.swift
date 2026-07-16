@@ -142,7 +142,7 @@ struct GroupDetailView: View {
 
     private func delete(_ vocab: Vocab) {
         context.delete(vocab)
-        try? context.save()
+        context.saveOrLog()
         pendingDelete = nil
         WidgetSnapshotWriter.refresh(context: context)
     }
