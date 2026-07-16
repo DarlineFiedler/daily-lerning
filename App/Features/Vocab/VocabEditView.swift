@@ -9,11 +9,14 @@ struct VocabEditView: View {
     let vocab: Vocab?          // nil = neue Vokabel
     let group: VocabGroup?     // Zielgruppe (für neue Vokabel erforderlich)
 
+    @Query(sort: \VocabGroup.sortOrder) private var allGroups: [VocabGroup]
+
     @State private var word: String
     @State private var meaning: String
     @State private var example: String
     @State private var status: LearningStatus
     @State private var includeInWidget: Bool
+    @State private var selectedGroup: VocabGroup?
 
     init(vocab: Vocab?, group: VocabGroup?) {
         self.vocab = vocab
@@ -23,6 +26,7 @@ struct VocabEditView: View {
         _example = State(initialValue: vocab?.example ?? "")
         _status = State(initialValue: vocab?.status ?? .new)
         _includeInWidget = State(initialValue: vocab?.includeInWidget ?? false)
+        _selectedGroup = State(initialValue: group ?? vocab?.group)
     }
 
     private var canSave: Bool {
@@ -39,6 +43,17 @@ struct VocabEditView: View {
                     TextField(L("vocab.meaningPlaceholder"), text: $meaning)
                     TextField(L("vocab.examplePlaceholder"), text: $example, axis: .vertical)
                         .lineLimit(2...5)
+                }
+
+                if !allGroups.isEmpty {
+                    Section(L("vocab.group")) {
+                        Picker(L("vocab.group"), selection: $selectedGroup) {
+                            ForEach(allGroups) { g in
+                                Text(g.name).tag(Optional(g))
+                            }
+                        }
+                        .pickerStyle(.menu)
+                    }
                 }
 
                 Section(L("vocab.status")) {
@@ -82,11 +97,13 @@ struct VocabEditView: View {
             target.word = trimmedWord
             target.meaning = trimmedMeaning
         } else {
-            target = Vocab(word: trimmedWord, meaning: trimmedMeaning, group: group)
+            target = Vocab(word: trimmedWord, meaning: trimmedMeaning, group: selectedGroup ?? group)
             context.insert(target)
         }
         target.example = trimmedExample.isEmpty ? nil : trimmedExample
         target.includeInWidget = includeInWidget
+        // Gruppe zuweisen/verschieben (auch aus der Suche heraus möglich).
+        if let selectedGroup { target.group = selectedGroup }
 
         // Status nur überschreiben, wenn manuell geändert.
         if status != target.status {

@@ -83,6 +83,7 @@
 "practice.iKnow" = "I know it";
 "practice.iDontKnow" = "I don't know";
 "practice.showAnswer" = "Show answer";
+"practice.tapToReveal" = "Tap to reveal";
 "practice.correct" = "Correct!";
 "practice.wrong" = "Wrong";
 "practice.markCorrect" = "Mark as correct";
@@ -134,3 +135,37 @@
 "widget.description" = "Shows a study word on the Lock Screen.";
 "widget.empty" = "No words enabled";
 "widget.tapHint" = "Tap for meaning";
+
+/* Daily loop (due, streak, reminder) */
+"home.streak" = "%d";
+"home.streak.a11y" = "Streak: %d days";
+"home.due.title" = "Due today";
+"home.due.count" = "%d words to review";
+"home.due.a11y.hint" = "Starts your review";
+"review.empty" = "Nothing due — great job! 🎉";
+"settings.reminder.section" = "Reminder";
+"settings.reminder.enable" = "Daily reminder";
+"settings.reminder.time" = "Time";
+"settings.reminder.hint" = "Get a daily nudge to practice.";
+"notification.title" = "Time to learn 🇰🇷";
+"notification.body" = "Your words are waiting — a few minutes is enough.";
+
+/* Audio */
+"speak.label" = "Play pronunciation";
+
+/* Import / Export / Groups */
+"vocab.group" = "Group";
+"group.moveUp" = "Move up";
+"group.moveDown" = "Move down";
+"settings.data.section" = "Data";
+"settings.data.import" = "Import words";
+"settings.data.export" = "Export words";
+"settings.data.hint" = "Import many words at once or back them up as CSV.";
+"import.target" = "Target group";
+"import.newGroup" = "New group";
+"import.paste" = "Paste text";
+"import.fromFile" = "Import from file";
+"import.formatHint" = "One line per word: word ; meaning ; example (optional).";
+"import.preview" = "%d words detected";
+"import.action" = "Import";
+"import.error" = "Could not read the file.";

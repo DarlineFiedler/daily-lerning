@@ -17,6 +17,8 @@ struct StatTile: View {
             Text(value)
                 .font(.appDisplay(30))
                 .foregroundStyle(tint)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
                 .contentTransition(.numericText())
             Text(label)
                 .font(.appCaption)

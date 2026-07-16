@@ -83,6 +83,7 @@
 "practice.iKnow" = "알아요";
 "practice.iDontKnow" = "몰라요";
 "practice.showAnswer" = "정답 보기";
+"practice.tapToReveal" = "탭하여 정답 보기";
 "practice.correct" = "정답!";
 "practice.wrong" = "오답";
 "practice.markCorrect" = "정답 처리";
@@ -134,3 +135,37 @@
 "widget.description" = "잠금 화면에 학습 단어를 표시합니다.";
 "widget.empty" = "활성화된 단어 없음";
 "widget.tapHint" = "탭하여 뜻 보기";
+
+/* 데일리 루프 (복습 예정, 연속 학습, 알림) */
+"home.streak" = "%d";
+"home.streak.a11y" = "연속 학습: %d일";
+"home.due.title" = "오늘 복습";
+"home.due.count" = "복습할 단어 %d개";
+"home.due.a11y.hint" = "복습을 시작합니다";
+"review.empty" = "복습할 단어가 없어요 — 잘했어요! 🎉";
+"settings.reminder.section" = "알림";
+"settings.reminder.enable" = "매일 알림";
+"settings.reminder.time" = "시간";
+"settings.reminder.hint" = "매일 학습 알림을 받아요.";
+"notification.title" = "학습할 시간이에요 🇰🇷";
+"notification.body" = "단어들이 기다려요 — 몇 분이면 충분해요.";
+
+/* 오디오 */
+"speak.label" = "발음 듣기";
+
+/* 가져오기 / 내보내기 / 그룹 */
+"vocab.group" = "그룹";
+"group.moveUp" = "위로 이동";
+"group.moveDown" = "아래로 이동";
+"settings.data.section" = "데이터";
+"settings.data.import" = "단어 가져오기";
+"settings.data.export" = "단어 내보내기";
+"settings.data.hint" = "여러 단어를 한 번에 가져오거나 CSV로 백업하세요.";
+"import.target" = "대상 그룹";
+"import.newGroup" = "새 그룹";
+"import.paste" = "텍스트 붙여넣기";
+"import.fromFile" = "파일에서 가져오기";
+"import.formatHint" = "한 줄에 단어 하나: 단어 ; 뜻 ; 예문(선택).";
+"import.preview" = "단어 %d개 인식됨";
+"import.action" = "가져오기";
+"import.error" = "파일을 읽을 수 없습니다.";

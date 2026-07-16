@@ -14,6 +14,10 @@ final class Vocab {
     var includeInWidget: Bool = false
     var timesPracticed: Int = 0
     var lastPracticedAt: Date?
+    /// Nächster Fälligkeitszeitpunkt fürs Wiederholen (SRS-lite). `nil` = noch nie
+    /// geplant ⇒ sofort fällig (siehe `isDue`). Additiv eingeführt; SwiftData
+    /// migriert bestehende Stores automatisch (Default `nil`).
+    var nextReviewAt: Date?
     var createdAt: Date = Date.now
 
     var group: VocabGroup?
@@ -39,13 +43,22 @@ final class Vocab {
 
     var hasBeenPracticed: Bool { timesPracticed > 0 }
 
+    /// Ist das Wort zum Wiederholen fällig? Neue/ungeplante Wörter (`nextReviewAt == nil`)
+    /// gelten sofort als fällig.
+    func isDue(asOf date: Date = .now) -> Bool {
+        guard let due = nextReviewAt else { return true }
+        return due <= date
+    }
+
     /// Zentrale Ergebnisverarbeitung – von allen Lernmodi genutzt.
-    /// Richtig → Counter +1, Falsch → Counter zurück auf 0. Status wird neu berechnet.
+    /// Richtig → Counter +1, Falsch → Counter zurück auf 0. Status wird neu berechnet
+    /// und die nächste Fälligkeit (SRS-lite) geplant.
     func registerResult(correct: Bool) {
         timesPracticed += 1
         lastPracticedAt = .now
         successCounter = correct ? successCounter + 1 : 0
         statusRaw = LearningStatus.computed(counter: successCounter, practiced: true).rawValue
+        nextReviewAt = ReviewSchedule.nextReviewDate(for: successCounter)
     }
 
     /// Manuelles Setzen des Status (überschreibt die automatische Berechnung).
@@ -57,12 +70,17 @@ final class Vocab {
             successCounter = 0
             timesPracticed = 0
             lastPracticedAt = nil
+            nextReviewAt = nil          // zurück auf „sofort fällig"
         case .learning:
             successCounter = LearningStatus.learningThreshold
         case .almostLearned:
             successCounter = LearningStatus.almostLearnedThreshold
         case .learned:
             successCounter = LearningStatus.masteredThreshold
+        }
+        // Fälligkeit an den (evtl. neu gesetzten) Counter angleichen, außer bei „neu".
+        if newStatus != .new {
+            nextReviewAt = ReviewSchedule.nextReviewDate(for: successCounter)
         }
     }
 }

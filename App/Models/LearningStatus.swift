@@ -35,12 +35,13 @@ enum LearningStatus: Int, Codable, CaseIterable, Identifiable {
         }
     }
 
+    /// Adaptive Status-Farben aus dem Design-System (Light/Dark), siehe `Theme`.
     var color: Color {
         switch self {
-        case .new: return Color(hex: "#94A3B8")          // grau
-        case .learning: return Color(hex: "#F59E0B")     // orange
-        case .almostLearned: return Color(hex: "#3B82F6") // blau
-        case .learned: return Color(hex: "#22C55E")      // grün
+        case .new: return Theme.statusNew
+        case .learning: return Theme.statusLearning
+        case .almostLearned: return Theme.statusAlmostLearned
+        case .learned: return Theme.statusLearned
         }
     }
 

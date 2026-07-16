@@ -9,6 +9,7 @@ struct RootView: View {
 
     @State private var localization = LocalizationManager.shared
     @State private var deepLink: IdentifiableID?
+    @State private var showReview = false
 
     var body: some View {
         TabView {
@@ -43,10 +44,15 @@ struct RootView: View {
         .onOpenURL { url in
             if let id = DeepLink.wordID(from: url) {
                 deepLink = IdentifiableID(id: id)
+            } else if DeepLink.isReview(url) {
+                showReview = true
             }
         }
         .sheet(item: $deepLink) { item in
             WordRevealSheet(wordID: item.id)
+        }
+        .sheet(isPresented: $showReview) {
+            ReviewSessionView()
         }
     }
 }

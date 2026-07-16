@@ -83,6 +83,7 @@
 "practice.iKnow" = "Weiß ich";
 "practice.iDontKnow" = "Weiß ich nicht";
 "practice.showAnswer" = "Antwort zeigen";
+"practice.tapToReveal" = "Zum Aufdecken tippen";
 "practice.correct" = "Richtig!";
 "practice.wrong" = "Falsch";
 "practice.markCorrect" = "Trotzdem richtig";
@@ -134,3 +135,37 @@
 "widget.description" = "Zeigt ein Lernwort auf dem Lock Screen.";
 "widget.empty" = "Keine Wörter aktiviert";
 "widget.tapHint" = "Tippen für Bedeutung";
+
+/* Daily-Loop (Fällig, Streak, Erinnerung) */
+"home.streak" = "%d";
+"home.streak.a11y" = "Streak: %d Tage";
+"home.due.title" = "Heute fällig";
+"home.due.count" = "%d Wörter zum Wiederholen";
+"home.due.a11y.hint" = "Startet die Wiederholung";
+"review.empty" = "Nichts fällig – super gemacht! 🎉";
+"settings.reminder.section" = "Erinnerung";
+"settings.reminder.enable" = "Tägliche Erinnerung";
+"settings.reminder.time" = "Uhrzeit";
+"settings.reminder.hint" = "Erhalte täglich eine Erinnerung zum Üben.";
+"notification.title" = "Zeit zum Lernen 🇰🇷";
+"notification.body" = "Deine Vokabeln warten – ein paar Minuten reichen.";
+
+/* Audio */
+"speak.label" = "Aussprache anhören";
+
+/* Import / Export / Gruppen */
+"vocab.group" = "Gruppe";
+"group.moveUp" = "Nach oben";
+"group.moveDown" = "Nach unten";
+"settings.data.section" = "Daten";
+"settings.data.import" = "Vokabeln importieren";
+"settings.data.export" = "Vokabeln exportieren";
+"settings.data.hint" = "Importiere mehrere Vokabeln oder sichere sie als CSV.";
+"import.target" = "Zielgruppe";
+"import.newGroup" = "Neue Gruppe";
+"import.paste" = "Text einfügen";
+"import.fromFile" = "Aus Datei importieren";
+"import.formatHint" = "Eine Zeile pro Vokabel: Wort ; Bedeutung ; Beispiel (optional).";
+"import.preview" = "%d Vokabeln erkannt";
+"import.action" = "Importieren";
+"import.error" = "Datei konnte nicht gelesen werden.";

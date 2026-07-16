@@ -10,10 +10,15 @@ struct HomeView: View {
     @State private var revealWord: IdentifiableID?
     @State private var practiceGroup: VocabGroup?
     @State private var showingNewGroup = false
+    @State private var showReview = false
 
     // MARK: Abgeleitete Werte
 
     private var learnedCount: Int { vocabs.filter { $0.status == .learned }.count }
+    /// Heute fällige Wörter (SRS-lite) über alle Gruppen.
+    private var dueCount: Int { vocabs.filter { $0.isDue() }.count }
+    /// Aktueller Tages-Streak (0, wenn abgelaufen).
+    private var streak: Int { StreakStore.displayStreak() }
     private var rate: Int {
         guard !vocabs.isEmpty else { return 0 }
         return Int(round(Double(learnedCount) / Double(vocabs.count) * 100))
@@ -46,6 +51,7 @@ struct HomeView: View {
                     if vocabs.isEmpty {
                         emptyState
                     } else {
+                        if dueCount > 0 { dueCard }
                         if let word = wordOfDay { wordOfDayCard(word) }
                         progressSection
                         startPracticeButton
@@ -60,6 +66,7 @@ struct HomeView: View {
             .sheet(item: $revealWord) { WordRevealSheet(wordID: $0.id) }
             .sheet(item: $practiceGroup) { PracticeConfigView(group: $0) }
             .sheet(isPresented: $showingNewGroup) { GroupEditView(group: nil) }
+            .sheet(isPresented: $showReview) { ReviewSessionView() }
         }
     }
 
@@ -68,9 +75,13 @@ struct HomeView: View {
     private var header: some View {
         GradientCard(gradient: Theme.brandGradient, radius: 28, padding: Theme.Spacing.l) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("🇰🇷 안녕!")
-                    .font(.appTitle3)
-                    .opacity(0.9)
+                HStack(alignment: .top) {
+                    Text("🇰🇷 안녕!")
+                        .font(.appTitle3)
+                        .opacity(0.9)
+                    Spacer()
+                    if streak > 0 { streakBadge }
+                }
                 Text(greeting)
                     .font(.appLargeTitle)
                 Text(L("home.subtitle"))
@@ -79,6 +90,44 @@ struct HomeView: View {
             }
         }
         .padding(.top, Theme.Spacing.m)
+    }
+
+    private var streakBadge: some View {
+        Label(L("home.streak", streak), systemImage: "flame.fill")
+            .font(.appCaption.weight(.bold))
+            .padding(.horizontal, Theme.Spacing.s)
+            .padding(.vertical, Theme.Spacing.xs)
+            .background(.white.opacity(0.22), in: Capsule())
+            .accessibilityLabel(L("home.streak.a11y", streak))
+    }
+
+    // MARK: - Heute fällig
+
+    private var dueCard: some View {
+        Button { showReview = true } label: {
+            HStack(spacing: Theme.Spacing.m) {
+                Image(systemName: "bolt.heart.fill")
+                    .font(.appTitle2)
+                    .foregroundStyle(Theme.brandStart)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(L("home.due.title"))
+                        .font(.appHeadline)
+                        .foregroundStyle(.primary)
+                    Text(L("home.due.count", dueCount))
+                        .font(.appSubheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.appHeadline)
+                    .foregroundStyle(.tertiary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .cardStyle(padding: Theme.Spacing.l)
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint(L("home.due.a11y.hint"))
     }
 
     private var greeting: String {
