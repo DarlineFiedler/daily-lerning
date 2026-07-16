@@ -49,7 +49,8 @@ struct PracticeConfigView: View {
                         distractorPool: group.vocabs,
                         config: config,
                         context: context
-                    )
+                    ),
+                    onClose: { dismiss() }
                 )
             }
         }

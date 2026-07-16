@@ -3,7 +3,8 @@ import SwiftUI
 /// Führt durch einen Lernvorgang und zeigt je Wort die passende Modus-View.
 struct PracticeContainerView: View {
     @State var session: PracticeSession
-    @Environment(\.dismiss) private var dismiss
+    /// Beendet den gesamten Lernvorgang (schließt das Practice-Sheet).
+    var onClose: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -19,15 +20,16 @@ struct PracticeContainerView: View {
                     correct: session.correctCount,
                     wrong: session.wrongCount,
                     onRestart: { withAnimation { session.restart() } },
-                    onClose: { dismiss() }
+                    onClose: onClose
                 )
             }
         }
         .background(Theme.background.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button(L("common.close")) { dismiss() }
+                Button(L("common.close"), action: onClose)
             }
         }
     }
