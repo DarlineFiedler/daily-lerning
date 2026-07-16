@@ -10,18 +10,22 @@ enum LearningStatus: Int, Codable, CaseIterable, Identifiable {
 
     var id: Int { rawValue }
 
-    /// Ab dieser Streak aufeinanderfolgender richtiger Antworten gilt eine Vokabel als gelernt.
+    /// Streak-Schwellen (aufeinanderfolgende richtige Antworten) je Stufe.
+    /// Zentral definiert, damit `computed` und `setStatusManually` nicht auseinanderdriften.
+    static let learningThreshold = 1
+    static let almostLearnedThreshold = 3
+    /// Ab dieser Streak gilt eine Vokabel als gelernt.
     static let masteredThreshold = 5
 
     /// Berechnet den Status aus dem Counter und ob die Vokabel schon geübt wurde.
     static func computed(counter: Int, practiced: Bool) -> LearningStatus {
         guard practiced else { return .new }
         if counter >= masteredThreshold { return .learned }
-        if counter >= 3 { return .almostLearned }
+        if counter >= almostLearnedThreshold { return .almostLearned }
         return .learning
     }
 
-    /// Localization-Key (siehe Localizable.xcstrings).
+    /// Localization-Key (siehe Localizable.strings in den *.lproj-Ordnern).
     var titleKey: String {
         switch self {
         case .new: return "status.new"

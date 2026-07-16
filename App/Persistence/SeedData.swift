@@ -29,7 +29,7 @@ enum SeedData {
             context.insert(vocab)
         }
 
-        try? context.save()
+        context.saveOrLog()
     }
 
     /// Legt Seed-Daten nur an, wenn der Store noch komplett leer ist.

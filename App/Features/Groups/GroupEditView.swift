@@ -56,7 +56,7 @@ struct GroupEditView: View {
             let newGroup = VocabGroup(name: trimmedName, colorHex: colorHex, sortOrder: count)
             context.insert(newGroup)
         }
-        try? context.save()
+        context.saveOrLog()
         dismiss()
     }
 }
