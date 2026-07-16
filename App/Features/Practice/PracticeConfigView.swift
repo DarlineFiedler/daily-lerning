@@ -25,47 +25,15 @@ struct PracticeConfigView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    ForEach(LearningStatus.allCases) { status in
-                        multiToggle(
-                            title: L(status.titleKey),
-                            systemImage: status.systemImage,
-                            tint: status.color,
-                            isOn: selectedStatuses.contains(status)
-                        ) { toggleStatus(status) }
-                    }
-                } header: {
-                    Text(L("practice.config.statuses"))
-                } footer: {
-                    Text(L("common.all")).opacity(selectedStatuses.isEmpty ? 1 : 0.4)
+            ScrollView {
+                VStack(alignment: .leading, spacing: Theme.Spacing.l) {
+                    statusSection
+                    directionSection
+                    modeSection
                 }
-
-                Section(L("practice.config.direction")) {
-                    Picker(L("practice.config.direction"), selection: $direction) {
-                        ForEach(PracticeDirection.allCases) { dir in
-                            Text(L(dir.titleKey)).tag(dir)
-                        }
-                    }
-                    .pickerStyle(.inline)
-                    .labelsHidden()
-                }
-
-                Section {
-                    ForEach(PracticeMode.allCases) { mode in
-                        multiToggle(
-                            title: L(mode.titleKey),
-                            systemImage: mode.systemImage,
-                            tint: .accentColor,
-                            isOn: selectedModes.contains(mode)
-                        ) { toggleMode(mode) }
-                    }
-                } header: {
-                    Text(L("practice.config.modes"))
-                } footer: {
-                    Text(L("practice.config.modesHint"))
-                }
+                .padding(Theme.Spacing.m)
             }
+            .background(Theme.background.ignoresSafeArea())
             .navigationTitle(L("practice.config.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -73,25 +41,7 @@ struct PracticeConfigView: View {
                     Button(L("common.cancel")) { dismiss() }
                 }
             }
-            .safeAreaInset(edge: .bottom) {
-                VStack(spacing: 4) {
-                    Button {
-                        startSession = true
-                    } label: {
-                        Label(L("common.start"), systemImage: "play.fill")
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 6)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(pool.isEmpty)
-
-                    Text(L("group.wordCount", pool.count))
-                        .font(.caption)
-                        .foregroundStyle(pool.isEmpty ? .red : .secondary)
-                }
-                .padding()
-                .background(.bar)
-            }
+            .safeAreaInset(edge: .bottom) { startBar }
             .navigationDestination(isPresented: $startSession) {
                 PracticeContainerView(
                     session: PracticeSession(
@@ -105,32 +55,120 @@ struct PracticeConfigView: View {
         }
     }
 
-    @ViewBuilder
-    private func multiToggle(
-        title: String,
-        systemImage: String,
-        tint: Color,
-        isOn: Bool,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            HStack {
-                Label(title, systemImage: systemImage)
-                    .foregroundStyle(.primary)
-                Spacer()
-                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isOn ? tint : Color.secondary.opacity(0.4))
+    // MARK: - Abschnitte
+
+    private var statusSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(L("practice.config.statuses"))
+            FlowChips {
+                ForEach(LearningStatus.allCases) { status in
+                    SelectableChip(
+                        title: L(status.titleKey),
+                        systemImage: status.systemImage,
+                        tint: status.color,
+                        isSelected: selectedStatuses.contains(status)
+                    ) { toggle(&selectedStatuses, status) }
+                }
             }
+            Text(L("common.all"))
+                .font(.appCaption)
+                .foregroundStyle(.secondary)
+                .opacity(selectedStatuses.isEmpty ? 1 : 0.4)
         }
     }
 
-    private func toggleStatus(_ status: LearningStatus) {
-        if selectedStatuses.contains(status) { selectedStatuses.remove(status) }
-        else { selectedStatuses.insert(status) }
+    private var directionSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(L("practice.config.direction"))
+            Picker(L("practice.config.direction"), selection: $direction) {
+                ForEach(PracticeDirection.allCases) { dir in
+                    Text(L(dir.titleKey)).tag(dir)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
     }
 
-    private func toggleMode(_ mode: PracticeMode) {
-        if selectedModes.contains(mode) { selectedModes.remove(mode) }
-        else { selectedModes.insert(mode) }
+    private var modeSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(L("practice.config.modes"))
+            FlowChips {
+                ForEach(PracticeMode.allCases) { mode in
+                    SelectableChip(
+                        title: L(mode.titleKey),
+                        systemImage: mode.systemImage,
+                        tint: Theme.brandStart,
+                        isSelected: selectedModes.contains(mode)
+                    ) { toggle(&selectedModes, mode) }
+                }
+            }
+            Text(L("practice.config.modesHint"))
+                .font(.appCaption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var startBar: some View {
+        VStack(spacing: 6) {
+            Button { startSession = true } label: {
+                Label(L("common.start"), systemImage: "play.fill")
+            }
+            .buttonStyle(.primary)
+            .disabled(pool.isEmpty)
+
+            Text(L("group.wordCount", pool.count))
+                .font(.appCaption)
+                .foregroundStyle(pool.isEmpty ? .red : .secondary)
+        }
+        .padding(Theme.Spacing.m)
+        .background(.ultraThinMaterial)
+    }
+
+    private func toggle<T: Hashable>(_ set: inout Set<T>, _ value: T) {
+        if set.contains(value) { set.remove(value) } else { set.insert(value) }
+    }
+}
+
+/// Einfaches umbrechendes Chip-Layout (WrapLayout) für die Auswahl-Chips.
+struct FlowChips<Content: View>: View {
+    @ViewBuilder var content: () -> Content
+    var body: some View {
+        WrapLayout(spacing: Theme.Spacing.s) { content() }
+    }
+}
+
+/// Layout, das Kinder horizontal anordnet und bei Platzmangel umbricht.
+struct WrapLayout: Layout {
+    var spacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) -> CGSize {
+        let maxWidth = proposal.width ?? .infinity
+        var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x + size.width > maxWidth, x > 0 {
+                x = 0
+                y += rowHeight + spacing
+                rowHeight = 0
+            }
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
+        }
+        return CGSize(width: maxWidth == .infinity ? x : maxWidth, height: y + rowHeight)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) {
+        var x = bounds.minX, y = bounds.minY, rowHeight: CGFloat = 0
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x + size.width > bounds.maxX, x > bounds.minX {
+                x = bounds.minX
+                y += rowHeight + spacing
+                rowHeight = 0
+            }
+            subview.place(at: CGPoint(x: x, y: y), anchor: .topLeading, proposal: ProposedViewSize(size))
+            x += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
+        }
     }
 }

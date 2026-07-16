@@ -56,6 +56,8 @@ struct VocabEditView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Theme.background.ignoresSafeArea())
             .navigationTitle(vocab == nil ? L("vocab.new") : L("vocab.edit"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

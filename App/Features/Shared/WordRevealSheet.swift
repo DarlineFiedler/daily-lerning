@@ -15,20 +15,23 @@ struct WordRevealSheet: View {
                 if let vocab {
                     VStack(spacing: 20) {
                         if let group = vocab.group {
-                            Label(group.name, systemImage: "rectangle.stack")
-                                .font(.subheadline)
+                            Label(group.name, systemImage: "rectangle.stack.fill")
+                                .font(.appSubheadline.weight(.semibold))
                                 .foregroundStyle(Color(hex: group.colorHex))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color(hex: group.colorHex).opacity(0.14), in: Capsule())
                         }
                         Text(vocab.word)
-                            .font(.system(size: 52, weight: .bold, design: .rounded))
+                            .font(.appDisplay(56))
                             .multilineTextAlignment(.center)
                         Text(vocab.meaning)
-                            .font(.title2)
+                            .font(.appTitle2)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                         if let example = vocab.example, !example.isEmpty {
                             Text(example)
-                                .font(.callout)
+                                .font(.appBody)
                                 .foregroundStyle(.tertiary)
                                 .multilineTextAlignment(.center)
                                 .padding(.top, 4)
@@ -36,12 +39,13 @@ struct WordRevealSheet: View {
                         StatusBadge(status: vocab.status)
                             .padding(.top, 8)
                     }
-                    .padding()
+                    .padding(Theme.Spacing.l)
                 } else {
                     ContentUnavailableView(L("widget.empty"), systemImage: "questionmark.circle")
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(background)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(L("common.done")) { dismiss() }
@@ -50,6 +54,18 @@ struct WordRevealSheet: View {
         }
         .presentationDetents([.medium])
         .onAppear(perform: fetch)
+    }
+
+    /// Dezenter, nach unten ausblendender Verlauf in der Gruppenfarbe.
+    @ViewBuilder
+    private var background: some View {
+        let base = vocab?.group.map { Color(hex: $0.colorHex) } ?? Theme.brandStart
+        LinearGradient(
+            colors: [base.opacity(0.16), Theme.background],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .ignoresSafeArea()
     }
 
     private func fetch() {

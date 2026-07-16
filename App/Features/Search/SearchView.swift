@@ -34,8 +34,10 @@ struct SearchView: View {
                             }
                         }
                     }
+                    .scrollContentBackground(.hidden)
                 }
             }
+            .background(Theme.background.ignoresSafeArea())
             .navigationTitle(L("search.title"))
             .searchable(text: $query, prompt: L("search.placeholder"))
             .sheet(item: $editingVocab) { vocab in

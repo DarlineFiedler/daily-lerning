@@ -1,8 +1,25 @@
 /* Tabs */
+"tab.home" = "Home";
 "tab.groups" = "Groups";
 "tab.search" = "Search";
 "tab.stats" = "Statistics";
 "tab.settings" = "Settings";
+
+/* Home */
+"home.greeting.morning" = "Good morning";
+"home.greeting.afternoon" = "Good afternoon";
+"home.greeting.evening" = "Good evening";
+"home.subtitle" = "Ready for a few new words?";
+"home.wordOfDay" = "Word of the day";
+"home.startPractice" = "Start practice";
+"home.progress" = "Your progress";
+"home.stat.total" = "Words";
+"home.stat.learned" = "Learned";
+"home.stat.rate" = "Rate";
+"home.groups" = "Your groups";
+"home.seeAll" = "All";
+"home.empty" = "Create your first group to get started.";
+"home.emptyCTA" = "Create group";
 
 /* Status */
 "status.new" = "New";

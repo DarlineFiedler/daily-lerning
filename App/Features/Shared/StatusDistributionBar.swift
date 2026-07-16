@@ -21,7 +21,7 @@ struct StatusDistributionBar: View {
             }
         }
         .frame(height: height)
-        .background(Color.gray.opacity(0.15))
+        .background(Theme.surfaceMuted)
         .clipShape(Capsule())
     }
 }

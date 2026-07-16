@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Modus 3: Schreiben. Antwort eingeben, mit hinterlegter Lösung vergleichen.
-/// Bei falscher Eingabe „Trotzdem richtig“ (zählt als richtig) oder „Weiter“ (Counter 0).
+/// Bei falscher Eingabe „Trotzdem richtig" (zählt als richtig) oder „Weiter" (Counter 0).
 struct WritingView: View {
     let item: PracticeItem
     let onAnswer: (Bool) -> Void
@@ -12,12 +12,17 @@ struct WritingView: View {
     @FocusState private var focused: Bool
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: Theme.Spacing.l) {
             PromptCard(text: item.prompt())
 
             TextField(L("practice.typeAnswer"), text: $typed)
-                .textFieldStyle(.roundedBorder)
-                .font(.title3)
+                .font(.appTitle3)
+                .padding(Theme.Spacing.m)
+                .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous)
+                        .strokeBorder(Theme.brandStart.opacity(0.3), lineWidth: 1.5)
+                )
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
                 .focused($focused)
@@ -30,9 +35,8 @@ struct WritingView: View {
             } else {
                 Button(action: check) {
                     Label(L("practice.check"), systemImage: "checkmark")
-                        .frame(maxWidth: .infinity).padding(.vertical, 6)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.primary)
                 .disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
@@ -45,18 +49,18 @@ struct WritingView: View {
                 wasCorrect ? L("practice.correct") : L("practice.wrong"),
                 systemImage: wasCorrect ? "checkmark.circle.fill" : "xmark.circle.fill"
             )
-            .font(.headline)
-            .foregroundStyle(wasCorrect ? .green : .red)
+            .font(.appHeadline)
+            .foregroundStyle(wasCorrect ? LearningStatus.learned.color : .red)
 
             if !wasCorrect {
                 Text(item.answer())
-                    .font(.title3.weight(.semibold))
+                    .font(.appTitle3)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding()
-        .background((wasCorrect ? Color.green : Color.red).opacity(0.12),
-                    in: RoundedRectangle(cornerRadius: 12))
+        .padding(Theme.Spacing.m)
+        .background((wasCorrect ? LearningStatus.learned.color : Color.red).opacity(0.14),
+                    in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
     }
 
     @ViewBuilder
@@ -64,23 +68,19 @@ struct WritingView: View {
         if wasCorrect {
             Button { onAnswer(true) } label: {
                 Label(L("common.next"), systemImage: "arrow.right")
-                    .frame(maxWidth: .infinity).padding(.vertical, 6)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.primary)
         } else {
-            VStack(spacing: 12) {
+            VStack(spacing: Theme.Spacing.s) {
                 Button { onAnswer(true) } label: {
                     Label(L("practice.markCorrect"), systemImage: "hand.thumbsup")
-                        .frame(maxWidth: .infinity).padding(.vertical, 6)
                 }
-                .buttonStyle(.bordered)
-                .tint(.green)
+                .buttonStyle(.secondary(tint: LearningStatus.learned.color))
 
                 Button { onAnswer(false) } label: {
                     Label(L("common.next"), systemImage: "arrow.right")
-                        .frame(maxWidth: .infinity).padding(.vertical, 6)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.primary)
             }
         }
     }

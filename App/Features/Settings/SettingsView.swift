@@ -61,6 +61,8 @@ struct SettingsView: View {
                     LabeledContent(L("settings.about.version"), value: appVersion)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Theme.background.ignoresSafeArea())
             .navigationTitle(L("tab.settings"))
             .onChange(of: interval) { refreshWidget() }
             .onChange(of: showMeaning) { refreshWidget() }

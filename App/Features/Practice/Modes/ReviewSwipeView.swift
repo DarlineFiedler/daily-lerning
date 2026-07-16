@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Modus 2: Durchgehen. „Weiß ich“ (links/Button) oder „Weiß ich nicht“
+/// Modus 2: Durchgehen. „Weiß ich" (links/Button) oder „Weiß ich nicht"
 /// (rechts/Button → Bedeutung wird eingeblendet).
 struct ReviewSwipeView: View {
     let item: PracticeItem
@@ -10,66 +10,64 @@ struct ReviewSwipeView: View {
     @State private var offset: CGSize = .zero
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: Theme.Spacing.l) {
             card
                 .offset(x: offset.width)
                 .rotationEffect(.degrees(Double(offset.width) / 20))
                 .gesture(dragGesture)
 
             Text(L("practice.swipeHint"))
-                .font(.caption)
+                .font(.appCaption)
                 .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
 
             if revealed {
                 Button {
                     onAnswer(false)
                 } label: {
                     Label(L("common.next"), systemImage: "arrow.right")
-                        .frame(maxWidth: .infinity).padding(.vertical, 6)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.primary)
             } else {
-                HStack(spacing: 12) {
+                HStack(spacing: Theme.Spacing.s + 4) {
                     Button { handleDontKnow() } label: {
                         Label(L("practice.iDontKnow"), systemImage: "xmark")
-                            .frame(maxWidth: .infinity).padding(.vertical, 6)
                     }
-                    .buttonStyle(.bordered)
-                    .tint(.red)
+                    .buttonStyle(.secondary(tint: .red))
 
                     Button { onAnswer(true) } label: {
                         Label(L("practice.iKnow"), systemImage: "checkmark")
-                            .frame(maxWidth: .infinity).padding(.vertical, 6)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.green)
+                    .buttonStyle(.primary)
                 }
             }
         }
     }
 
     private var card: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: Theme.Spacing.m) {
             Text(item.prompt())
-                .font(.system(size: 40, weight: .bold, design: .rounded))
+                .font(.appDisplay(44))
                 .multilineTextAlignment(.center)
             if revealed {
-                Divider()
+                Divider().overlay(.white.opacity(0.4))
                 Text(item.answer())
-                    .font(.title2)
-                    .foregroundStyle(.secondary)
+                    .font(.appTitle2)
+                    .opacity(0.95)
                 if let example = item.vocab.example, !example.isEmpty {
                     Text(example)
-                        .font(.callout)
-                        .foregroundStyle(.tertiary)
+                        .font(.appBody)
+                        .opacity(0.8)
                         .multilineTextAlignment(.center)
                 }
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 48)
-        .padding(.horizontal)
-        .background(Color.gray.opacity(0.12), in: RoundedRectangle(cornerRadius: 20))
+        .padding(.vertical, Theme.Spacing.xl + 16)
+        .padding(.horizontal, Theme.Spacing.m)
+        .background(Theme.brandGradientSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .foregroundStyle(.white)
+        .shadow(color: Theme.brandStart.opacity(0.3), radius: 16, y: 8)
     }
 
     private var dragGesture: some Gesture {

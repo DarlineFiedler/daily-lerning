@@ -11,7 +11,7 @@ struct PracticeContainerView: View {
                 progressHeader
                 ScrollView {
                     modeView(for: item)
-                        .padding()
+                        .padding(Theme.Spacing.m)
                         .id(session.index)   // erzwingt frische State pro Wort
                 }
             } else {
@@ -23,6 +23,7 @@ struct PracticeContainerView: View {
                 )
             }
         }
+        .background(Theme.background.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -32,21 +33,33 @@ struct PracticeContainerView: View {
     }
 
     private var progressHeader: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: Theme.Spacing.s) {
             HStack {
                 Text("\(session.position) / \(session.total)")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.appSubheadline.weight(.semibold))
                 Spacer()
                 Label("\(session.correctCount)", systemImage: "checkmark")
-                    .foregroundStyle(.green)
+                    .foregroundStyle(LearningStatus.learned.color)
                 Label("\(session.wrongCount)", systemImage: "xmark")
                     .foregroundStyle(.red)
             }
-            .font(.caption)
-            ProgressView(value: Double(session.index), total: Double(max(session.total, 1)))
+            .font(.appCaption.weight(.medium))
+
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Theme.surfaceMuted)
+                    Capsule().fill(Theme.brandGradient)
+                        .frame(width: geo.size.width * progress)
+                }
+            }
+            .frame(height: 8)
         }
-        .padding(.horizontal)
-        .padding(.top, 8)
+        .padding(.horizontal, Theme.Spacing.m)
+        .padding(.top, Theme.Spacing.s)
+    }
+
+    private var progress: Double {
+        Double(session.index) / Double(max(session.total, 1))
     }
 
     @ViewBuilder
@@ -72,53 +85,61 @@ struct PracticeSummaryView: View {
     let onRestart: () -> Void
     let onClose: () -> Void
 
+    @State private var appeared = false
+
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: Theme.Spacing.l) {
             Spacer()
             Image(systemName: "party.popper.fill")
-                .font(.system(size: 60))
-                .foregroundStyle(.yellow)
+                .font(.system(size: 72))
+                .foregroundStyle(Theme.brandGradient)
+                .scaleEffect(appeared ? 1 : 0.4)
+                .rotationEffect(.degrees(appeared ? 0 : -20))
             Text(L("practice.finished"))
-                .font(.largeTitle.bold())
+                .font(.appLargeTitle)
             Text(L("practice.finishedSummary", correct, wrong))
-                .font(.title3)
+                .font(.appTitle3)
                 .foregroundStyle(.secondary)
             Spacer()
-            VStack(spacing: 12) {
+            VStack(spacing: Theme.Spacing.s) {
                 Button(action: onRestart) {
                     Label(L("practice.restart"), systemImage: "arrow.clockwise")
-                        .frame(maxWidth: .infinity).padding(.vertical, 6)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.primary)
                 Button(action: onClose) {
-                    Text(L("common.done")).frame(maxWidth: .infinity)
+                    Text(L("common.done"))
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.secondary)
             }
-            .padding(.horizontal)
         }
-        .padding()
+        .padding(Theme.Spacing.l)
+        .onAppear {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) { appeared = true }
+        }
     }
 }
 
-/// Große Karte für das abgefragte Wort.
+/// Große Karte für das abgefragte Wort – farbiger Verlauf, gerundete Schrift.
 struct PromptCard: View {
     let text: String
     var subtitle: String?
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: Theme.Spacing.s) {
             Text(text)
-                .font(.system(size: 40, weight: .bold, design: .rounded))
+                .font(.appDisplay(44))
                 .multilineTextAlignment(.center)
             if let subtitle {
                 Text(subtitle)
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
+                    .font(.appHeadline)
+                    .opacity(0.9)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
-        .background(Color.gray.opacity(0.12), in: RoundedRectangle(cornerRadius: 20))
+        .padding(.vertical, Theme.Spacing.xl + 8)
+        .padding(.horizontal, Theme.Spacing.m)
+        .background(Theme.brandGradientSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .foregroundStyle(.white)
+        .shadow(color: Theme.brandStart.opacity(0.3), radius: 16, y: 8)
     }
 }

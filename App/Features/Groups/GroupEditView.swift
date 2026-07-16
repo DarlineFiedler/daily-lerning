@@ -31,6 +31,8 @@ struct GroupEditView: View {
                     ColorGridPicker(selection: $colorHex)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Theme.background.ignoresSafeArea())
             .navigationTitle(group == nil ? L("group.new") : L("group.edit"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-/// Wurzel-View mit den vier Haupt-Tabs. Wird bei Sprachwechsel komplett neu
+/// Wurzel-View mit den fünf Haupt-Tabs. Wird bei Sprachwechsel komplett neu
 /// aufgebaut (`.id(localization.language)`), damit alle Texte aktualisiert werden.
 struct RootView: View {
     @Environment(\.modelContext) private var context
@@ -12,18 +12,22 @@ struct RootView: View {
 
     var body: some View {
         TabView {
+            HomeView()
+                .tabItem { Label(L("tab.home"), systemImage: "house.fill") }
+
             GroupListView()
-                .tabItem { Label(L("tab.groups"), systemImage: "rectangle.stack") }
+                .tabItem { Label(L("tab.groups"), systemImage: "rectangle.stack.fill") }
 
             SearchView()
                 .tabItem { Label(L("tab.search"), systemImage: "magnifyingglass") }
 
             StatisticsView()
-                .tabItem { Label(L("tab.stats"), systemImage: "chart.bar") }
+                .tabItem { Label(L("tab.stats"), systemImage: "chart.bar.fill") }
 
             SettingsView()
-                .tabItem { Label(L("tab.settings"), systemImage: "gearshape") }
+                .tabItem { Label(L("tab.settings"), systemImage: "gearshape.fill") }
         }
+        .tint(Theme.brandStart)
         .id(localization.language)
         .environment(localization)
         .environment(\.locale, localization.localeForFormatting)
