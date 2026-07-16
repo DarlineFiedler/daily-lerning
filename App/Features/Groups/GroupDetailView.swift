@@ -35,6 +35,9 @@ struct GroupDetailView: View {
                         VocabRow(vocab: vocab) { editingVocab = vocab }
                             .cardStyle(padding: Theme.Spacing.s + 4)
                             .contextMenu {
+                                Button { editingVocab = vocab } label: {
+                                    Label(L("common.edit"), systemImage: "pencil")
+                                }
                                 Button(role: .destructive) { pendingDelete = vocab } label: {
                                     Label(L("common.delete"), systemImage: "trash")
                                 }

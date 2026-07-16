@@ -3,9 +3,11 @@ import SwiftData
 
 /// Tab 2: Globale Suche über ALLE Wörter in ALLEN Gruppen (Wort oder Bedeutung).
 struct SearchView: View {
+    @Environment(\.modelContext) private var context
     @Query(sort: \Vocab.word) private var vocabs: [Vocab]
     @State private var query = ""
     @State private var editingVocab: Vocab?
+    @State private var pendingDelete: Vocab?
 
     private var results: [Vocab] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -32,6 +34,15 @@ struct SearchView: View {
                             VocabRow(vocab: vocab, showGroup: true) {
                                 editingVocab = vocab
                             }
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) { pendingDelete = vocab } label: {
+                                    Label(L("common.delete"), systemImage: "trash")
+                                }
+                                Button { editingVocab = vocab } label: {
+                                    Label(L("common.edit"), systemImage: "pencil")
+                                }
+                                .tint(.accentColor)
+                            }
                         }
                     }
                     .scrollContentBackground(.hidden)
@@ -43,7 +54,27 @@ struct SearchView: View {
             .sheet(item: $editingVocab) { vocab in
                 VocabEditView(vocab: vocab, group: vocab.group)
             }
+            .confirmationDialog(
+                L("vocab.deleteConfirm"),
+                isPresented: Binding(
+                    get: { pendingDelete != nil },
+                    set: { if !$0 { pendingDelete = nil } }
+                ),
+                titleVisibility: .visible
+            ) {
+                Button(L("common.delete"), role: .destructive) {
+                    if let vocab = pendingDelete { delete(vocab) }
+                }
+                Button(L("common.cancel"), role: .cancel) { pendingDelete = nil }
+            }
         }
+    }
+
+    private func delete(_ vocab: Vocab) {
+        context.delete(vocab)
+        context.saveOrLog()
+        pendingDelete = nil
+        WidgetSnapshotWriter.refresh(context: context)
     }
 }
 
