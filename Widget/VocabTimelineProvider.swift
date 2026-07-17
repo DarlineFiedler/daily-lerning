@@ -53,10 +53,26 @@ struct VocabTimelineProvider: TimelineProvider {
         let nowSlot = max(0, Int((elapsed / secondsPerSlot).rounded(.down)))
 
         var entries: [VocabEntry] = []
+        // Permutation nur einmal pro Zyklus aufbauen statt für jeden Slot neu.
+        var cachedCycle = -1
+        var permutation: [Int] = []
         for j in 0..<count {
             let slot = nowSlot + j
             let date = anchor.addingTimeInterval(Double(slot) * secondsPerSlot)
-            let idx = WidgetRotation.wordIndex(forSlot: slot, count: n, seed: seed)
+            let idx: Int
+            if n > 1 {
+                let cycle = slot / n
+                if cycle != cachedCycle {
+                    cachedCycle = cycle
+                    permutation = WidgetRotation.seededPermutation(
+                        wordCount: n,
+                        seed: WidgetRotation.cycleSeed(cycle, seed: seed)
+                    )
+                }
+                idx = permutation[slot % n]
+            } else {
+                idx = 0
+            }
             entries.append(VocabEntry(date: date, word: words[idx], settings: settings))
         }
 
