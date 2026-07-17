@@ -32,6 +32,9 @@ struct PracticeContainerView: View {
                 Button(L("common.close"), action: onClose)
             }
         }
+        // Haptik für die wichtigsten Lern-Momente (richtig/falsch).
+        .sensoryFeedback(.success, trigger: session.correctCount)
+        .sensoryFeedback(.error, trigger: session.wrongCount)
     }
 
     private var progressHeader: some View {
@@ -43,7 +46,7 @@ struct PracticeContainerView: View {
                 Label("\(session.correctCount)", systemImage: "checkmark")
                     .foregroundStyle(LearningStatus.learned.color)
                 Label("\(session.wrongCount)", systemImage: "xmark")
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Theme.wrong)
             }
             .font(.appCaption.weight(.medium))
 
@@ -125,12 +128,21 @@ struct PracticeSummaryView: View {
 struct PromptCard: View {
     let text: String
     var subtitle: String?
+    /// Wenn gesetzt, erscheint ein Vorlese-Button (koreanisches Wort). Nur übergeben,
+    /// wenn der Prompt selbst das Wort ist – sonst würde er die Antwort verraten.
+    var spokenText: String?
 
     var body: some View {
         VStack(spacing: Theme.Spacing.s) {
-            Text(text)
-                .font(.appDisplay(44))
-                .multilineTextAlignment(.center)
+            HStack(spacing: Theme.Spacing.s) {
+                Text(text)
+                    .font(.appDisplay(44))
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.5)
+                if let spokenText {
+                    SpeakButton(text: spokenText, font: .appTitle2, tint: .white)
+                }
+            }
             if let subtitle {
                 Text(subtitle)
                     .font(.appHeadline)

@@ -12,7 +12,8 @@ struct MultipleChoiceView: View {
 
     var body: some View {
         VStack(spacing: Theme.Spacing.l) {
-            PromptCard(text: item.prompt())
+            PromptCard(text: item.prompt(),
+                       spokenText: item.direction == .wordToMeaning ? item.vocab.word : nil)
 
             VStack(spacing: Theme.Spacing.s + 4) {
                 ForEach(item.choices) { choice in
@@ -58,21 +59,21 @@ struct MultipleChoiceView: View {
 
     private func icon(for choice: Vocab) -> (name: String, color: Color)? {
         if isRight(choice) { return ("checkmark.circle.fill", LearningStatus.learned.color) }
-        if choice.id == selected?.id { return ("xmark.circle.fill", .red) }
+        if choice.id == selected?.id { return ("xmark.circle.fill", Theme.wrong) }
         return nil
     }
 
     private func background(for choice: Vocab) -> Color {
         guard answered else { return Theme.surfaceMuted }
         if isRight(choice) { return LearningStatus.learned.color.opacity(0.18) }
-        if choice.id == selected?.id { return Color.red.opacity(0.15) }
+        if choice.id == selected?.id { return Theme.wrong.opacity(0.15) }
         return Theme.surfaceMuted
     }
 
     private func border(for choice: Vocab) -> Color {
         guard answered else { return .clear }
         if isRight(choice) { return LearningStatus.learned.color }
-        if choice.id == selected?.id { return .red }
+        if choice.id == selected?.id { return Theme.wrong }
         return .clear
     }
 }

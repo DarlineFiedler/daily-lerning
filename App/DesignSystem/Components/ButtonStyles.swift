@@ -26,6 +26,7 @@ struct PrimaryButtonStyle: ButtonStyle {
 
 /// Getönter, umrandeter Sekundär-Button (gleiche Form, dezenter).
 struct SecondaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
     var tint: Color = Theme.brandStart
 
     func makeBody(configuration: Configuration) -> some View {
@@ -38,6 +39,7 @@ struct SecondaryButtonStyle: ButtonStyle {
                 RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous)
                     .fill(tint.opacity(0.14))
             }
+            .opacity(isEnabled ? 1 : 0.4)
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
     }

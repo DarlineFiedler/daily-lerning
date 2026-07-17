@@ -13,7 +13,8 @@ struct WritingView: View {
 
     var body: some View {
         VStack(spacing: Theme.Spacing.l) {
-            PromptCard(text: item.prompt())
+            PromptCard(text: item.prompt(),
+                       spokenText: item.direction == .wordToMeaning ? item.vocab.word : nil)
 
             TextField(L("practice.typeAnswer"), text: $typed)
                 .font(.appTitle3)
@@ -50,16 +51,21 @@ struct WritingView: View {
                 systemImage: wasCorrect ? "checkmark.circle.fill" : "xmark.circle.fill"
             )
             .font(.appHeadline)
-            .foregroundStyle(wasCorrect ? LearningStatus.learned.color : .red)
+            .foregroundStyle(wasCorrect ? LearningStatus.learned.color : Theme.wrong)
 
             if !wasCorrect {
-                Text(item.answer())
-                    .font(.appTitle3)
+                HStack(spacing: Theme.Spacing.s) {
+                    Text(item.answer())
+                        .font(.appTitle3)
+                    if item.direction == .meaningToWord {
+                        SpeakButton(text: item.vocab.word)
+                    }
+                }
             }
         }
         .frame(maxWidth: .infinity)
         .padding(Theme.Spacing.m)
-        .background((wasCorrect ? LearningStatus.learned.color : Color.red).opacity(0.14),
+        .background((wasCorrect ? LearningStatus.learned.color : Theme.wrong).opacity(0.14),
                     in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
     }
 

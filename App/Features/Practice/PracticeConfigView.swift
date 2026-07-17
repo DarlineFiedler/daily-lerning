@@ -119,7 +119,7 @@ struct PracticeConfigView: View {
 
             Text(L("group.wordCount", pool.count))
                 .font(.appCaption)
-                .foregroundStyle(pool.isEmpty ? .red : .secondary)
+                .foregroundStyle(pool.isEmpty ? Theme.wrong : .secondary)
         }
         .padding(Theme.Spacing.m)
         .background(.ultraThinMaterial)

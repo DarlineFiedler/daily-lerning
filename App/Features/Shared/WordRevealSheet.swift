@@ -22,9 +22,12 @@ struct WordRevealSheet: View {
                                 .padding(.vertical, 6)
                                 .background(Color(hex: group.colorHex).opacity(0.14), in: Capsule())
                         }
-                        Text(vocab.word)
-                            .font(.appDisplay(56))
-                            .multilineTextAlignment(.center)
+                        HStack(spacing: Theme.Spacing.s) {
+                            Text(vocab.word)
+                                .font(.appDisplay(56))
+                                .multilineTextAlignment(.center)
+                            SpeakButton(text: vocab.word, font: .appTitle)
+                        }
                         Text(vocab.meaning)
                             .font(.appTitle2)
                             .foregroundStyle(.secondary)

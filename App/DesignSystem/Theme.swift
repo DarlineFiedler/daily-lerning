@@ -36,6 +36,18 @@ enum Theme {
     /// Leicht abgesetzte Fläche (z.B. Chips, Balken-Hintergrund).
     static let surfaceMuted = adaptive(light: "#EEEEF5", dark: "#26262F")
 
+    // MARK: - Semantische Farben (adaptiv, Light/Dark)
+
+    /// Lern-Status-Farben – zentral hier, damit sie in Dark Mode angepasst sind
+    /// (statt fest verdrahtet in der Models-Schicht). Genutzt via `LearningStatus.color`.
+    static let statusNew           = adaptive(light: "#94A3B8", dark: "#64748B")
+    static let statusLearning      = adaptive(light: "#F59E0B", dark: "#FBBF24")
+    static let statusAlmostLearned = adaptive(light: "#3B82F6", dark: "#60A5FA")
+    static let statusLearned       = adaptive(light: "#22C55E", dark: "#4ADE80")
+
+    /// Signalfarbe für falsche Antworten (ersetzt hartcodiertes `Color.red`).
+    static let wrong = adaptive(light: "#EF4444", dark: "#F87171")
+
     // MARK: - Radien
 
     enum Radius {

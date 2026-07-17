@@ -27,6 +27,16 @@ struct GroupListView: View {
                                     Button { editingGroup = group } label: {
                                         Label(L("common.edit"), systemImage: "pencil")
                                     }
+                                    if group.id != groups.first?.id {
+                                        Button { move(group, by: -1) } label: {
+                                            Label(L("group.moveUp"), systemImage: "arrow.up")
+                                        }
+                                    }
+                                    if group.id != groups.last?.id {
+                                        Button { move(group, by: 1) } label: {
+                                            Label(L("group.moveDown"), systemImage: "arrow.down")
+                                        }
+                                    }
                                     Button(role: .destructive) { pendingDelete = group } label: {
                                         Label(L("common.delete"), systemImage: "trash")
                                     }
@@ -45,6 +55,7 @@ struct GroupListView: View {
                         Image(systemName: "plus.circle.fill")
                             .font(.appTitle3)
                     }
+                    .accessibilityLabel(L("group.new"))
                 }
             }
             .sheet(isPresented: $showingNew) { GroupEditView(group: nil) }
@@ -88,6 +99,18 @@ struct GroupListView: View {
         context.saveOrLog()
         pendingDelete = nil
         WidgetSnapshotWriter.refresh(context: context)
+    }
+
+    /// Verschiebt eine Gruppe um `offset` Positionen (tauscht `sortOrder` mit dem Nachbarn).
+    private func move(_ group: VocabGroup, by offset: Int) {
+        guard let idx = groups.firstIndex(where: { $0.id == group.id }) else { return }
+        let target = idx + offset
+        guard groups.indices.contains(target) else { return }
+        let other = groups[target]
+        let tmp = group.sortOrder
+        group.sortOrder = other.sortOrder
+        other.sortOrder = tmp
+        context.saveOrLog()
     }
 }
 

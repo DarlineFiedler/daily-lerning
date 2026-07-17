@@ -60,6 +60,7 @@ final class PracticeSession {
         guard let item = currentItem else { return }
         item.vocab.registerResult(correct: correct)
         if correct { correctCount += 1 } else { wrongCount += 1 }
+        StreakStore.registerActivity()   // idempotent pro Kalendertag
         context.saveOrLog()
         index += 1
     }
