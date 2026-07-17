@@ -35,9 +35,13 @@ enum VocabImporter {
         }) {
             group = match
         } else {
+            // Live-Zählung (inkl. noch nicht gespeicherter Inserts), damit beim
+            // "Alle importieren" jede neu angelegte Gruppe eine eigene, aufsteigende
+            // Reihenfolge bekommt – `existingGroups` ist während der Schleife statisch.
+            let order = (try? context.fetchCount(FetchDescriptor<VocabGroup>())) ?? existingGroups.count
             let newGroup = VocabGroup(name: trimmedName,
                                       colorHex: GroupPalette.random,
-                                      sortOrder: existingGroups.count)
+                                      sortOrder: order)
             context.insert(newGroup)
             group = newGroup
         }

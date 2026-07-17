@@ -91,4 +91,20 @@ final class VocabImporterTests: XCTestCase {
         XCTAssertEqual(result.added, 1)
         XCTAssertEqual(result.skipped, 1)
     }
+
+    /// Beim Import mehrerer Pakete in einem Rutsch (statische `existingGroups`-Liste)
+    /// muss jede neu angelegte Gruppe eine eigene, aufsteigende `sortOrder` bekommen.
+    func testAssignsDistinctSortOrderAcrossMultipleImports() throws {
+        let snapshot = try groups()   // einmalig, wie im "Alle importieren"-Aufruf
+        VocabImporter.importRows(rows([("가다", "gehen")]),
+                                 intoGroupNamed: "Verben", context: context, existingGroups: snapshot)
+        VocabImporter.importRows(rows([("사과", "Apfel")]),
+                                 intoGroupNamed: "Essen", context: context, existingGroups: snapshot)
+        VocabImporter.importRows(rows([("선생님", "Lehrer")]),
+                                 intoGroupNamed: "Berufe", context: context, existingGroups: snapshot)
+        try context.save()
+
+        let orders = try groups().map(\.sortOrder).sorted()
+        XCTAssertEqual(orders, [0, 1, 2], "Jede neue Gruppe braucht eine eindeutige sortOrder")
+    }
 }
