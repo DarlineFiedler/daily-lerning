@@ -10,6 +10,7 @@ struct RootView: View {
     @State private var localization = LocalizationManager.shared
     @State private var deepLink: IdentifiableID?
     @State private var showReview = false
+    @State private var showStoreError = false
 
     var body: some View {
         TabView {
@@ -33,8 +34,20 @@ struct RootView: View {
         .environment(localization)
         .environment(\.locale, localization.localeForFormatting)
         .task {
-            SeedData.insertIfEmpty(into: context)
+            if PersistenceController.storeOpenFailed {
+                showStoreError = true
+            } else {
+                // Erst Altdaten aus dem App-Group-Store übernehmen, DANN ggf. seeden –
+                // sonst würden Beispielwörter über verlorene Daten gelegt.
+                StoreMigration.runIfNeeded(into: context)
+                SeedData.insertIfEmpty(into: context)
+            }
             WidgetSnapshotWriter.refresh(context: context)
+        }
+        .alert(L("store.error.title"), isPresented: $showStoreError) {
+            Button(L("common.done"), role: .cancel) {}
+        } message: {
+            Text(L("store.error.message"))
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {

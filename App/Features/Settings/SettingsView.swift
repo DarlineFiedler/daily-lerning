@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import WidgetKit
+import UniformTypeIdentifiers
 
 /// Tab 4: Einstellungen – Sprache (Runtime-Umschaltung) und Lock-Screen-Widget.
 struct SettingsView: View {
@@ -11,7 +12,13 @@ struct SettingsView: View {
     private var widgetVocabs: [Vocab]
 
     @Query private var allVocabs: [Vocab]
+    @Query(sort: \VocabGroup.sortOrder) private var allGroups: [VocabGroup]
     @State private var showImport = false
+
+    /// Zu teilende Sicherungsdatei (löst das Share-Sheet aus).
+    @State private var backupFile: BackupFile?
+    @State private var showRestore = false
+    @State private var restoreMessage: String?
 
     @AppStorage(WidgetSettingsKeys.interval, store: AppGroup.defaults)
     private var interval = 30
@@ -103,12 +110,43 @@ struct SettingsView: View {
                     Text(L("settings.data.hint"))
                 }
 
+                // MARK: Sicherung
+                Section {
+                    if !allVocabs.isEmpty {
+                        Button {
+                            exportBackup()
+                        } label: {
+                            Label(L("settings.backup.export"), systemImage: "arrow.down.doc")
+                        }
+                    }
+                    Button {
+                        showRestore = true
+                    } label: {
+                        Label(L("settings.backup.restore"), systemImage: "arrow.up.doc")
+                    }
+                } header: {
+                    Text(L("settings.backup.section"))
+                } footer: {
+                    Text(L("settings.backup.hint"))
+                }
+
                 // MARK: Über
                 Section(L("settings.about.section")) {
                     LabeledContent(L("settings.about.version"), value: appVersion)
                 }
             }
             .sheet(isPresented: $showImport) { VocabImportView() }
+            .sheet(item: $backupFile) { file in
+                ActivityView(items: [file.url])
+            }
+            .fileImporter(isPresented: $showRestore,
+                          allowedContentTypes: [.json],
+                          allowsMultipleSelection: false) { result in
+                restoreBackup(result)
+            }
+            .alert(restoreMessage ?? "", isPresented: restoreAlertBinding) {
+                Button(L("common.done"), role: .cancel) { restoreMessage = nil }
+            }
             .scrollContentBackground(.hidden)
             .background(Theme.background.ignoresSafeArea())
             .navigationTitle(L("tab.settings"))
@@ -162,6 +200,42 @@ struct SettingsView: View {
     private func refreshWidget() {
         WidgetSnapshotWriter.refresh(context: context)
     }
+
+    // MARK: - Sicherung
+
+    /// Bindung, die den Bestätigungs-Alert zeigt, sobald eine Meldung vorliegt.
+    private var restoreAlertBinding: Binding<Bool> {
+        Binding { restoreMessage != nil } set: { if !$0 { restoreMessage = nil } }
+    }
+
+    private func exportBackup() {
+        guard let url = try? VocabBackup.exportFile(groups: allGroups, vocabs: allVocabs) else {
+            restoreMessage = L("settings.backup.error")
+            return
+        }
+        backupFile = BackupFile(url: url)
+    }
+
+    private func restoreBackup(_ result: Result<[URL], Error>) {
+        guard case .success(let urls) = result, let url = urls.first else { return }
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+
+        guard let data = try? Data(contentsOf: url),
+              let backup = try? VocabBackup.decode(data) else {
+            restoreMessage = L("settings.backup.error")
+            return
+        }
+        backup.apply(into: context)
+        WidgetSnapshotWriter.refresh(context: context)
+        restoreMessage = L("settings.backup.restored", backup.vocabs.count, backup.groups.count)
+    }
+}
+
+/// Identifizierbarer Wrapper um die Sicherungs-URL fürs `.sheet(item:)`.
+private struct BackupFile: Identifiable {
+    let url: URL
+    var id: String { url.path }
 }
 
 #Preview {

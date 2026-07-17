@@ -161,6 +161,14 @@
 "settings.data.import" = "단어 가져오기";
 "settings.data.export" = "단어 내보내기";
 "settings.data.hint" = "여러 단어를 한 번에 가져오거나 CSV로 백업하세요.";
+"settings.backup.section" = "백업";
+"settings.backup.export" = "백업 만들기";
+"settings.backup.restore" = "백업 복원";
+"settings.backup.hint" = "모든 단어와 그룹을 파일로 완전히 백업합니다(파일/iCloud Drive에 저장). 복원 시 기존 단어는 업데이트되며 중복되지 않습니다.";
+"settings.backup.restored" = "단어 %d개와 그룹 %d개를 복원했습니다.";
+"settings.backup.error" = "파일을 읽을 수 없습니다.";
+"store.error.title" = "데이터베이스 오류";
+"store.error.message" = "데이터베이스를 열 수 없습니다. 단어를 추가하지 말고 앱을 다시 시작하세요.";
 "import.target" = "대상 그룹";
 "import.newGroup" = "새 그룹";
 "import.paste" = "텍스트 붙여넣기";

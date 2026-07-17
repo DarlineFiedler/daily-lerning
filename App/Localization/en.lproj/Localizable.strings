@@ -161,6 +161,14 @@
 "settings.data.import" = "Import words";
 "settings.data.export" = "Export words";
 "settings.data.hint" = "Import many words at once or back them up as CSV.";
+"settings.backup.section" = "Backup";
+"settings.backup.export" = "Create backup";
+"settings.backup.restore" = "Restore backup";
+"settings.backup.hint" = "Full backup of all words and groups as a file (save to Files/iCloud Drive). Restoring updates existing words, no duplicates.";
+"settings.backup.restored" = "Restored %d words and %d groups.";
+"settings.backup.error" = "The file could not be read.";
+"store.error.title" = "Database error";
+"store.error.message" = "The database could not be opened. Please don't add words and restart the app.";
 "import.target" = "Target group";
 "import.newGroup" = "New group";
 "import.paste" = "Paste text";
