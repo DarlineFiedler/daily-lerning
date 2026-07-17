@@ -69,6 +69,7 @@
 /* Lernen */
 "practice.start" = "Lernen starten";
 "practice.config.title" = "Lernvorgang";
+"practice.config.groups" = "Gruppen";
 "practice.config.statuses" = "Welche Wörter?";
 "practice.config.direction" = "Richtung";
 "practice.config.modes" = "Lernmodi";
@@ -161,6 +162,14 @@
 "settings.data.import" = "Vokabeln importieren";
 "settings.data.export" = "Vokabeln exportieren";
 "settings.data.hint" = "Importiere mehrere Vokabeln oder sichere sie als CSV.";
+"settings.backup.section" = "Sicherung";
+"settings.backup.export" = "Sicherung erstellen";
+"settings.backup.restore" = "Sicherung wiederherstellen";
+"settings.backup.hint" = "Vollständige Sicherung aller Wörter und Gruppen als Datei (in Dateien/iCloud Drive speichern). Beim Wiederherstellen werden vorhandene Wörter aktualisiert, keine Duplikate.";
+"settings.backup.restored" = "%d Wörter und %d Gruppen wiederhergestellt.";
+"settings.backup.error" = "Die Datei konnte nicht gelesen werden.";
+"store.error.title" = "Datenbankfehler";
+"store.error.message" = "Die Datenbank konnte nicht geöffnet werden. Bitte keine Wörter hinzufügen und die App neu starten.";
 "import.target" = "Zielgruppe";
 "import.newGroup" = "Neue Gruppe";
 "import.paste" = "Text einfügen";

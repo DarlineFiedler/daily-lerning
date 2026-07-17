@@ -1,20 +1,32 @@
 import SwiftUI
 import SwiftData
 
-/// Konfiguriert einen Lernvorgang für eine Gruppe (Status-Filter, Richtung, Modi).
+/// Konfiguriert einen Lernvorgang (Gruppen-Auswahl, Status-Filter, Richtung, Modi).
 struct PracticeConfigView: View {
-    let group: VocabGroup
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \VocabGroup.sortOrder) private var allGroups: [VocabGroup]
 
+    @State private var selectedGroupIDs: Set<UUID>
     @State private var selectedStatuses: Set<LearningStatus> = []
     @State private var direction: PracticeDirection = .wordToMeaning
     @State private var selectedModes: Set<PracticeMode> = []
     @State private var startSession = false
 
+    /// `preselected` sind die beim Öffnen bereits gewählten Gruppen (z.B. die
+    /// Herkunftsgruppe). Weitere lassen sich im Screen dazuschalten.
+    init(preselected: [VocabGroup]) {
+        _selectedGroupIDs = State(initialValue: Set(preselected.map(\.id)))
+    }
+
+    /// Aktuell ausgewählte Gruppen (in Sortier-Reihenfolge).
+    private var selectedGroups: [VocabGroup] {
+        allGroups.filter { selectedGroupIDs.contains($0.id) }
+    }
+
     /// Wörter, die zur aktuellen Auswahl passen (leere Statusmenge = alle).
     private var pool: [Vocab] {
-        group.vocabs.filter {
+        selectedGroups.flatMap(\.vocabs).filter {
             selectedStatuses.isEmpty || selectedStatuses.contains($0.status)
         }
     }
@@ -27,6 +39,7 @@ struct PracticeConfigView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Spacing.l) {
+                    if allGroups.count > 1 { groupSection }
                     statusSection
                     directionSection
                     modeSection
@@ -46,7 +59,7 @@ struct PracticeConfigView: View {
                 PracticeContainerView(
                     session: PracticeSession(
                         vocabs: pool,
-                        distractorPool: group.vocabs,
+                        distractorPool: selectedGroups.flatMap(\.vocabs),
                         config: config,
                         context: context
                     ),
@@ -57,6 +70,22 @@ struct PracticeConfigView: View {
     }
 
     // MARK: - Abschnitte
+
+    private var groupSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(L("practice.config.groups"))
+            FlowChips {
+                ForEach(allGroups) { group in
+                    SelectableChip(
+                        title: group.name,
+                        systemImage: "rectangle.stack.fill",
+                        tint: Color(hex: group.colorHex),
+                        isSelected: selectedGroupIDs.contains(group.id)
+                    ) { toggle(&selectedGroupIDs, group.id) }
+                }
+            }
+        }
+    }
 
     private var statusSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {

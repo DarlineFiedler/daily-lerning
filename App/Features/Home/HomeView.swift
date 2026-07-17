@@ -64,7 +64,7 @@ struct HomeView: View {
             .background(Theme.background.ignoresSafeArea())
             .navigationBarHidden(true)
             .sheet(item: $revealWord) { WordRevealSheet(wordID: $0.id) }
-            .sheet(item: $practiceGroup) { PracticeConfigView(group: $0) }
+            .sheet(item: $practiceGroup) { PracticeConfigView(preselected: [$0]) }
             .sheet(isPresented: $showingNewGroup) { GroupEditView(group: nil) }
             .sheet(isPresented: $showReview) { ReviewSessionView() }
         }
