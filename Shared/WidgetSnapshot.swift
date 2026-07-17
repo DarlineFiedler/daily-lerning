@@ -13,10 +13,34 @@ struct WidgetSettings: Codable, Hashable {
     var intervalMinutes: Int = 30
     /// Bedeutung dauerhaft anzeigen.
     var showMeaning: Bool = true
-    /// Bedeutung erst nach Tippen anzeigen (öffnet die App per Deep-Link).
-    var showMeaningOnTap: Bool = false
+    /// Fester Ankerzeitpunkt, ab dem die Slots gezählt werden (stabil).
+    var rotationAnchor: Date = Date(timeIntervalSince1970: 0)
+    /// Fester Zufalls-Seed für die Reihenfolge (stabil).
+    var rotationSeed: UInt64 = 0
 
     static let intervalOptions = [10, 15, 30, 60, 120]
+
+    init(
+        intervalMinutes: Int = 30,
+        showMeaning: Bool = true,
+        rotationAnchor: Date = Date(timeIntervalSince1970: 0),
+        rotationSeed: UInt64 = 0
+    ) {
+        self.intervalMinutes = intervalMinutes
+        self.showMeaning = showMeaning
+        self.rotationAnchor = rotationAnchor
+        self.rotationSeed = rotationSeed
+    }
+
+    // Toleranter Decoder: fehlende Felder (z.B. aus einem älteren Snapshot)
+    // fallen auf die Defaults zurück, statt das Laden komplett scheitern zu lassen.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        intervalMinutes = try c.decodeIfPresent(Int.self, forKey: .intervalMinutes) ?? 30
+        showMeaning = try c.decodeIfPresent(Bool.self, forKey: .showMeaning) ?? true
+        rotationAnchor = try c.decodeIfPresent(Date.self, forKey: .rotationAnchor) ?? Date(timeIntervalSince1970: 0)
+        rotationSeed = try c.decodeIfPresent(UInt64.self, forKey: .rotationSeed) ?? 0
+    }
 }
 
 /// Vollständiger Snapshot, den die App in den App-Group-Container schreibt

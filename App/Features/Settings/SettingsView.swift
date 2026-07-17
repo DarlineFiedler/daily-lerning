@@ -29,8 +29,6 @@ struct SettingsView: View {
     private var interval = 30
     @AppStorage(WidgetSettingsKeys.showMeaning, store: AppGroup.defaults)
     private var showMeaning = true
-    @AppStorage(WidgetSettingsKeys.showMeaningOnTap, store: AppGroup.defaults)
-    private var showMeaningOnTap = false
 
     @AppStorage(ReminderKeys.enabled, store: AppGroup.defaults)
     private var reminderEnabled = false
@@ -67,10 +65,6 @@ struct SettingsView: View {
 
                     Toggle(isOn: $showMeaning) {
                         Label(L("settings.widget.showMeaning"), systemImage: "text.alignleft")
-                    }
-
-                    Toggle(isOn: $showMeaningOnTap) {
-                        Label(L("settings.widget.showMeaningOnTap"), systemImage: "hand.tap")
                     }
                 } header: {
                     Text(L("settings.widget.section"))
@@ -190,7 +184,6 @@ struct SettingsView: View {
             .navigationTitle(L("tab.settings"))
             .onChange(of: interval) { refreshWidget() }
             .onChange(of: showMeaning) { refreshWidget() }
-            .onChange(of: showMeaningOnTap) { refreshWidget() }
             .onChange(of: reminderEnabled) { _, enabled in
                 if enabled {
                     Task {

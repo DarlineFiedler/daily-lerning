@@ -42,12 +42,22 @@ struct VocabTimelineProvider: TimelineProvider {
         let perDay = (24 * 60) / interval
         let count = min(max(perDay, words.count), 200)
 
+        // Zeit-verankerte Rotation: der angezeigte Slot folgt aus der echten Uhrzeit
+        // (nicht aus dem Build-Zeitpunkt), daher springt das Widget beim App-Öffnen
+        // nicht mehr auf Wort 1 zurück.
+        let n = words.count
+        let anchor = settings.rotationAnchor
+        let seed = settings.rotationSeed
+        let secondsPerSlot = Double(interval * 60)
+        let elapsed = Date().timeIntervalSince(anchor)
+        let nowSlot = max(0, Int((elapsed / secondsPerSlot).rounded(.down)))
+
         var entries: [VocabEntry] = []
-        let start = Date()
-        for i in 0..<count {
-            let date = Calendar.current.date(byAdding: .minute, value: i * interval, to: start) ?? start
-            let word = words[i % words.count]
-            entries.append(VocabEntry(date: date, word: word, settings: settings))
+        for j in 0..<count {
+            let slot = nowSlot + j
+            let date = anchor.addingTimeInterval(Double(slot) * secondsPerSlot)
+            let idx = WidgetRotation.wordIndex(forSlot: slot, count: n, seed: seed)
+            entries.append(VocabEntry(date: date, word: words[idx], settings: settings))
         }
 
         completion(Timeline(entries: entries, policy: .atEnd))
