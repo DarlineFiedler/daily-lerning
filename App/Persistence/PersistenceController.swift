@@ -62,11 +62,17 @@ enum PersistenceController {
         }
     }
 
-    /// Vorschau-Container mit Seed-Daten für SwiftUI-Previews.
+    /// Vorschau-Container für SwiftUI-Previews – befüllt aus den mitgelieferten
+    /// CSV-Wortpaketen (keine hartcodierten Beispieldaten mehr).
     @MainActor
     static let preview: ModelContainer = {
         let container = makeContainer(inMemory: true)
-        SeedData.insert(into: container.mainContext)
+        let context = container.mainContext
+        for pack in WordPack.loadBundled().prefix(2) {
+            VocabImporter.importRows(pack.rows, intoGroupNamed: pack.name,
+                                     context: context, existingGroups: [])
+        }
+        context.saveOrLog()
         return container
     }()
 }

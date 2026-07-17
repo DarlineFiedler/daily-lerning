@@ -178,3 +178,9 @@
 "import.preview" = "%d words detected";
 "import.action" = "Import";
 "import.error" = "Could not read the file.";
+
+"wordpacks.section" = "Word packs";
+"wordpacks.hint" = "Load ready-made word lists into a group named after the pack. Words that already exist are skipped.";
+"wordpacks.count" = "%d words";
+"wordpacks.importAll" = "Import all";
+"wordpacks.result" = "%d added · %d skipped";

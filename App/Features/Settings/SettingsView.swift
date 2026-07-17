@@ -15,6 +15,11 @@ struct SettingsView: View {
     @Query(sort: \VocabGroup.sortOrder) private var allGroups: [VocabGroup]
     @State private var showImport = false
 
+    /// Mitgelieferte Vokabel-Pakete (aus dem `WordPacks/`-Ordner im Bundle).
+    @State private var wordPacks: [WordPack] = []
+    /// Ergebnis-Meldung nach einem Paket-Import (löst den Alert aus).
+    @State private var packMessage: String?
+
     /// Zu teilende Sicherungsdatei (löst das Share-Sheet aus).
     @State private var backupFile: BackupFile?
     @State private var showRestore = false
@@ -89,6 +94,35 @@ struct SettingsView: View {
                     Text(L("settings.reminder.hint"))
                 }
 
+                // MARK: Wortpakete
+                if !wordPacks.isEmpty {
+                    Section {
+                        ForEach(wordPacks) { pack in
+                            HStack {
+                                Text(pack.name)
+                                Spacer()
+                                Text(L("wordpacks.count", pack.count))
+                                    .foregroundStyle(.secondary)
+                                Button {
+                                    importPacks([pack])
+                                } label: {
+                                    Image(systemName: "plus.circle.fill")
+                                }
+                                .buttonStyle(.borderless)
+                            }
+                        }
+                        Button {
+                            importPacks(wordPacks)
+                        } label: {
+                            Label(L("wordpacks.importAll"), systemImage: "square.and.arrow.down.on.square")
+                        }
+                    } header: {
+                        Text(L("wordpacks.section"))
+                    } footer: {
+                        Text(L("wordpacks.hint"))
+                    }
+                }
+
                 // MARK: Daten
                 Section {
                     Button {
@@ -147,6 +181,10 @@ struct SettingsView: View {
             .alert(restoreMessage ?? "", isPresented: restoreAlertBinding) {
                 Button(L("common.done"), role: .cancel) { restoreMessage = nil }
             }
+            .alert(packMessage ?? "", isPresented: packAlertBinding) {
+                Button(L("common.done"), role: .cancel) { packMessage = nil }
+            }
+            .onAppear { wordPacks = WordPack.loadBundled() }
             .scrollContentBackground(.hidden)
             .background(Theme.background.ignoresSafeArea())
             .navigationTitle(L("tab.settings"))
@@ -206,6 +244,27 @@ struct SettingsView: View {
     /// Bindung, die den Bestätigungs-Alert zeigt, sobald eine Meldung vorliegt.
     private var restoreAlertBinding: Binding<Bool> {
         Binding { restoreMessage != nil } set: { if !$0 { restoreMessage = nil } }
+    }
+
+    /// Bindung für den Ergebnis-Alert nach einem Paket-Import.
+    private var packAlertBinding: Binding<Bool> {
+        Binding { packMessage != nil } set: { if !$0 { packMessage = nil } }
+    }
+
+    // MARK: - Wortpakete
+
+    /// Importiert die angegebenen Pakete jeweils in eine Gruppe mit dem Paketnamen
+    /// (Dubletten werden übersprungen) und zeigt anschließend eine Ergebnis-Meldung.
+    private func importPacks(_ packs: [WordPack]) {
+        var total = VocabImporter.Result(added: 0, skipped: 0)
+        for pack in packs {
+            total = total + VocabImporter.importRows(
+                pack.rows, intoGroupNamed: pack.name, context: context, existingGroups: allGroups
+            )
+        }
+        context.saveOrLog()
+        WidgetSnapshotWriter.refresh(context: context)
+        packMessage = L("wordpacks.result", total.added, total.skipped)
     }
 
     private func exportBackup() {
