@@ -69,6 +69,7 @@
 /* Lernen */
 "practice.start" = "Lernen starten";
 "practice.config.title" = "Lernvorgang";
+"practice.config.groups" = "Gruppen";
 "practice.config.statuses" = "Welche Wörter?";
 "practice.config.direction" = "Richtung";
 "practice.config.modes" = "Lernmodi";

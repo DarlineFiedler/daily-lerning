@@ -69,6 +69,7 @@
 /* Practice */
 "practice.start" = "Start Practice";
 "practice.config.title" = "Practice";
+"practice.config.groups" = "Groups";
 "practice.config.statuses" = "Which words?";
 "practice.config.direction" = "Direction";
 "practice.config.modes" = "Modes";

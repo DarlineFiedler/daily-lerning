@@ -69,6 +69,7 @@
 /* Practice */
 "practice.start" = "학습 시작";
 "practice.config.title" = "학습";
+"practice.config.groups" = "그룹";
 "practice.config.statuses" = "어떤 단어?";
 "practice.config.direction" = "방향";
 "practice.config.modes" = "학습 모드";
