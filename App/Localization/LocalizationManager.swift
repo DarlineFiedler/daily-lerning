@@ -21,6 +21,8 @@ final class LocalizationManager {
         didSet {
             AppGroup.defaults.set(language.rawValue, forKey: storageKey)
             updateBundle()
+            // Geplante Erinnerung in der neuen Sprache neu aufsetzen.
+            NotificationScheduler.rescheduleIfEnabled()
         }
     }
 

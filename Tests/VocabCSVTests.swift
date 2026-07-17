@@ -41,4 +41,29 @@ final class VocabCSVTests: XCTestCase {
         let csv = VocabCSV.export([tricky])
         XCTAssertTrue(csv.contains("\"a;b\""))
     }
+
+    func testSkipsExportHeaderRow() {
+        // Eine exportierte Kopfzeile darf beim Re-Import nicht als Vokabel landen.
+        let rows = VocabCSV.parse("word;meaning;example;group;status\n가다;gehen")
+        XCTAssertEqual(rows, [VocabCSV.Row(word: "가다", meaning: "gehen", example: nil)])
+    }
+
+    func testParsesQuotedDelimiter() {
+        // Trennzeichen innerhalb von Quotes zählt nicht; "" wird zu ".
+        let rows = VocabCSV.parse("\"a;b\";\"sagt \"\"hallo\"\"\"")
+        XCTAssertEqual(rows, [VocabCSV.Row(word: "a;b", meaning: "sagt \"hallo\"", example: nil)])
+    }
+
+    func testExportThenParseRoundTrips() {
+        // Export → Parse ergibt die Kernfelder zurück (Header + Zusatzspalten ignoriert).
+        let vocabs = [
+            Vocab(word: "사과", meaning: "Apfel", example: "Ein Beispiel"),
+            Vocab(word: "a;b", meaning: "x;y", example: nil),
+        ]
+        let parsed = VocabCSV.parse(VocabCSV.export(vocabs))
+        XCTAssertEqual(parsed, [
+            VocabCSV.Row(word: "사과", meaning: "Apfel", example: "Ein Beispiel"),
+            VocabCSV.Row(word: "a;b", meaning: "x;y", example: nil),
+        ])
+    }
 }

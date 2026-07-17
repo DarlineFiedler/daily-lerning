@@ -38,4 +38,15 @@ enum NotificationScheduler {
     static func cancel() {
         center.removePendingNotificationRequests(withIdentifiers: [requestID])
     }
+
+    /// Plant die Erinnerung neu, falls sie aktiviert ist – z.B. nach einem
+    /// Sprachwechsel, damit Titel/Body in der neuen Sprache erscheinen.
+    /// Nutzt dieselben Defaults (19:00) wie die Einstellungs-`@AppStorage`.
+    static func rescheduleIfEnabled() {
+        let d = AppGroup.defaults
+        guard d.bool(forKey: ReminderKeys.enabled) else { return }
+        let hour = d.object(forKey: ReminderKeys.hour) as? Int ?? 19
+        let minute = d.object(forKey: ReminderKeys.minute) as? Int ?? 0
+        schedule(hour: hour, minute: minute)
+    }
 }
