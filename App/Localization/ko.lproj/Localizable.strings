@@ -178,3 +178,9 @@
 "import.preview" = "단어 %d개 인식됨";
 "import.action" = "가져오기";
 "import.error" = "파일을 읽을 수 없습니다.";
+
+"wordpacks.section" = "단어 묶음";
+"wordpacks.hint" = "미리 만들어진 단어 목록을 묶음 이름의 그룹으로 가져옵니다. 이미 있는 단어는 건너뜁니다.";
+"wordpacks.count" = "%d개 단어";
+"wordpacks.importAll" = "모두 가져오기";
+"wordpacks.result" = "%d개 추가 · %d개 건너뜀";

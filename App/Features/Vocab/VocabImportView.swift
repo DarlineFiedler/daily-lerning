@@ -112,23 +112,13 @@ struct VocabImportView: View {
         let rows = parsedRows
         guard !rows.isEmpty else { return }
 
-        let group: VocabGroup
+        let groupName: String
         switch target {
-        case .existing(let g):
-            group = g
-        case .new:
-            let g = VocabGroup(
-                name: newGroupName.trimmingCharacters(in: .whitespacesAndNewlines),
-                colorHex: GroupPalette.random,
-                sortOrder: groups.count
-            )
-            context.insert(g)
-            group = g
+        case .existing(let g): groupName = g.name
+        case .new: groupName = newGroupName.trimmingCharacters(in: .whitespacesAndNewlines)
         }
 
-        for row in rows {
-            context.insert(Vocab(word: row.word, meaning: row.meaning, example: row.example, group: group))
-        }
+        VocabImporter.importRows(rows, intoGroupNamed: groupName, context: context, existingGroups: groups)
         context.saveOrLog()
         WidgetSnapshotWriter.refresh(context: context)
         dismiss()

@@ -1,43 +1,39 @@
 import Foundation
 import SwiftData
 
-/// Beispieldaten für Previews und den ersten App-Start (leicht entfernbar).
+/// Einmalige Entfernung der früheren, hartcodierten Beispieldaten. Beim ersten Start
+/// werden KEINE Vokabeln mehr angelegt – Inhalte kommen jetzt ausschließlich aus den
+/// mitgelieferten CSV-Wortpaketen (siehe `WordPack`) bzw. eigenen Importen.
 enum SeedData {
 
+    // MARK: - Alt-Beispieldaten entfernen
+
+    /// Namen der ursprünglich geseedeten Beispielgruppen.
+    private static let legacyGroupNames: Set<String> = ["Verben", "Essen"]
+    /// Koreanische Wörter der ursprünglichen Beispieldaten.
+    private static let legacyWords: Set<String> = [
+        "가다", "먹다", "마시다", "보다", "사과", "밥", "물", "김치"
+    ]
+    /// Flag im geteilten UserDefaults: Alt-Seed wurde bereits einmalig entfernt.
+    private static let removedFlagKey = "didRemoveLegacySeed"
+
+    /// Entfernt einmalig die alten Beispieldaten („Verben"/„Essen" mit den bekannten
+    /// Beispielwörtern). Läuft nur, solange die Gruppe unverändert ist – enthält sie
+    /// eigene, hinzugefügte Wörter, bleibt sie erhalten. Danach wird ein Flag gesetzt,
+    /// damit später selbst angelegte gleichnamige Gruppen nicht angetastet werden.
     @MainActor
-    static func insert(into context: ModelContext) {
-        let verbs = VocabGroup(name: "Verben", colorHex: "#22C55E", sortOrder: 0)
-        let food = VocabGroup(name: "Essen", colorHex: "#F97316", sortOrder: 1)
-        context.insert(verbs)
-        context.insert(food)
+    static func removeLegacySeedIfNeeded(from context: ModelContext) {
+        let defaults = AppGroup.defaults
+        guard !defaults.bool(forKey: removedFlagKey) else { return }
 
-        // Letztes Feld: fürs Lock-Screen-Widget vormarkiert (includeInWidget).
-        let samples: [(String, String, String?, VocabGroup, Bool)] = [
-            ("가다", "gehen", "학교에 가다 – zur Schule gehen", verbs, true),
-            ("먹다", "essen", "밥을 먹다 – Reis essen", verbs, true),
-            ("마시다", "trinken", nil, verbs, false),
-            ("보다", "sehen / schauen", nil, verbs, false),
-            ("사과", "Apfel", nil, food, true),
-            ("밥", "Reis / Mahlzeit", nil, food, false),
-            ("물", "Wasser", nil, food, true),
-            ("김치", "Kimchi", nil, food, false)
-        ]
-
-        for (word, meaning, example, group, inWidget) in samples {
-            let vocab = Vocab(word: word, meaning: meaning, example: example, group: group)
-            vocab.includeInWidget = inWidget
-            context.insert(vocab)
+        let groups = (try? context.fetch(FetchDescriptor<VocabGroup>())) ?? []
+        for group in groups where legacyGroupNames.contains(group.name) {
+            // Nur löschen, wenn ausschließlich bekannte Beispielwörter enthalten sind.
+            guard group.vocabs.allSatisfy({ legacyWords.contains($0.word) }) else { continue }
+            context.delete(group)   // cascade löscht die zugehörigen Vokabeln
         }
-
         context.saveOrLog()
-    }
-
-    /// Legt Seed-Daten nur an, wenn der Store noch komplett leer ist.
-    @MainActor
-    static func insertIfEmpty(into context: ModelContext) {
-        let descriptor = FetchDescriptor<VocabGroup>()
-        let existing = (try? context.fetchCount(descriptor)) ?? 0
-        guard existing == 0 else { return }
-        insert(into: context)
+        // Flag erst nach erfolgreichem Speichern setzen (sonst kein erneuter Versuch).
+        defaults.set(true, forKey: removedFlagKey)
     }
 }

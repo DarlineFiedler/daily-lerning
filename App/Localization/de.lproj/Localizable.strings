@@ -178,3 +178,9 @@
 "import.preview" = "%d Vokabeln erkannt";
 "import.action" = "Importieren";
 "import.error" = "Datei konnte nicht gelesen werden.";
+
+"wordpacks.section" = "Wortpakete";
+"wordpacks.hint" = "Fertige Wörterlisten in eine Gruppe mit dem Paketnamen laden. Bereits vorhandene Wörter werden übersprungen.";
+"wordpacks.count" = "%d Wörter";
+"wordpacks.importAll" = "Alle importieren";
+"wordpacks.result" = "%d hinzugefügt · %d übersprungen";

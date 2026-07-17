@@ -37,10 +37,10 @@ struct RootView: View {
             if PersistenceController.storeOpenFailed {
                 showStoreError = true
             } else {
-                // Erst Altdaten aus dem App-Group-Store übernehmen, DANN ggf. seeden –
-                // sonst würden Beispielwörter über verlorene Daten gelegt.
+                // Erst Altdaten aus dem App-Group-Store übernehmen, dann die alten
+                // Beispieldaten einmalig entfernen. Neue Installationen starten leer.
                 StoreMigration.runIfNeeded(into: context)
-                SeedData.insertIfEmpty(into: context)
+                SeedData.removeLegacySeedIfNeeded(from: context)
             }
             WidgetSnapshotWriter.refresh(context: context)
         }

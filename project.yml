@@ -24,6 +24,8 @@ targets:
     sources:
       - path: App
       - path: Shared
+      - path: WordPacks
+        type: folder
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.darlinefiedler.DailyHangul
