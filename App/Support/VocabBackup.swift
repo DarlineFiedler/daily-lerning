@@ -8,10 +8,21 @@ import SwiftData
 /// Backup/Wiederherstellen (SettingsView) als auch für die einmalige
 /// Store-Migration ([[StoreMigration]]) verwendet.
 struct VocabBackup: Codable {
-    var schemaVersion: Int = 1
+    /// Höchste Schema-Version, die dieser App-Build lesen kann. Eine neuere Datei
+    /// (aus einer späteren App-Version) könnte Felder anders interpretieren – lieber
+    /// sauber ablehnen als still unvollständig wiederherstellen.
+    static let currentSchemaVersion = 1
+
+    var schemaVersion: Int = currentSchemaVersion
     var exportedAt: Date = .now
     var groups: [GroupDTO]
     var vocabs: [VocabDTO]
+
+    /// Fehler beim Lesen einer Sicherungsdatei.
+    enum BackupError: Error {
+        /// Datei stammt aus einer neueren App-Version (`found` > unterstützte Version).
+        case unsupportedVersion(found: Int)
+    }
 
     struct GroupDTO: Codable {
         var id: UUID
@@ -88,8 +99,17 @@ extension VocabBackup {
         return dec
     }
 
+    /// Nur das `schemaVersion`-Feld – erlaubt die Versionsprüfung, BEVOR der volle
+    /// (u.a. datumsbehaftete) Decode läuft, der bei fremdem Format sonst mit einem
+    /// missverständlichen Fehler abbräche.
+    private struct VersionHeader: Codable { var schemaVersion: Int }
+
     static func decode(_ data: Data) throws -> VocabBackup {
-        try decoder.decode(VocabBackup.self, from: data)
+        let header = try JSONDecoder().decode(VersionHeader.self, from: data)
+        guard header.schemaVersion <= currentSchemaVersion else {
+            throw BackupError.unsupportedVersion(found: header.schemaVersion)
+        }
+        return try decoder.decode(VocabBackup.self, from: data)
     }
 
     /// Schreibt die Sicherung als `.json`-Datei ins temporäre Verzeichnis und gibt
@@ -111,12 +131,19 @@ extension VocabBackup {
 
     // MARK: - Wiederherstellen / Migration
 
-    /// Idempotenter, id-basierter Upsert in den Kontext: vorhandene Objekte werden
-    /// aktualisiert, fehlende eingefügt. Mehrfaches Anwenden derselben Sicherung
-    /// führt zum gleichen Zustand (keine Duplikate). Überschreibt keine Objekte,
-    /// deren id nicht in der Sicherung vorkommt.
+    /// Idempotenter, id-basierter Upsert in den Kontext: fehlende Objekte werden
+    /// eingefügt. Mehrfaches Anwenden derselben Sicherung führt zum gleichen Zustand
+    /// (keine Duplikate). Objekte, deren id nicht in der Sicherung vorkommt, bleiben
+    /// unberührt.
+    ///
+    /// - Parameter overwriteExisting: Steuert, was mit bereits vorhandenen ids passiert.
+    ///   `true` (manuelle Wiederherstellung) → vorhandene Objekte werden mit den Werten
+    ///   aus der Datei überschrieben (der Nutzer hat die Datei bewusst gewählt).
+    ///   `false` ([[StoreMigration]]) → lokal vorhandene Objekte bleiben unangetastet,
+    ///   nur fehlende werden ergänzt. So gewinnt beim Rescue aus dem alten App-Group-
+    ///   Store der aktuelle lokale Lernstand statt evtl. veralteter App-Group-Daten.
     @MainActor
-    func apply(into context: ModelContext) {
+    func apply(into context: ModelContext, overwriteExisting: Bool = true) {
         var groupByID: [UUID: VocabGroup] = [:]
         for g in (try? context.fetch(FetchDescriptor<VocabGroup>())) ?? [] {
             groupByID[g.id] = g
@@ -127,7 +154,9 @@ extension VocabBackup {
         }
 
         for dto in groups {
-            let group = groupByID[dto.id] ?? {
+            let existing = groupByID[dto.id]
+            if existing != nil && !overwriteExisting { continue }
+            let group = existing ?? {
                 let new = VocabGroup(name: dto.name)
                 new.id = dto.id
                 context.insert(new)
@@ -141,7 +170,9 @@ extension VocabBackup {
         }
 
         for dto in vocabs {
-            let vocab = vocabByID[dto.id] ?? {
+            let existing = vocabByID[dto.id]
+            if existing != nil && !overwriteExisting { continue }
+            let vocab = existing ?? {
                 let new = Vocab(word: dto.word, meaning: dto.meaning)
                 new.id = dto.id
                 context.insert(new)

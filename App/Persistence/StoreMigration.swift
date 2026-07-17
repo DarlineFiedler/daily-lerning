@@ -35,7 +35,9 @@ enum StoreMigration {
 
         if !groups.isEmpty || !vocabs.isEmpty {
             let backup = VocabBackup(from: groups, vocabs: vocabs)
-            backup.apply(into: context)   // id-erhaltender Upsert + saveOrLog
+            // Lokal vorhandene Daten haben Vorrang: nur fehlende ids ergänzen, damit
+            // ein evtl. veralteter App-Group-Stand nicht den aktuellen überschreibt.
+            backup.apply(into: context, overwriteExisting: false)   // id-erhaltend + saveOrLog
         }
 
         // Erst jetzt (App-Group war erreichbar & geöffnet) als erledigt markieren.

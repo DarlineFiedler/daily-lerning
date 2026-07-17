@@ -122,4 +122,43 @@ final class VocabBackupTests: XCTestCase {
             try context.fetch(FetchDescriptor<Vocab>()).first { $0.id == extraID })
         XCTAssertEqual(added.group?.id, group.id)
     }
+
+    /// `overwriteExisting: false` (Migrations-Pfad) lässt lokal vorhandene Objekte
+    /// unangetastet und ergänzt nur fehlende – lokaler Lernstand gewinnt.
+    func testApplyWithoutOverwriteKeepsLocalAndAddsMissing() throws {
+        let (group, vocab) = try makeSampleData()
+
+        // Sicherung mit abweichender Bedeutung (dürfte NICHT übernommen werden)
+        // + zusätzlicher Vokabel (soll ergänzt werden).
+        var backup = VocabBackup(from: [group], vocabs: [vocab])
+        backup.vocabs[0].meaning = "sollte-ignoriert-werden"
+        let extraID = UUID()
+        backup.vocabs.append(VocabBackup.VocabDTO(
+            id: extraID, word: "오다", meaning: "kommen", example: nil,
+            statusRaw: 0, successCounter: 0, includeInWidget: false,
+            timesPracticed: 0, lastPracticedAt: nil, nextReviewAt: nil,
+            createdAt: .now, groupID: group.id))
+
+        backup.apply(into: context, overwriteExisting: false)
+
+        XCTAssertEqual(try vocabCount(), 2)   // fehlende ergänzt
+        let kept = try XCTUnwrap(
+            try context.fetch(FetchDescriptor<Vocab>()).first { $0.id == vocab.id })
+        XCTAssertEqual(kept.meaning, "gehen")   // lokaler Wert blieb erhalten
+    }
+
+    /// Eine Sicherung aus einer neueren App-Version wird beim Decodieren abgelehnt,
+    /// statt sie unvollständig zu interpretieren.
+    func testDecodeRejectsNewerSchemaVersion() throws {
+        let (group, vocab) = try makeSampleData()
+        var backup = VocabBackup(from: [group], vocabs: [vocab])
+        backup.schemaVersion = VocabBackup.currentSchemaVersion + 1
+        let data = try JSONEncoder().encode(backup)
+
+        XCTAssertThrowsError(try VocabBackup.decode(data)) { error in
+            guard case VocabBackup.BackupError.unsupportedVersion = error else {
+                return XCTFail("Erwartete unsupportedVersion, bekam \(error)")
+            }
+        }
+    }
 }
