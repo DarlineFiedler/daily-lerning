@@ -115,7 +115,6 @@
 "settings.widget.section" = "잠금 화면 위젯";
 "settings.widget.interval" = "전환 간격";
 "settings.widget.showMeaning" = "뜻 표시";
-"settings.widget.showMeaningOnTap" = "탭하면 뜻 표시";
 "settings.widget.count" = "%d개 단어 활성화됨";
 "settings.widget.hint" = "각 단어 카드의 위젯 아이콘으로 활성화하세요.";
 "settings.about.section" = "정보";
@@ -135,7 +134,6 @@
 "widget.displayName" = "단어";
 "widget.description" = "잠금 화면에 학습 단어를 표시합니다.";
 "widget.empty" = "활성화된 단어 없음";
-"widget.tapHint" = "탭하여 뜻 보기";
 
 /* 데일리 루프 (복습 예정, 연속 학습, 알림) */
 "home.streak" = "%d";

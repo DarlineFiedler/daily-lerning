@@ -115,7 +115,6 @@
 "settings.widget.section" = "Lock Screen Widget";
 "settings.widget.interval" = "Rotation interval";
 "settings.widget.showMeaning" = "Show meaning";
-"settings.widget.showMeaningOnTap" = "Show meaning on tap";
 "settings.widget.count" = "%d words enabled";
 "settings.widget.hint" = "Enable words via the widget icon on each vocabulary card.";
 "settings.about.section" = "About";
@@ -135,7 +134,6 @@
 "widget.displayName" = "Vocabulary";
 "widget.description" = "Shows a study word on the Lock Screen.";
 "widget.empty" = "No words enabled";
-"widget.tapHint" = "Tap for meaning";
 
 /* Daily loop (due, streak, reminder) */
 "home.streak" = "%d";

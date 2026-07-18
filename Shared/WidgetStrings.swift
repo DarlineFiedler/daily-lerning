@@ -13,14 +13,6 @@ enum WidgetStrings {
         return raw
     }
 
-    static var tapHint: String {
-        switch languageCode {
-        case "de": return "Tippen für Bedeutung"
-        case "ko": return "탭하여 뜻 보기"
-        default: return "Tap for meaning"
-        }
-    }
-
     static var empty: String {
         switch languageCode {
         case "de": return "Keine Wörter"

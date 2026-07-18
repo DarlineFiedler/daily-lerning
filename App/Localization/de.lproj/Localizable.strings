@@ -115,7 +115,6 @@
 "settings.widget.section" = "Lock-Screen-Widget";
 "settings.widget.interval" = "Wechsel-Intervall";
 "settings.widget.showMeaning" = "Bedeutung anzeigen";
-"settings.widget.showMeaningOnTap" = "Bedeutung erst beim Tippen";
 "settings.widget.count" = "%d Wörter aktiviert";
 "settings.widget.hint" = "Aktiviere Wörter über das Widget-Symbol auf der Vokabelkarte.";
 "settings.about.section" = "Über";
@@ -135,7 +134,6 @@
 "widget.displayName" = "Vokabel";
 "widget.description" = "Zeigt ein Lernwort auf dem Lock Screen.";
 "widget.empty" = "Keine Wörter aktiviert";
-"widget.tapHint" = "Tippen für Bedeutung";
 
 /* Daily-Loop (Fällig, Streak, Erinnerung) */
 "home.streak" = "%d";

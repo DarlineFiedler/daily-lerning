@@ -37,7 +37,7 @@ struct VocabWidgetView: View {
     private func content(for word: WidgetWord) -> some View {
         switch family {
         case .accessoryInline:
-            Text(showMeaningInline ? "\(word.word) – \(word.meaning)" : word.word)
+            Text(entry.settings.showMeaning ? "\(word.word) – \(word.meaning)" : word.word)
 
         case .accessoryRectangular:
             VStack(alignment: .leading, spacing: 2) {
@@ -71,17 +71,11 @@ struct VocabWidgetView: View {
 
     @ViewBuilder
     private func secondaryLine(for word: WidgetWord) -> some View {
-        if entry.settings.showMeaningOnTap {
-            Text(WidgetStrings.tapHint)
-        } else if entry.settings.showMeaning {
+        if entry.settings.showMeaning {
             Text(word.meaning)
         } else {
             EmptyView()
         }
-    }
-
-    private var showMeaningInline: Bool {
-        entry.settings.showMeaning && !entry.settings.showMeaningOnTap
     }
 
     private var emptyView: some View {
