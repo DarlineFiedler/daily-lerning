@@ -32,7 +32,7 @@ final class DailyPlanTests: XCTestCase {
     func testDoneWhenEverythingHandledToday() {
         let result = DailyPlan.today(from: [
             word(.learning, handledToday: true),
-            word(.learned, handledToday: true),
+            word(.learned, handledToday: true)
         ])
         XCTAssertEqual(result.kind, .done)
         XCTAssertTrue(result.words.isEmpty)
