@@ -79,6 +79,51 @@ project.yml XcodeGen-Projektdefinition
 plan.md     Detaillierter Umsetzungsplan
 ```
 
+## Qualitätssicherung & CI
+
+Jede PR gegen `main` durchläuft die GitHub-Actions-Pipelines mit drei parallelen,
+**blockierenden** Jobs:
+
+| Job | Prüft | Tool | Datei |
+|-----|-------|------|-------|
+| **Lint & Format** | Stil-/Fehlerregeln + einheitliche Formatierung | SwiftLint (`--strict`) + SwiftFormat (`--lint`) | `ci.yml` |
+| **Build & Test** | Kompiliert, Unit- + UI-Tests, Coverage | `xcodebuild test` + Coverage-Gate | `ci.yml` |
+| **Secret Scan** | Keine eingecheckten Keys/Tokens/Passwörter | gitleaks | `security.yml` |
+
+Zusätzlich:
+- **Compiler-Warnungen zählen als Fehler** (`SWIFT_TREAT_WARNINGS_AS_ERRORS=YES`).
+- **UI-Smoke-Test** (`UITests/`, XCUITest): App startet und zeigt die 5 Haupt-Tabs.
+- **Coverage-Kommentar**: die Coverage-Zahl wird bei jeder PR als (aktualisierender)
+  Kommentar gepostet – ohne externen Dienst, direkt über GitHub Actions.
+- **[Dependabot](.github/dependabot.yml)** hält die verwendeten GitHub-Actions aktuell.
+- **Branch Protection** auf `main`: die drei Checks oben sind als *required status
+  checks* gesetzt – Merge erst, wenn alle grün sind.
+
+### Lokal vor dem Push prüfen
+
+```bash
+brew install swiftlint swiftformat   # einmalig
+
+swiftlint --strict     # Lint (0 Verstöße erwartet)
+swiftformat .          # Formatierung anwenden …
+swiftformat . --lint   # … oder nur prüfen
+```
+
+Konfiguration: [`.swiftlint.yml`](.swiftlint.yml) (idiomatische Kurznamen &
+Fachbegriffe erlaubt) und [`.swiftformat`](.swiftformat) (bewusst konservative
+Whitelist sicherer Regeln).
+
+### Code-Coverage-Gate
+
+`scripts/check-coverage.sh` wertet die **Line-Coverage der Logik-Schicht** aus dem
+`xcresult`-Bundle aus und schlägt unter der Schwelle fehl. Bewusst
+ausgeschlossen: Testdateien selbst, SwiftUI-Views und drei nicht unit-testbare
+System-Framework-Wrapper (`SpeechService`, `NotificationScheduler`,
+`VocabTimelineProvider`).
+
+Aktuelle Schwelle: **75 %** (Ist ~76 %). Beim Ausbau der Tests schrittweise Richtung
+80 % anheben – zentral in `.github/workflows/ci.yml` (`COVERAGE_THRESHOLD`).
+
 ## Widget-Hinweis
 
 Lock-Screen-Widgets erlauben kein echtes In-Place-Umschalten per Tap. Ist

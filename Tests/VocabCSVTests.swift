@@ -1,5 +1,5 @@
-import XCTest
 @testable import DailyHangul
+import XCTest
 
 final class VocabCSVTests: XCTestCase {
 
@@ -32,7 +32,7 @@ final class VocabCSVTests: XCTestCase {
         let apple = Vocab(word: "사과", meaning: "Apfel", example: "Ein Beispiel")
         let csv = VocabCSV.export([apple])
         let lines = csv.split(separator: "\n")
-        XCTAssertEqual(lines.first, "word;meaning;example;group;status")   // Header
+        XCTAssertEqual(lines.first, "word;meaning;example;group;status") // Header
         XCTAssertTrue(csv.contains("사과;Apfel;Ein Beispiel"))
     }
 
@@ -58,12 +58,12 @@ final class VocabCSVTests: XCTestCase {
         // Export → Parse ergibt die Kernfelder zurück (Header + Zusatzspalten ignoriert).
         let vocabs = [
             Vocab(word: "사과", meaning: "Apfel", example: "Ein Beispiel"),
-            Vocab(word: "a;b", meaning: "x;y", example: nil),
+            Vocab(word: "a;b", meaning: "x;y", example: nil)
         ]
         let parsed = VocabCSV.parse(VocabCSV.export(vocabs))
         XCTAssertEqual(parsed, [
             VocabCSV.Row(word: "사과", meaning: "Apfel", example: "Ein Beispiel"),
-            VocabCSV.Row(word: "a;b", meaning: "x;y", example: nil),
+            VocabCSV.Row(word: "a;b", meaning: "x;y", example: nil)
         ])
     }
 }

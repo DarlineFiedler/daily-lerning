@@ -3,10 +3,10 @@ import SwiftUI
 /// Lernstatus einer Vokabel – vier Stufen, automatisch aus dem „Geschafft-Counter“
 /// berechnet oder manuell gesetzt.
 enum LearningStatus: Int, Codable, CaseIterable, Identifiable {
-    case new = 0            // Neu – noch nie in einem Lernvorgang bearbeitet
-    case learning = 1       // Am Lernen
-    case almostLearned = 2  // Fast gelernt
-    case learned = 3        // Gelernt / „Kann ich“
+    case new = 0 // Neu – noch nie in einem Lernvorgang bearbeitet
+    case learning = 1 // Am Lernen
+    case almostLearned = 2 // Fast gelernt
+    case learned = 3 // Gelernt / „Kann ich“
 
     var id: Int { rawValue }
 

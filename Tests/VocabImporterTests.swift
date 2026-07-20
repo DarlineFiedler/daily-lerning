@@ -1,6 +1,6 @@
-import XCTest
-import SwiftData
 @testable import DailyHangul
+import SwiftData
+import XCTest
 
 /// Prüft die zentrale Import-Logik (`VocabImporter`): Gruppen-Anlage/-Wiederverwendung
 /// und Dubletten-Erkennung anhand des koreanischen Worts.
@@ -59,7 +59,7 @@ final class VocabImporterTests: XCTestCase {
 
         XCTAssertEqual(result.added, 1)
         let all = try groups()
-        XCTAssertEqual(all.count, 1)                 // keine zweite Gruppe angelegt
+        XCTAssertEqual(all.count, 1) // keine zweite Gruppe angelegt
         XCTAssertEqual(all.first?.vocabs.count, 2)
     }
 
@@ -95,7 +95,7 @@ final class VocabImporterTests: XCTestCase {
     /// Beim Import mehrerer Pakete in einem Rutsch (statische `existingGroups`-Liste)
     /// muss jede neu angelegte Gruppe eine eigene, aufsteigende `sortOrder` bekommen.
     func testAssignsDistinctSortOrderAcrossMultipleImports() throws {
-        let snapshot = try groups()   // einmalig, wie im "Alle importieren"-Aufruf
+        let snapshot = try groups() // einmalig, wie im "Alle importieren"-Aufruf
         VocabImporter.importRows(rows([("가다", "gehen")]),
                                  intoGroupNamed: "Verben", context: context, existingGroups: snapshot)
         VocabImporter.importRows(rows([("사과", "Apfel")]),

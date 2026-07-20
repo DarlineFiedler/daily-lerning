@@ -1,5 +1,5 @@
-import XCTest
 @testable import DailyHangul
+import XCTest
 
 final class WidgetRotationTests: XCTestCase {
 
@@ -8,12 +8,12 @@ final class WidgetRotationTests: XCTestCase {
     func testFullCycleCoversEveryWordExactlyOnce() {
         let wordCount = 7
         let seed: UInt64 = 0xABCD_1234
-        for cycle in 0..<5 {
+        for cycle in 0 ..< 5 {
             let start = cycle * wordCount
-            let indices = (start..<start + wordCount).map {
+            let indices = (start ..< start + wordCount).map {
                 WidgetRotation.wordIndex(forSlot: $0, wordCount: wordCount, seed: seed)
             }
-            XCTAssertEqual(Set(indices), Set(0..<wordCount),
+            XCTAssertEqual(Set(indices), Set(0 ..< wordCount),
                            "Zyklus \(cycle) deckt nicht jeden Index genau einmal ab")
         }
     }
@@ -23,8 +23,8 @@ final class WidgetRotationTests: XCTestCase {
     func testConsecutiveCyclesDiffer() {
         let wordCount = 8
         let seed: UInt64 = 42
-        let first = (0..<wordCount).map { WidgetRotation.wordIndex(forSlot: $0, wordCount: wordCount, seed: seed) }
-        let second = (wordCount..<2 * wordCount).map { WidgetRotation.wordIndex(forSlot: $0, wordCount: wordCount, seed: seed) }
+        let first = (0 ..< wordCount).map { WidgetRotation.wordIndex(forSlot: $0, wordCount: wordCount, seed: seed) }
+        let second = (wordCount ..< 2 * wordCount).map { WidgetRotation.wordIndex(forSlot: $0, wordCount: wordCount, seed: seed) }
         XCTAssertNotEqual(first, second, "Zwei Durchläufe haben dieselbe Reihenfolge")
     }
 
@@ -52,8 +52,8 @@ final class WidgetRotationTests: XCTestCase {
         let a = WidgetRotation.seededPermutation(wordCount: wordCount, seed: 1)
         let b = WidgetRotation.seededPermutation(wordCount: wordCount, seed: 2)
         XCTAssertNotEqual(a, b)
-        XCTAssertEqual(Set(a), Set(0..<wordCount))
-        XCTAssertEqual(Set(b), Set(0..<wordCount))
+        XCTAssertEqual(Set(a), Set(0 ..< wordCount))
+        XCTAssertEqual(Set(b), Set(0 ..< wordCount))
     }
 
     /// Die Permutation soll gleichverteilt sein (kein Modulo-Bias): über viele
@@ -62,7 +62,7 @@ final class WidgetRotationTests: XCTestCase {
         let wordCount = 5
         let samples = 20_000
         var firstPositionCounts = [Int](repeating: 0, count: wordCount)
-        for seed in 0..<samples {
+        for seed in 0 ..< samples {
             let perm = WidgetRotation.seededPermutation(wordCount: wordCount, seed: UInt64(seed))
             firstPositionCounts[perm[0]] += 1
         }

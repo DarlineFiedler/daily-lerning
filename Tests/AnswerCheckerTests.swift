@@ -1,5 +1,5 @@
-import XCTest
 @testable import DailyHangul
+import XCTest
 
 final class AnswerCheckerTests: XCTestCase {
 

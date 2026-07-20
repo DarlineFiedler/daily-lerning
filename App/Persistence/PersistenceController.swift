@@ -42,6 +42,8 @@ enum PersistenceController {
     static func makeContainer(inMemory: Bool = false) -> ModelContainer {
         if inMemory {
             let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            // In-Memory-Store kann praktisch nicht scheitern.
+            // swiftlint:disable:next force_try
             return try! ModelContainer(for: schema, configurations: config)
         }
 
@@ -58,6 +60,8 @@ enum PersistenceController {
             storeLog.fault("Öffnen des Stores fehlgeschlagen: \(error.localizedDescription, privacy: .public)")
             storeOpenFailed = true
             let memoryConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            // Letzter Ausweg; In-Memory-Store kann praktisch nicht scheitern.
+            // swiftlint:disable:next force_try
             return try! ModelContainer(for: schema, configurations: memoryConfig)
         }
     }

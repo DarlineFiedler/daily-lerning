@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// Startet ohne Konfig-Schritt eine gruppenübergreifende Wiederholung aller heute
 /// fälligen Wörter (SRS-lite). Nutzt dieselbe `PracticeSession`-Engine wie das

@@ -1,5 +1,5 @@
-import XCTest
 @testable import DailyHangul
+import XCTest
 
 final class LearningStatusTests: XCTestCase {
 
@@ -21,7 +21,7 @@ final class LearningStatusTests: XCTestCase {
 
     func testRegisterResultCorrectRaisesStatus() {
         let vocab = Vocab(word: "가다", meaning: "gehen")
-        for _ in 0..<LearningStatus.masteredThreshold {
+        for _ in 0 ..< LearningStatus.masteredThreshold {
             vocab.registerResult(correct: true)
         }
         XCTAssertEqual(vocab.status, .learned)
@@ -35,7 +35,7 @@ final class LearningStatusTests: XCTestCase {
         vocab.registerResult(correct: true)
         vocab.registerResult(correct: false)
         XCTAssertEqual(vocab.successCounter, 0)
-        XCTAssertEqual(vocab.status, .learning)   // geübt, aber Counter zurückgesetzt
+        XCTAssertEqual(vocab.status, .learning) // geübt, aber Counter zurückgesetzt
         XCTAssertEqual(vocab.timesPracticed, 3)
     }
 

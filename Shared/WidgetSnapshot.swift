@@ -3,8 +3,8 @@ import Foundation
 /// Ein einzelnes Wort, das im Lock-Screen-Widget angezeigt werden kann.
 struct WidgetWord: Codable, Identifiable, Hashable {
     let id: UUID
-    let word: String        // Lernsprache (z.B. Hangul)
-    let meaning: String     // Muttersprache
+    let word: String // Lernsprache (z.B. Hangul)
+    let meaning: String // Muttersprache
 }
 
 /// Vom Widget geteilte Einstellungen.

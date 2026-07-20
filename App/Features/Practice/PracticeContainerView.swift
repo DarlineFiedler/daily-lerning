@@ -13,7 +13,7 @@ struct PracticeContainerView: View {
                 ScrollView {
                     modeView(for: item)
                         .padding(Theme.Spacing.m)
-                        .id(session.index)   // erzwingt frische State pro Wort
+                        .id(session.index) // erzwingt frische State pro Wort
                 }
             } else {
                 PracticeSummaryView(

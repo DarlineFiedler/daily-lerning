@@ -5,12 +5,12 @@ import SwiftData
 @Model
 final class Vocab {
     var id: UUID = UUID()
-    var word: String = ""          // Lernsprache (z.B. Hangul)
-    var meaning: String = ""       // Muttersprache / Bedeutung
-    var example: String?           // optionaler Freitext (Beispielsatz)
+    var word: String = "" // Lernsprache (z.B. Hangul)
+    var meaning: String = "" // Muttersprache / Bedeutung
+    var example: String? // optionaler Freitext (Beispielsatz)
 
     var statusRaw: Int = LearningStatus.new.rawValue
-    var successCounter: Int = 0    // Streak aufeinanderfolgender richtiger Antworten
+    var successCounter: Int = 0 // Streak aufeinanderfolgender richtiger Antworten
     var includeInWidget: Bool = false
     var timesPracticed: Int = 0
     var lastPracticedAt: Date?
@@ -70,7 +70,7 @@ final class Vocab {
             successCounter = 0
             timesPracticed = 0
             lastPracticedAt = nil
-            nextReviewAt = nil          // zurück auf „sofort fällig"
+            nextReviewAt = nil // zurück auf „sofort fällig"
         case .learning:
             successCounter = LearningStatus.learningThreshold
         case .almostLearned:

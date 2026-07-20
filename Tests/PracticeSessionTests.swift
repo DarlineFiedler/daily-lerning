@@ -1,6 +1,6 @@
-import XCTest
-import SwiftData
 @testable import DailyHangul
+import SwiftData
+import XCTest
 
 /// Prüft die Lern-Session-Engine: Wortanzahl-Begrenzung, Nachüben der falschen
 /// Wörter und das Tracking von falschen/aufgestiegenen Wörtern.
@@ -23,7 +23,7 @@ final class PracticeSessionTests: XCTestCase {
     }
 
     private func makeVocabs(_ count: Int) -> [Vocab] {
-        (0..<count).map { i in
+        (0 ..< count).map { i in
             let v = Vocab(word: "단어\(i)", meaning: "Wort \(i)")
             context.insert(v)
             return v
@@ -72,7 +72,7 @@ final class PracticeSessionTests: XCTestCase {
             config: PracticeConfig(modes: [.review]), context: context
         )
         // Alle drei falsch beantworten.
-        for _ in 0..<3 { session.submit(correct: false) }
+        for _ in 0 ..< 3 { session.submit(correct: false) }
         XCTAssertEqual(session.missedVocabs.count, 3)
 
         session.retryWrong()

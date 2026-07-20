@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// Wird beim Antippen des Lock-Screen-Widgets geöffnet (Deep-Link) und zeigt das
 /// Wort mit Bedeutung. Auch als generische „Karte“ nutzbar.

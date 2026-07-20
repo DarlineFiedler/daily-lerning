@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// Detailansicht einer Gruppe: Kopf-Karte mit Fortschritt, Vokabelliste als Karten,
 /// Statusfilter, Hinzufügen, Lernen starten.

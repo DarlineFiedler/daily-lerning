@@ -39,7 +39,7 @@ enum WidgetRotation {
 
     /// Fisher-Yates-Shuffle der Indizes `0..<wordCount`, gesteuert vom Seed.
     static func seededPermutation(wordCount: Int, seed: UInt64) -> [Int] {
-        var indices = Array(0..<max(wordCount, 0))
+        var indices = Array(0 ..< max(wordCount, 0))
         guard indices.count > 1 else { return indices }
         var state = seed
         var i = indices.count - 1

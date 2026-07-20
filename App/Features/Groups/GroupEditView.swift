@@ -1,12 +1,12 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// Anlegen oder Bearbeiten einer Gruppe (Name + Farbe).
 struct GroupEditView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
-    let group: VocabGroup?   // nil = neue Gruppe
+    let group: VocabGroup? // nil = neue Gruppe
 
     @State private var name: String
     @State private var colorHex: String

@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// Tab 2: Liste aller Vokabelgruppen als bunte Karten mit Farbverlauf und Fortschritt.
 struct GroupListView: View {
