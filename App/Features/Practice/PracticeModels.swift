@@ -5,6 +5,7 @@ enum PracticeMode: String, CaseIterable, Identifiable {
     case multipleChoice
     case review
     case writing
+    case listening
 
     var id: String { rawValue }
 
@@ -13,6 +14,7 @@ enum PracticeMode: String, CaseIterable, Identifiable {
         case .multipleChoice: return "practice.mode.multipleChoice"
         case .review: return "practice.mode.review"
         case .writing: return "practice.mode.writing"
+        case .listening: return "practice.mode.listening"
         }
     }
 
@@ -21,7 +23,20 @@ enum PracticeMode: String, CaseIterable, Identifiable {
         case .multipleChoice: return "list.bullet"
         case .review: return "rectangle.stack"
         case .writing: return "pencil"
+        case .listening: return "ear.fill"
         }
+    }
+
+    /// Modi, die aktuell nutzbar sind. Der Hör-Modus fällt weg, wenn keine
+    /// koreanische Stimme installiert ist (sonst gäbe es nichts zu hören).
+    static var available: [PracticeMode] {
+        available(hasVoice: SpeechService.isAvailable())
+    }
+
+    /// Wie `available`, aber mit injizierbarer Stimm-Verfügbarkeit – dadurch
+    /// unabhängig von der Geräte-Konfiguration testbar.
+    static func available(hasVoice: Bool) -> [PracticeMode] {
+        allCases.filter { $0 != .listening || hasVoice }
     }
 }
 
@@ -63,8 +78,10 @@ struct PracticeConfig {
     var direction: PracticeDirection = .wordToMeaning
     /// Leere Menge = alle Modi (= Mix über alles).
     var modes: Set<PracticeMode> = []
+    /// Maximale Wortanzahl pro Durchgang. `nil` = alle.
+    var wordLimit: Int? = nil
 
     var resolvedModes: [PracticeMode] {
-        modes.isEmpty ? PracticeMode.allCases : Array(modes)
+        modes.isEmpty ? PracticeMode.available : Array(modes)
     }
 }

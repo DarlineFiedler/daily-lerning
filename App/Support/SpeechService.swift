@@ -15,7 +15,7 @@ final class SpeechService: NSObject {
 
     /// Ist für die Sprache eine Stimme installiert? Wenn nein, sollte der Speaker-Button
     /// ausgeblendet/deaktiviert werden.
-    static func isAvailable(language: String = "ko-KR") -> Bool {
+    nonisolated static func isAvailable(language: String = "ko-KR") -> Bool {
         AVSpeechSynthesisVoice(language: language) != nil
     }
 
