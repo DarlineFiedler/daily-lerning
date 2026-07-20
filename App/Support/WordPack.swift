@@ -25,9 +25,15 @@ struct WordPack: Identifiable {
 }
 
 private extension String {
-    /// „berufe" → „Berufe" (nur der erste Buchstabe wird großgeschrieben).
+    /// „berufe" → „Berufe", „sinokoreanische zahlen" → „Sinokoreanische Zahlen".
+    /// Jedes durch Leerzeichen getrennte Wort wird am ersten Buchstaben großgeschrieben,
+    /// der Rest bleibt unverändert (kein Kleinschreiben wie bei `.capitalized`).
     var capitalizedFirst: String {
-        guard let first else { return self }
-        return first.uppercased() + dropFirst()
+        split(separator: " ", omittingEmptySubsequences: false)
+            .map { word -> String in
+                guard let first = word.first else { return String(word) }
+                return first.uppercased() + word.dropFirst()
+            }
+            .joined(separator: " ")
     }
 }
