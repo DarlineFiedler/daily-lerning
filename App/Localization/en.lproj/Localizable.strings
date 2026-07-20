@@ -152,9 +152,8 @@
 "home.streak" = "%d";
 "home.streak.a11y" = "Streak: %d days";
 "home.today.learn.title" = "Still to learn today";
-"home.today.learn.count" = "%d words to learn";
 "home.today.review.title" = "Still to review today";
-"home.today.review.count" = "%d words to review";
+/* home.today.learn.count / home.today.review.count → plural forms in Localizable.stringsdict */
 "home.today.done.title" = "All done today 🎉";
 "home.today.done.subtitle" = "Come back tomorrow for the next round.";
 "home.today.a11y.hint" = "Starts today's round";

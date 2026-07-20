@@ -47,8 +47,9 @@ final class ReviewScheduleTests: XCTestCase {
         // Counter steigt nur einmal pro Tag → an fünf aufeinanderfolgenden Tagen bis „gelernt".
         for day in 0 ..< 5 { vocab.registerResult(correct: true, now: day.daysFromNow) }
         XCTAssertEqual(vocab.successCounter, 5)
-        vocab.registerResult(correct: false) // Reset → morgen
-        XCTAssertTrue(vocab.isDue(asOf: .now.addingTimeInterval(2 * 86_400)))
+        // Falsche Antwort am Folgetag (Zeitachse konsistent) → Reset, morgen wieder fällig.
+        vocab.registerResult(correct: false, now: 5.daysFromNow)
+        XCTAssertTrue(vocab.isDue(asOf: 7.daysFromNow))
     }
 
     func testManualNewClearsSchedule() {

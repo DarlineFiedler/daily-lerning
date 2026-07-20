@@ -152,9 +152,8 @@
 "home.streak" = "%d";
 "home.streak.a11y" = "Streak: %d Tage";
 "home.today.learn.title" = "Heute noch zu lernen";
-"home.today.learn.count" = "%d Wörter zum Lernen";
 "home.today.review.title" = "Heute noch zu wiederholen";
-"home.today.review.count" = "%d Wörter zum Wiederholen";
+/* home.today.learn.count / home.today.review.count → Pluralformen in Localizable.stringsdict */
 "home.today.done.title" = "Heute alles erledigt 🎉";
 "home.today.done.subtitle" = "Komm morgen wieder für die nächste Runde.";
 "home.today.a11y.hint" = "Startet die heutige Runde";

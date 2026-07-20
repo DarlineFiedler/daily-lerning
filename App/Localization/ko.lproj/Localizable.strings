@@ -152,9 +152,8 @@
 "home.streak" = "%d";
 "home.streak.a11y" = "연속 학습: %d일";
 "home.today.learn.title" = "오늘 학습할 단어";
-"home.today.learn.count" = "학습할 단어 %d개";
 "home.today.review.title" = "오늘 복습할 단어";
-"home.today.review.count" = "복습할 단어 %d개";
+/* home.today.learn.count / home.today.review.count → 복수형은 Localizable.stringsdict 참조 */
 "home.today.done.title" = "오늘 학습 완료 🎉";
 "home.today.done.subtitle" = "내일 다시 만나요.";
 "home.today.a11y.hint" = "오늘의 학습을 시작합니다";
