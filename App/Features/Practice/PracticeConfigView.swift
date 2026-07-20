@@ -11,38 +11,54 @@ struct PracticeConfigView: View {
     @State private var selectedStatuses: Set<LearningStatus> = []
     @State private var direction: PracticeDirection = .wordToMeaning
     @State private var selectedModes: Set<PracticeMode> = []
+    @State private var wordLimit: Int? = nil
     @State private var startSession = false
 
-    /// `preselected` sind die beim Öffnen bereits gewählten Gruppen (z.B. die
-    /// Herkunftsgruppe). Weitere lassen sich im Screen dazuschalten.
-    init(preselected: [VocabGroup]) {
+    @State private var presets: [PracticePreset] = []
+    @State private var showingSavePreset = false
+    @State private var newPresetName = ""
+
+    /// Wählbare Session-Längen (nil = alle).
+    private let limitOptions: [Int?] = [10, 20, 50, nil]
+
+    /// `preselected` sind die beim Öffnen bereits gewählten Gruppen. Standardmäßig
+    /// leer – leere Auswahl bedeutet „alle Gruppen" (siehe `resolvedGroups`).
+    init(preselected: [VocabGroup] = []) {
         _selectedGroupIDs = State(initialValue: Set(preselected.map(\.id)))
     }
 
-    /// Aktuell ausgewählte Gruppen (in Sortier-Reihenfolge).
-    private var selectedGroups: [VocabGroup] {
-        allGroups.filter { selectedGroupIDs.contains($0.id) }
+    /// Tatsächlich verwendete Gruppen: leere Auswahl = alle Gruppen.
+    private var resolvedGroups: [VocabGroup] {
+        selectedGroupIDs.isEmpty ? allGroups : allGroups.filter { selectedGroupIDs.contains($0.id) }
     }
 
     /// Wörter, die zur aktuellen Auswahl passen (leere Statusmenge = alle).
     private var pool: [Vocab] {
-        selectedGroups.flatMap(\.vocabs).filter {
+        resolvedGroups.flatMap(\.vocabs).filter {
             selectedStatuses.isEmpty || selectedStatuses.contains($0.status)
         }
     }
 
+    /// So viele Wörter werden tatsächlich abgefragt (Begrenzung berücksichtigt).
+    private var effectiveCount: Int {
+        min(pool.count, wordLimit ?? pool.count)
+    }
+
     private var config: PracticeConfig {
-        PracticeConfig(statuses: selectedStatuses, direction: direction, modes: selectedModes)
+        PracticeConfig(statuses: selectedStatuses, direction: direction,
+                       modes: selectedModes, wordLimit: wordLimit)
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Spacing.l) {
+                    if !presets.isEmpty { presetSection }
                     if allGroups.count > 1 { groupSection }
                     statusSection
                     directionSection
                     modeSection
+                    countSection
                 }
                 .padding(Theme.Spacing.m)
             }
@@ -53,18 +69,35 @@ struct PracticeConfigView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(L("common.cancel")) { dismiss() }
                 }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        newPresetName = ""
+                        showingSavePreset = true
+                    } label: {
+                        Label(L("practice.config.savePreset"), systemImage: "square.and.arrow.down")
+                    }
+                    .disabled(pool.isEmpty)
+                }
             }
             .safeAreaInset(edge: .bottom) { startBar }
             .navigationDestination(isPresented: $startSession) {
                 PracticeContainerView(
                     session: PracticeSession(
                         vocabs: pool,
-                        distractorPool: selectedGroups.flatMap(\.vocabs),
+                        distractorPool: resolvedGroups.flatMap(\.vocabs),
                         config: config,
                         context: context
                     ),
                     onClose: { dismiss() }
                 )
+            }
+            .onAppear { presets = PracticePresetStore.all() }
+            .alert(L("practice.config.savePreset"), isPresented: $showingSavePreset) {
+                TextField(L("practice.preset.namePrompt"), text: $newPresetName)
+                Button(L("common.cancel"), role: .cancel) {}
+                Button(L("common.save")) { savePreset() }
+            } message: {
+                Text(L("practice.preset.namePrompt"))
             }
         }
     }
@@ -75,6 +108,12 @@ struct PracticeConfigView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             SectionHeader(L("practice.config.groups"))
             FlowChips {
+                SelectableChip(
+                    title: L("practice.config.allGroups"),
+                    systemImage: "square.stack.3d.up.fill",
+                    tint: Theme.brandStart,
+                    isSelected: selectedGroupIDs.isEmpty
+                ) { selectedGroupIDs = [] }
                 ForEach(allGroups) { group in
                     SelectableChip(
                         title: group.name,
@@ -82,6 +121,43 @@ struct PracticeConfigView: View {
                         tint: Color(hex: group.colorHex),
                         isSelected: selectedGroupIDs.contains(group.id)
                     ) { toggle(&selectedGroupIDs, group.id) }
+                }
+            }
+        }
+    }
+
+    private var presetSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(L("practice.config.presets"))
+            FlowChips {
+                ForEach(presets) { preset in
+                    SelectableChip(
+                        title: preset.name,
+                        systemImage: "slider.horizontal.3",
+                        tint: Theme.brandEnd,
+                        isSelected: false
+                    ) { apply(preset) }
+                    .contextMenu {
+                        Button(role: .destructive) { delete(preset) } label: {
+                            Label(L("common.delete"), systemImage: "trash")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var countSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(L("practice.config.count"))
+            FlowChips {
+                ForEach(limitOptions, id: \.self) { option in
+                    SelectableChip(
+                        title: option.map(String.init) ?? L("practice.count.all"),
+                        systemImage: "number",
+                        tint: Theme.brandStart,
+                        isSelected: wordLimit == option
+                    ) { wordLimit = option }
                 }
             }
         }
@@ -123,7 +199,7 @@ struct PracticeConfigView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             SectionHeader(L("practice.config.modes"))
             FlowChips {
-                ForEach(PracticeMode.allCases) { mode in
+                ForEach(PracticeMode.available) { mode in
                     SelectableChip(
                         title: L(mode.titleKey),
                         systemImage: mode.systemImage,
@@ -146,7 +222,7 @@ struct PracticeConfigView: View {
             .buttonStyle(.primary)
             .disabled(pool.isEmpty)
 
-            Text(L("group.wordCount", pool.count))
+            Text(L("group.wordCount", effectiveCount))
                 .font(.appCaption)
                 .foregroundStyle(pool.isEmpty ? Theme.wrong : .secondary)
         }
@@ -156,6 +232,40 @@ struct PracticeConfigView: View {
 
     private func toggle<T: Hashable>(_ set: inout Set<T>, _ value: T) {
         if set.contains(value) { set.remove(value) } else { set.insert(value) }
+    }
+
+    // MARK: - Voreinstellungen
+
+    /// Speichert die aktuelle Konfiguration als benanntes Preset.
+    private func savePreset() {
+        let name = newPresetName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        let preset = PracticePreset(
+            name: name,
+            groupIDs: Array(selectedGroupIDs),
+            statuses: selectedStatuses.map(\.rawValue),
+            direction: direction.rawValue,
+            modes: selectedModes.map(\.rawValue),
+            wordLimit: wordLimit
+        )
+        PracticePresetStore.save(preset)
+        presets = PracticePresetStore.all()
+    }
+
+    /// Übernimmt ein Preset in den aktuellen Auswahl-Zustand. Gruppen-IDs, die es
+    /// nicht mehr gibt, werden ausgefiltert.
+    private func apply(_ preset: PracticePreset) {
+        let existing = Set(allGroups.map(\.id))
+        selectedGroupIDs = Set(preset.groupIDs).intersection(existing)
+        selectedStatuses = Set(preset.statuses.compactMap(LearningStatus.init(rawValue:)))
+        direction = PracticeDirection(rawValue: preset.direction) ?? .wordToMeaning
+        selectedModes = Set(preset.modes.compactMap(PracticeMode.init(rawValue:)))
+        wordLimit = preset.wordLimit
+    }
+
+    private func delete(_ preset: PracticePreset) {
+        PracticePresetStore.delete(preset)
+        presets = PracticePresetStore.all()
     }
 }
 

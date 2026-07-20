@@ -28,23 +28,27 @@ struct PracticeItem: Identifiable {
 @MainActor
 @Observable
 final class PracticeSession {
-    let items: [PracticeItem]
+    private(set) var items: [PracticeItem]
     private let context: ModelContext
+    private let distractorPool: [Vocab]
+    private let config: PracticeConfig
 
     var index = 0
     var correctCount = 0
     var wrongCount = 0
 
+    /// Falsch beantwortete Wörter (für Zusammenfassung + „Falsche wiederholen").
+    private(set) var missedVocabs: [Vocab] = []
+    /// Wörter, deren Status in dieser Session aufgestiegen ist.
+    private(set) var leveledUpVocabs: [Vocab] = []
+
     init(vocabs: [Vocab], distractorPool: [Vocab], config: PracticeConfig, context: ModelContext) {
         self.context = context
-        let modes = config.resolvedModes
-
-        self.items = vocabs.shuffled().map { vocab in
-            let mode = modes.randomElement() ?? .review
-            let direction = ResolvedDirection.resolve(config.direction)
-            let choices = Self.makeChoices(for: vocab, pool: distractorPool, direction: direction)
-            return PracticeItem(vocab: vocab, mode: mode, direction: direction, choices: choices)
-        }
+        self.distractorPool = distractorPool
+        self.config = config
+        // Wortanzahl begrenzen (nil = alle), danach Aufgaben bauen.
+        let picked = config.wordLimit.map { Array(vocabs.shuffled().prefix($0)) } ?? vocabs.shuffled()
+        self.items = Self.buildItems(from: picked, distractorPool: distractorPool, config: config)
     }
 
     var isFinished: Bool { index >= items.count }
@@ -52,14 +56,30 @@ final class PracticeSession {
     var total: Int { items.count }
     var position: Int { min(index + 1, total) }
 
+    /// Trefferquote in Prozent (0, wenn noch nichts beantwortet).
+    var accuracy: Int {
+        let answered = correctCount + wrongCount
+        return answered == 0 ? 0 : Int(round(Double(correctCount) / Double(answered) * 100))
+    }
+
     /// Verbucht das Ergebnis für das aktuelle Wort und geht zum nächsten.
     /// Kein Widget-Refresh: Üben ändert nur Status/Counter, nie die im Widget
     /// gezeigten Wörter (word/meaning/includeInWidget). Der Snapshot wird beim
     /// App-Start, Wechsel in den Vordergrund und beim Bearbeiten aktualisiert.
     func submit(correct: Bool) {
         guard let item = currentItem else { return }
+        let before = item.vocab.status
         item.vocab.registerResult(correct: correct)
-        if correct { correctCount += 1 } else { wrongCount += 1 }
+        if correct {
+            correctCount += 1
+            // Aufstieg? (rawValue steigt mit dem Lernfortschritt).
+            if item.vocab.status.rawValue > before.rawValue {
+                leveledUpVocabs.append(item.vocab)
+            }
+        } else {
+            wrongCount += 1
+            missedVocabs.append(item.vocab)
+        }
         StreakStore.registerActivity()   // idempotent pro Kalendertag
         context.saveOrLog()
         index += 1
@@ -67,9 +87,38 @@ final class PracticeSession {
 
     /// Startet denselben Satz Wörter erneut.
     func restart() {
+        resetProgress()
+    }
+
+    /// Baut eine neue Runde nur aus den falsch beantworteten Wörtern.
+    func retryWrong() {
+        let wrong = missedVocabs
+        guard !wrong.isEmpty else { return }
+        items = Self.buildItems(from: wrong.shuffled(), distractorPool: distractorPool, config: config)
+        resetProgress()
+    }
+
+    private func resetProgress() {
         index = 0
         correctCount = 0
         wrongCount = 0
+        missedVocabs = []
+        leveledUpVocabs = []
+    }
+
+    // MARK: - Aufgaben-Aufbau
+
+    /// Weist jedem Wort einen (zufälligen) Modus, eine aufgelöste Richtung und
+    /// – für Auswahl-/Hör-Modi – vier Optionen zu.
+    private static func buildItems(from vocabs: [Vocab], distractorPool: [Vocab], config: PracticeConfig) -> [PracticeItem] {
+        let modes = config.resolvedModes
+        return vocabs.map { vocab in
+            let mode = modes.randomElement() ?? .review
+            // Hör-Modus: immer Koreanisch hören → Bedeutung wählen.
+            let direction = mode == .listening ? .wordToMeaning : ResolvedDirection.resolve(config.direction)
+            let choices = makeChoices(for: vocab, pool: distractorPool, direction: direction)
+            return PracticeItem(vocab: vocab, mode: mode, direction: direction, choices: choices)
+        }
     }
 
     // MARK: - Multiple-Choice-Optionen

@@ -70,7 +70,7 @@ struct GroupDetailView: View {
         }
         .sheet(isPresented: $showingNew) { VocabEditView(vocab: nil, group: group) }
         .sheet(item: $editingVocab) { vocab in VocabEditView(vocab: vocab, group: group) }
-        .sheet(isPresented: $showingPractice) { PracticeConfigView(preselected: [group]) }
+        .sheet(isPresented: $showingPractice) { PracticeConfigView() }
         .confirmationDialog(
             L("vocab.deleteConfirm"),
             isPresented: Binding(
