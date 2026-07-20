@@ -108,4 +108,39 @@ final class PracticeSessionTests: XCTestCase {
         session.submit(correct: false)
         XCTAssertEqual(session.accuracy, 75)
     }
+
+    func testAccuracyIsZeroBeforeAnyAnswer() {
+        let vocabs = makeVocabs(3)
+        let session = PracticeSession(
+            vocabs: vocabs, distractorPool: vocabs,
+            config: PracticeConfig(modes: [.review]), context: context
+        )
+        XCTAssertEqual(session.accuracy, 0)
+    }
+
+    /// Der Hör-Modus muss immer Wort→Bedeutung sein – auch wenn die Config eine
+    /// andere Richtung vorgibt (siehe `PracticeSession.buildItems`).
+    func testListeningModeForcesWordToMeaningDirection() {
+        let vocabs = makeVocabs(5)
+        let session = PracticeSession(
+            vocabs: vocabs, distractorPool: vocabs,
+            config: PracticeConfig(direction: .meaningToWord, modes: [.listening]),
+            context: context
+        )
+        XCTAssertFalse(session.items.isEmpty)
+        XCTAssertTrue(session.items.allSatisfy { $0.mode == .listening })
+        XCTAssertTrue(session.items.allSatisfy { $0.direction == .wordToMeaning })
+    }
+
+    func testResolvedModesUsesExplicitModesWhenSet() {
+        let config = PracticeConfig(modes: [.review, .writing])
+        XCTAssertEqual(Set(config.resolvedModes), [.review, .writing])
+    }
+
+    func testAvailableModesFilterListeningByVoice() {
+        XCTAssertFalse(PracticeMode.available(hasVoice: false).contains(.listening))
+        XCTAssertTrue(PracticeMode.available(hasVoice: true).contains(.listening))
+        // Nicht-Hör-Modi sind unabhängig von der Stimme immer dabei.
+        XCTAssertTrue(PracticeMode.available(hasVoice: false).contains(.review))
+    }
 }

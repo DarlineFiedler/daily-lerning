@@ -30,7 +30,13 @@ enum PracticeMode: String, CaseIterable, Identifiable {
     /// Modi, die aktuell nutzbar sind. Der Hör-Modus fällt weg, wenn keine
     /// koreanische Stimme installiert ist (sonst gäbe es nichts zu hören).
     static var available: [PracticeMode] {
-        allCases.filter { $0 != .listening || SpeechService.isAvailable() }
+        available(hasVoice: SpeechService.isAvailable())
+    }
+
+    /// Wie `available`, aber mit injizierbarer Stimm-Verfügbarkeit – dadurch
+    /// unabhängig von der Geräte-Konfiguration testbar.
+    static func available(hasVoice: Bool) -> [PracticeMode] {
+        allCases.filter { $0 != .listening || hasVoice }
     }
 }
 

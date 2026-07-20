@@ -242,9 +242,8 @@ struct PracticeConfigView: View {
     private func savePreset() {
         let name = newPresetName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
-        let existing = presets.first { $0.name.caseInsensitiveCompare(name) == .orderedSame }
         let preset = PracticePreset(
-            id: existing?.id ?? UUID(),
+            id: PracticePresetStore.id(forName: name, in: presets),
             name: name,
             groupIDs: Array(selectedGroupIDs),
             statuses: selectedStatuses.map(\.rawValue),

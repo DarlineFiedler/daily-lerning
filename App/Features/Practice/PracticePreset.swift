@@ -40,6 +40,14 @@ enum PracticePresetStore {
         persist(all().filter { $0.id != preset.id })
     }
 
+    /// Wählt die `id` für ein unter `name` zu speicherndes Preset: übernimmt die
+    /// eines bereits vorhandenen, gleichnamigen (Groß-/Kleinschreibung egal)
+    /// Presets, damit Speichern es überschreibt statt zu duplizieren – sonst eine
+    /// neue `id`.
+    static func id(forName name: String, in presets: [PracticePreset]) -> UUID {
+        presets.first { $0.name.caseInsensitiveCompare(name) == .orderedSame }?.id ?? UUID()
+    }
+
     private static func persist(_ presets: [PracticePreset]) {
         guard let data = try? JSONEncoder().encode(presets) else { return }
         d.set(data, forKey: key)

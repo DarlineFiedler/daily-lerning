@@ -68,4 +68,34 @@ final class PracticePresetTests: XCTestCase {
     func testEmptyWhenNothingStored() {
         XCTAssertTrue(PracticePresetStore.all().isEmpty)
     }
+
+    // MARK: - Namens-Entdopplung (id(forName:in:))
+
+    func testIdForNameReusesExistingCaseInsensitive() {
+        let preset = sample(name: "Morgens")
+        // Gleicher Name, andere Schreibung ⇒ dieselbe id (überschreiben).
+        XCTAssertEqual(PracticePresetStore.id(forName: "morgens", in: [preset]), preset.id)
+    }
+
+    func testIdForNameCreatesNewWhenNoMatch() {
+        let preset = sample(name: "Morgens")
+        XCTAssertNotEqual(PracticePresetStore.id(forName: "Abends", in: [preset]), preset.id)
+        XCTAssertNotEqual(PracticePresetStore.id(forName: "Abends", in: []), preset.id)
+    }
+
+    /// Zweimal unter demselben Namen speichern ⇒ nur ein (überschriebenes) Preset.
+    func testSaveSameNameOverwritesInsteadOfDuplicating() {
+        var first = sample(name: "Morgens")
+        first.id = PracticePresetStore.id(forName: first.name, in: PracticePresetStore.all())
+        PracticePresetStore.save(first)
+
+        var second = sample(name: "morgens")   // andere Schreibung, andere Werte
+        second.wordLimit = 50
+        second.id = PracticePresetStore.id(forName: second.name, in: PracticePresetStore.all())
+        PracticePresetStore.save(second)
+
+        let all = PracticePresetStore.all()
+        XCTAssertEqual(all.count, 1)
+        XCTAssertEqual(all.first?.wordLimit, 50)
+    }
 }
