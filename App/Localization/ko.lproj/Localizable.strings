@@ -151,9 +151,13 @@
 /* 데일리 루프 (복습 예정, 연속 학습, 알림) */
 "home.streak" = "%d";
 "home.streak.a11y" = "연속 학습: %d일";
-"home.due.title" = "오늘 복습";
-"home.due.count" = "복습할 단어 %d개";
-"home.due.a11y.hint" = "복습을 시작합니다";
+"home.today.learn.title" = "오늘 학습할 단어";
+"home.today.learn.count" = "학습할 단어 %d개";
+"home.today.review.title" = "오늘 복습할 단어";
+"home.today.review.count" = "복습할 단어 %d개";
+"home.today.done.title" = "오늘 학습 완료 🎉";
+"home.today.done.subtitle" = "내일 다시 만나요.";
+"home.today.a11y.hint" = "오늘의 학습을 시작합니다";
 "review.empty" = "복습할 단어가 없어요 — 잘했어요! 🎉";
 "settings.reminder.section" = "알림";
 "settings.reminder.enable" = "매일 알림";

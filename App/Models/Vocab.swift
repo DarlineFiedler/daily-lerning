@@ -18,6 +18,10 @@ final class Vocab {
     /// geplant ⇒ sofort fällig (siehe `isDue`). Additiv eingeführt; SwiftData
     /// migriert bestehende Stores automatisch (Default `nil`).
     var nextReviewAt: Date?
+    /// Kalendertag, an dem der `successCounter` zuletzt sein „+1" bekam. Damit lässt sich
+    /// ein Wort pro Tag nur einmal hochzählen (siehe `registerResult`). Additiv eingeführt;
+    /// SwiftData migriert bestehende Stores automatisch (Default `nil`).
+    var lastCountedAt: Date?
     var createdAt: Date = Date.now
 
     var group: VocabGroup?
@@ -51,14 +55,24 @@ final class Vocab {
     }
 
     /// Zentrale Ergebnisverarbeitung – von allen Lernmodi genutzt.
-    /// Richtig → Counter +1, Falsch → Counter zurück auf 0. Status wird neu berechnet
-    /// und die nächste Fälligkeit (SRS-lite) geplant.
-    func registerResult(correct: Bool) {
+    /// Richtig → Counter **einmal pro Kalendertag** +1 (weitere richtige Antworten am selben
+    /// Tag zählen nicht mehr). Falsch → Counter jederzeit zurück auf 0 (auch von „Gelernt"
+    /// herunter). Status wird neu berechnet und die nächste Fälligkeit (SRS-lite) geplant.
+    /// `now` ist injizierbar, damit sich der Tageswechsel testen lässt.
+    func registerResult(correct: Bool, now: Date = .now) {
         timesPracticed += 1
-        lastPracticedAt = .now
-        successCounter = correct ? successCounter + 1 : 0
+        lastPracticedAt = now
+        if correct {
+            let countedToday = lastCountedAt.map { Calendar.current.isDate($0, inSameDayAs: now) } ?? false
+            if !countedToday {
+                successCounter += 1
+                lastCountedAt = now
+            }
+        } else {
+            successCounter = 0
+        }
         statusRaw = LearningStatus.computed(counter: successCounter, practiced: true).rawValue
-        nextReviewAt = ReviewSchedule.nextReviewDate(for: successCounter)
+        nextReviewAt = ReviewSchedule.nextReviewDate(for: successCounter, from: now)
     }
 
     /// Manuelles Setzen des Status (überschreibt die automatische Berechnung).
@@ -70,6 +84,7 @@ final class Vocab {
             successCounter = 0
             timesPracticed = 0
             lastPracticedAt = nil
+            lastCountedAt = nil
             nextReviewAt = nil // zurück auf „sofort fällig"
         case .learning:
             successCounter = LearningStatus.learningThreshold

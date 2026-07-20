@@ -21,12 +21,44 @@ final class LearningStatusTests: XCTestCase {
 
     func testRegisterResultCorrectRaisesStatus() {
         let vocab = Vocab(word: "가다", meaning: "gehen")
-        for _ in 0 ..< LearningStatus.masteredThreshold {
-            vocab.registerResult(correct: true)
+        // Der Counter steigt nur einmal pro Tag → über mehrere Tage bis „Gelernt".
+        for day in 0 ..< LearningStatus.masteredThreshold {
+            vocab.registerResult(correct: true, now: day.daysFromNow)
         }
         XCTAssertEqual(vocab.status, .learned)
         XCTAssertEqual(vocab.successCounter, LearningStatus.masteredThreshold)
         XCTAssertEqual(vocab.timesPracticed, LearningStatus.masteredThreshold)
+    }
+
+    // MARK: - „Nur +1 pro Tag"
+
+    func testMultipleCorrectSameDayCountOnce() {
+        let vocab = Vocab(word: "가다", meaning: "gehen")
+        let today = Date.now
+        vocab.registerResult(correct: true, now: today)
+        vocab.registerResult(correct: true, now: today)
+        vocab.registerResult(correct: true, now: today)
+        XCTAssertEqual(vocab.successCounter, 1) // weitere richtige Antworten zählen nicht
+        XCTAssertEqual(vocab.timesPracticed, 3) // aber jede Bearbeitung wird gezählt
+    }
+
+    func testCorrectOnDifferentDaysCounts() {
+        let vocab = Vocab(word: "가다", meaning: "gehen")
+        vocab.registerResult(correct: true, now: 0.daysFromNow)
+        vocab.registerResult(correct: true, now: 1.daysFromNow)
+        XCTAssertEqual(vocab.successCounter, 2)
+    }
+
+    func testLearnedWordWrongDropsToLearning() {
+        let vocab = Vocab(word: "가다", meaning: "gehen")
+        for day in 0 ..< LearningStatus.masteredThreshold {
+            vocab.registerResult(correct: true, now: day.daysFromNow)
+        }
+        XCTAssertEqual(vocab.status, .learned)
+        // Ein versehentlich falsch beantwortetes „Gelernt"-Wort fällt zurück.
+        vocab.registerResult(correct: false, now: LearningStatus.masteredThreshold.daysFromNow)
+        XCTAssertEqual(vocab.successCounter, 0)
+        XCTAssertEqual(vocab.status, .learning)
     }
 
     func testRegisterResultWrongResetsCounter() {

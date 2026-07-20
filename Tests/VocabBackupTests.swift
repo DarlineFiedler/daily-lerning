@@ -37,6 +37,7 @@ final class VocabBackupTests: XCTestCase {
         vocab.includeInWidget = true
         vocab.setStatusManually(.almostLearned) // setzt statusRaw, counter, nextReviewAt
         vocab.timesPracticed = 5
+        vocab.lastCountedAt = .now
         context.insert(vocab)
         try context.save()
         return (group, vocab)
@@ -78,6 +79,9 @@ final class VocabBackupTests: XCTestCase {
         let expectedDue = try XCTUnwrap(vocab.nextReviewAt).timeIntervalSinceReferenceDate
         let actualDue = try XCTUnwrap(v.nextReviewAt).timeIntervalSinceReferenceDate
         XCTAssertEqual(actualDue, expectedDue, accuracy: 0.01)
+        let expectedCounted = try XCTUnwrap(vocab.lastCountedAt).timeIntervalSinceReferenceDate
+        let actualCounted = try XCTUnwrap(v.lastCountedAt).timeIntervalSinceReferenceDate
+        XCTAssertEqual(actualCounted, expectedCounted, accuracy: 0.01)
         // Beziehung über groupID rekonstruiert.
         XCTAssertEqual(v.group?.id, group.id)
     }
@@ -109,7 +113,7 @@ final class VocabBackupTests: XCTestCase {
             id: extraID, word: "오다", meaning: "kommen", example: nil,
             statusRaw: 0, successCounter: 0, includeInWidget: false,
             timesPracticed: 0, lastPracticedAt: nil, nextReviewAt: nil,
-            createdAt: .now, groupID: group.id))
+            lastCountedAt: nil, createdAt: .now, groupID: group.id))
 
         backup.apply(into: context)
 
@@ -137,7 +141,7 @@ final class VocabBackupTests: XCTestCase {
             id: extraID, word: "오다", meaning: "kommen", example: nil,
             statusRaw: 0, successCounter: 0, includeInWidget: false,
             timesPracticed: 0, lastPracticedAt: nil, nextReviewAt: nil,
-            createdAt: .now, groupID: group.id))
+            lastCountedAt: nil, createdAt: .now, groupID: group.id))
 
         backup.apply(into: context, overwriteExisting: false)
 
