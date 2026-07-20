@@ -236,11 +236,15 @@ struct PracticeConfigView: View {
 
     // MARK: - Voreinstellungen
 
-    /// Speichert die aktuelle Konfiguration als benanntes Preset.
+    /// Speichert die aktuelle Konfiguration als benanntes Preset. Ein bestehendes
+    /// Preset mit gleichem Namen (Groß-/Kleinschreibung egal) wird überschrieben,
+    /// statt einen zweiten, nicht unterscheidbaren Chip anzulegen.
     private func savePreset() {
         let name = newPresetName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
+        let existing = presets.first { $0.name.caseInsensitiveCompare(name) == .orderedSame }
         let preset = PracticePreset(
+            id: existing?.id ?? UUID(),
             name: name,
             groupIDs: Array(selectedGroupIDs),
             statuses: selectedStatuses.map(\.rawValue),
@@ -253,13 +257,15 @@ struct PracticeConfigView: View {
     }
 
     /// Übernimmt ein Preset in den aktuellen Auswahl-Zustand. Gruppen-IDs, die es
-    /// nicht mehr gibt, werden ausgefiltert.
+    /// nicht mehr gibt, und Modi, die auf diesem Gerät nicht verfügbar sind (z.B.
+    /// Hören ohne installierte koreanische Stimme), werden ausgefiltert.
     private func apply(_ preset: PracticePreset) {
         let existing = Set(allGroups.map(\.id))
         selectedGroupIDs = Set(preset.groupIDs).intersection(existing)
         selectedStatuses = Set(preset.statuses.compactMap(LearningStatus.init(rawValue:)))
         direction = PracticeDirection(rawValue: preset.direction) ?? .wordToMeaning
         selectedModes = Set(preset.modes.compactMap(PracticeMode.init(rawValue:)))
+            .intersection(PracticeMode.available)
         wordLimit = preset.wordLimit
     }
 
