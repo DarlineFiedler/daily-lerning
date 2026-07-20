@@ -13,7 +13,18 @@ enum WidgetSnapshotWriter {
             predicate: #Predicate { $0.includeInWidget == true },
             sortBy: [SortDescriptor(\.createdAt)]
         )
-        let vocabs = (try? context.fetch(descriptor)) ?? []
+        var vocabs = (try? context.fetch(descriptor)) ?? []
+
+        // Fallback: Hat der Nutzer noch kein Wort ausdrücklich fürs Widget markiert
+        // (Stern), zeigen wir statt „No words" einfach alle vorhandenen Vokabeln –
+        // das Widget rotiert dann durch den gesamten Wortschatz.
+        if vocabs.isEmpty {
+            let allDescriptor = FetchDescriptor<Vocab>(
+                sortBy: [SortDescriptor(\.createdAt)]
+            )
+            vocabs = (try? context.fetch(allDescriptor)) ?? []
+        }
+
         let words = vocabs.map { WidgetWord(id: $0.id, word: $0.word, meaning: $0.meaning) }
 
         let snapshot = WidgetSnapshot(

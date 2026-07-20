@@ -42,12 +42,14 @@ struct VocabWidgetView: View {
         case .accessoryRectangular:
             VStack(alignment: .leading, spacing: 2) {
                 Text(word.word)
-                    .font(.headline)
-                    .minimumScaleFactor(0.6)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .minimumScaleFactor(0.5)
                     .lineLimit(1)
                 secondaryLine(for: word)
-                    .font(.caption)
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
+                    .minimumScaleFactor(0.7)
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
