@@ -10,7 +10,7 @@ options:
 settings:
   base:
     MARKETING_VERSION: "1.5"
-    CURRENT_PROJECT_VERSION: "10"
+    CURRENT_PROJECT_VERSION: "11"
     SWIFT_VERSION: "5.0"
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: ""
@@ -97,3 +97,20 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
     dependencies:
       - target: DailyHangul
+
+# Explizites Schema, damit die CI (`xcodebuild test -scheme DailyHangul`) verlässlich
+# BEIDE Test-Bundles ausführt – Unit- UND UI-Tests. Nicht der Auto-Scheme-Generierung
+# überlassen, sonst könnte der UI-Smoke-Test unbemerkt nie laufen.
+schemes:
+  DailyHangul:
+    build:
+      targets:
+        DailyHangul: all
+    test:
+      gatherCoverageData: true
+      coverageTargets:
+        - DailyHangul
+        - DailyHangulWidgetExtension
+      targets:
+        - DailyHangulTests
+        - DailyHangulUITests
