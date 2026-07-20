@@ -1,0 +1,61 @@
+# SwiftLint-Konfiguration für DailyHangul
+# Docs: https://realm.github.io/SwiftLint/rule-directory.html
+#
+# Einführung in ein bestehendes Projekt via Baseline (.swiftlint-baseline.json):
+# Bestehende Verstöße sind eingefroren, NUR NEUE Verstöße lassen die CI rot werden.
+# Baseline neu erzeugen (z. B. nach dem Abbauen von Altlasten):
+#   swiftlint lint --write-baseline .swiftlint-baseline.json App Shared Widget Tests
+
+# Nur diese Pfade prüfen (generierten/Build-Kram außen vor lassen)
+included:
+  - App
+  - Shared
+  - Widget
+  - Tests
+  - UITests
+
+excluded:
+  - build
+  - DerivedData
+  - "**/.build"
+
+# In CI mit --strict aufgerufen: Warnungen zählen dann als Fehler.
+
+# --- Regelanpassungen -------------------------------------------------------
+
+# Kurze, idiomatische Namen erlauben (r/g/b/a bei Farben, i/x/y in Schleifen,
+# Sprachcodes ko/en/de, der Lokalisierungs-Helfer L(...)).
+identifier_name:
+  min_length:
+    warning: 1
+    error: 1
+  max_length:
+    warning: 60
+    error: 80
+  excluded:
+    - L
+
+# Lernpsychologie-Domäne: "mastery"/"mastered" sind hier Fachbegriffe, kein Bias.
+inclusive_language:
+  override_allowed_terms:
+    - master
+
+# Etwas mehr Luft bei der Zeilenlänge; Kommentare/URLs nicht mitzählen.
+line_length:
+  warning: 140
+  error: 200
+  ignores_comments: true
+  ignores_urls: true
+
+# Testmethoden dürfen lang sein (viele setUp/assert-Zeilen).
+function_body_length:
+  warning: 80
+  error: 150
+
+type_body_length:
+  warning: 400
+  error: 600
+
+file_length:
+  warning: 600
+  error: 1000

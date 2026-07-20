@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// Zeile einer Vokabel in Listen. Tippen wählt die Vokabel aus (`onSelect`),
 /// das Widget-Symbol schaltet die Anzeige auf dem Lock Screen an/aus.

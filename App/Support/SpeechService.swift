@@ -31,7 +31,7 @@ final class SpeechService: NSObject {
         activateSession()
         let utterance = AVSpeechUtterance(string: trimmed)
         utterance.voice = voice
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.9   // etwas langsamer zum Nachsprechen
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.9 // etwas langsamer zum Nachsprechen
         synthesizer.speak(utterance)
     }
 

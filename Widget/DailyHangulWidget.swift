@@ -1,5 +1,5 @@
-import WidgetKit
 import SwiftUI
+import WidgetKit
 
 /// Lock-Screen-Widget (accessoryRectangular) + kleines Home-Screen-Widget.
 struct DailyHangulWidget: Widget {
@@ -11,7 +11,7 @@ struct DailyHangulWidget: Widget {
                 .containerBackground(.fill.tertiary, for: .widget)
         }
         .configurationDisplayName("DailyHangul")
-        .description(WidgetStrings.empty)   // Kurzbeschreibung im Widget-Katalog
+        .description(WidgetStrings.empty) // Kurzbeschreibung im Widget-Katalog
         .supportedFamilies([
             .accessoryRectangular,
             .accessoryInline,

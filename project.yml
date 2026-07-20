@@ -10,7 +10,7 @@ options:
 settings:
   base:
     MARKETING_VERSION: "1.5"
-    CURRENT_PROJECT_VERSION: "8"
+    CURRENT_PROJECT_VERSION: "10"
     SWIFT_VERSION: "5.0"
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: ""
@@ -82,6 +82,18 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.darlinefiedler.DailyHangul.Tests
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: DailyHangul
+
+  DailyHangulUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.darlinefiedler.DailyHangul.UITests
         GENERATE_INFOPLIST_FILE: YES
     dependencies:
       - target: DailyHangul

@@ -1,6 +1,6 @@
-import XCTest
-import SwiftData
 @testable import DailyHangul
+import SwiftData
+import XCTest
 
 /// Prüft die vollständige Sicherung/Wiederherstellung (`VocabBackup`): Round-Trip
 /// aller Felder, id-erhaltende Idempotenz (keine Duplikate) und Merge-Verhalten.
@@ -35,7 +35,7 @@ final class VocabBackupTests: XCTestCase {
         context.insert(group)
         let vocab = Vocab(word: "가다", meaning: "gehen", example: "학교에 가다", group: group)
         vocab.includeInWidget = true
-        vocab.setStatusManually(.almostLearned)   // setzt statusRaw, counter, nextReviewAt
+        vocab.setStatusManually(.almostLearned) // setzt statusRaw, counter, nextReviewAt
         vocab.timesPracticed = 5
         context.insert(vocab)
         try context.save()
@@ -90,7 +90,7 @@ final class VocabBackupTests: XCTestCase {
         let freshContainer = PersistenceController.makeContainer(inMemory: true)
         let freshContext = freshContainer.mainContext
         backup.apply(into: freshContext)
-        backup.apply(into: freshContext)   // erneut
+        backup.apply(into: freshContext) // erneut
 
         XCTAssertEqual(try freshContext.fetchCount(FetchDescriptor<VocabGroup>()), 1)
         XCTAssertEqual(try freshContext.fetchCount(FetchDescriptor<Vocab>()), 1)
@@ -114,7 +114,7 @@ final class VocabBackupTests: XCTestCase {
         backup.apply(into: context)
 
         XCTAssertEqual(try groupCount(), 1)
-        XCTAssertEqual(try vocabCount(), 2)   // kein Duplikat der vorhandenen Vokabel
+        XCTAssertEqual(try vocabCount(), 2) // kein Duplikat der vorhandenen Vokabel
         let updated = try XCTUnwrap(
             try context.fetch(FetchDescriptor<Vocab>()).first { $0.id == vocab.id })
         XCTAssertEqual(updated.meaning, "geändert")
@@ -141,10 +141,10 @@ final class VocabBackupTests: XCTestCase {
 
         backup.apply(into: context, overwriteExisting: false)
 
-        XCTAssertEqual(try vocabCount(), 2)   // fehlende ergänzt
+        XCTAssertEqual(try vocabCount(), 2) // fehlende ergänzt
         let kept = try XCTUnwrap(
             try context.fetch(FetchDescriptor<Vocab>()).first { $0.id == vocab.id })
-        XCTAssertEqual(kept.meaning, "gehen")   // lokaler Wert blieb erhalten
+        XCTAssertEqual(kept.meaning, "gehen") // lokaler Wert blieb erhalten
     }
 
     /// Eine Sicherung aus einer neueren App-Version wird beim Decodieren abgelehnt,

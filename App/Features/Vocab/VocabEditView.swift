@@ -1,13 +1,13 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// Anlegen oder Bearbeiten einer Vokabel.
 struct VocabEditView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
-    let vocab: Vocab?          // nil = neue Vokabel
-    let group: VocabGroup?     // Zielgruppe (für neue Vokabel erforderlich)
+    let vocab: Vocab? // nil = neue Vokabel
+    let group: VocabGroup? // Zielgruppe (für neue Vokabel erforderlich)
 
     @Query(sort: \VocabGroup.sortOrder) private var allGroups: [VocabGroup]
 
@@ -42,7 +42,7 @@ struct VocabEditView: View {
                         .font(.title3)
                     TextField(L("vocab.meaningPlaceholder"), text: $meaning)
                     TextField(L("vocab.examplePlaceholder"), text: $example, axis: .vertical)
-                        .lineLimit(2...5)
+                        .lineLimit(2 ... 5)
                 }
 
                 if !allGroups.isEmpty {

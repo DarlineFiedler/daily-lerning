@@ -1,5 +1,5 @@
-import XCTest
 @testable import DailyHangul
+import XCTest
 
 /// Prüft die Lern-Voreinstellungen: Codable-Round-Trip und den UserDefaults-Store.
 final class PracticePresetTests: XCTestCase {
@@ -89,7 +89,7 @@ final class PracticePresetTests: XCTestCase {
         first.id = PracticePresetStore.id(forName: first.name, in: PracticePresetStore.all())
         PracticePresetStore.save(first)
 
-        var second = sample(name: "morgens")   // andere Schreibung, andere Werte
+        var second = sample(name: "morgens") // andere Schreibung, andere Werte
         second.wordLimit = 50
         second.id = PracticePresetStore.id(forName: second.name, in: PracticePresetStore.all())
         PracticePresetStore.save(second)

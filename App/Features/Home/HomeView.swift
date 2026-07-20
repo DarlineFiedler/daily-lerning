@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// Tab 1: Einladendes Dashboard – Begrüßung, Wort des Tages, Fortschritt,
 /// schneller Einstieg ins Üben und die eigenen Gruppen auf einen Blick.
@@ -133,8 +133,8 @@ struct HomeView: View {
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: .now)
         switch hour {
-        case 5..<12: return L("home.greeting.morning")
-        case 12..<18: return L("home.greeting.afternoon")
+        case 5 ..< 12: return L("home.greeting.morning")
+        case 12 ..< 18: return L("home.greeting.afternoon")
         default: return L("home.greeting.evening")
         }
     }

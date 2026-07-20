@@ -1,5 +1,5 @@
-import XCTest
 @testable import DailyHangul
+import XCTest
 
 final class ReviewScheduleTests: XCTestCase {
 
@@ -15,7 +15,7 @@ final class ReviewScheduleTests: XCTestCase {
     }
 
     func testIntervalIsMonotonic() {
-        let days = (0...6).map { ReviewSchedule.intervalDays(for: $0) }
+        let days = (0 ... 6).map { ReviewSchedule.intervalDays(for: $0) }
         XCTAssertEqual(days, days.sorted())
     }
 
@@ -36,17 +36,17 @@ final class ReviewScheduleTests: XCTestCase {
 
     func testRegisterResultSchedulesFutureReview() {
         let vocab = Vocab(word: "가다", meaning: "gehen")
-        vocab.registerResult(correct: true)   // counter 1 → +1 Tag
+        vocab.registerResult(correct: true) // counter 1 → +1 Tag
         XCTAssertNotNil(vocab.nextReviewAt)
-        XCTAssertFalse(vocab.isDue())          // erst morgen wieder fällig
+        XCTAssertFalse(vocab.isDue()) // erst morgen wieder fällig
         XCTAssertTrue(vocab.isDue(asOf: .now.addingTimeInterval(2 * 86_400)))
     }
 
     func testWrongAnswerMakesDueSoon() {
         let vocab = Vocab(word: "가다", meaning: "gehen")
-        for _ in 0..<5 { vocab.registerResult(correct: true) }   // gelernt, 14 Tage
+        for _ in 0 ..< 5 { vocab.registerResult(correct: true) } // gelernt, 14 Tage
         XCTAssertFalse(vocab.isDue(asOf: .now.addingTimeInterval(7 * 86_400)))
-        vocab.registerResult(correct: false)                     // Reset → morgen
+        vocab.registerResult(correct: false) // Reset → morgen
         XCTAssertTrue(vocab.isDue(asOf: .now.addingTimeInterval(2 * 86_400)))
     }
 

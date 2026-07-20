@@ -1,7 +1,7 @@
-import SwiftUI
 import SwiftData
-import WidgetKit
+import SwiftUI
 import UniformTypeIdentifiers
+import WidgetKit
 
 /// Tab 4: Einstellungen – Sprache (Runtime-Umschaltung) und Lock-Screen-Widget.
 struct SettingsView: View {
@@ -190,7 +190,7 @@ struct SettingsView: View {
                         if await NotificationScheduler.requestAuthorization() {
                             NotificationScheduler.schedule(hour: reminderHour, minute: reminderMinute)
                         } else {
-                            reminderEnabled = false   // Berechtigung verweigert
+                            reminderEnabled = false // Berechtigung verweigert
                         }
                     }
                 } else {
@@ -251,6 +251,8 @@ struct SettingsView: View {
     private func importPacks(_ packs: [WordPack]) {
         var total = VocabImporter.Result(added: 0, skipped: 0)
         for pack in packs {
+            // Result definiert nur '+', kein '+=' – daher kein Shorthand möglich.
+            // swiftlint:disable:next shorthand_operator
             total = total + VocabImporter.importRows(
                 pack.rows, intoGroupNamed: pack.name, context: context, existingGroups: allGroups
             )

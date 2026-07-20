@@ -1,6 +1,6 @@
-import XCTest
-import SwiftData
 @testable import DailyHangul
+import SwiftData
+import XCTest
 
 /// Prüft das Persistenz-Verhalten hinter den Bearbeiten-/Löschen-Funktionen
 /// für Gruppen und Vokabeln (das, was GroupEditView/VocabEditView, GroupListView,

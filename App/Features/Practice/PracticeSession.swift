@@ -80,7 +80,7 @@ final class PracticeSession {
             wrongCount += 1
             missedVocabs.append(item.vocab)
         }
-        StreakStore.registerActivity()   // idempotent pro Kalendertag
+        StreakStore.registerActivity() // idempotent pro Kalendertag
         context.saveOrLog()
         index += 1
     }

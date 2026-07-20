@@ -1,5 +1,5 @@
-import WidgetKit
 import SwiftUI
+import WidgetKit
 
 /// Ein Zeitpunkt-Eintrag für das Widget.
 struct VocabEntry: TimelineEntry {
@@ -56,7 +56,7 @@ struct VocabTimelineProvider: TimelineProvider {
         // Permutation nur einmal pro Zyklus aufbauen statt für jeden Slot neu.
         var cachedCycle = -1
         var permutation: [Int] = []
-        for j in 0..<count {
+        for j in 0 ..< count {
             let slot = nowSlot + j
             let date = anchor.addingTimeInterval(Double(slot) * secondsPerSlot)
             let idx: Int

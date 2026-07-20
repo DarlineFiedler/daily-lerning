@@ -1,0 +1,12 @@
+# Hält die in den Workflows verwendeten GitHub-Actions automatisch aktuell.
+# (Die App selbst hat keine externen Paket-Abhängigkeiten.)
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"

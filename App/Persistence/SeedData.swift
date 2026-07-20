@@ -30,7 +30,7 @@ enum SeedData {
         for group in groups where legacyGroupNames.contains(group.name) {
             // Nur löschen, wenn ausschließlich bekannte Beispielwörter enthalten sind.
             guard group.vocabs.allSatisfy({ legacyWords.contains($0.word) }) else { continue }
-            context.delete(group)   // cascade löscht die zugehörigen Vokabeln
+            context.delete(group) // cascade löscht die zugehörigen Vokabeln
         }
         context.saveOrLog()
         // Flag erst nach erfolgreichem Speichern setzen (sonst kein erneuter Versuch).

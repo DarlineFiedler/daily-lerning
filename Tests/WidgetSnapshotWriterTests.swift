@@ -1,6 +1,6 @@
-import XCTest
-import SwiftData
 @testable import DailyHangul
+import SwiftData
+import XCTest
 
 /// Prüft die Wortauswahl fürs Widget (`WidgetSnapshotWriter.widgetWords`):
 /// bevorzugt markierte Wörter, fällt sonst auf den gesamten Wortschatz zurück.

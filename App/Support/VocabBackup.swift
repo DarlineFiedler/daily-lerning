@@ -44,7 +44,7 @@ struct VocabBackup: Codable {
         var lastPracticedAt: Date?
         var nextReviewAt: Date?
         var createdAt: Date
-        var groupID: UUID?          // Beziehung über stabile id, nicht Objektgraph
+        var groupID: UUID? // Beziehung über stabile id, nicht Objektgraph
     }
 }
 

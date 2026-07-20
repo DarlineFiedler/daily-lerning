@@ -3,7 +3,7 @@ import Foundation
 enum StreakKeys {
     static let current = "streak.current"
     static let longest = "streak.longest"
-    static let lastActiveDay = "streak.lastActiveDay"   // Start des letzten aktiven Kalendertags
+    static let lastActiveDay = "streak.lastActiveDay" // Start des letzten aktiven Kalendertags
 }
 
 /// Tages-Streak (aufeinanderfolgende Kalendertage mit mindestens einer geübten

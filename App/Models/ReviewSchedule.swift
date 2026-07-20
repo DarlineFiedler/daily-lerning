@@ -11,12 +11,12 @@ enum ReviewSchedule {
     /// 0 (gerade falsch / neu) → morgen wieder; danach wachsende Abstände.
     static func intervalDays(for successCounter: Int) -> Int {
         switch successCounter {
-        case ..<1: return 1   // falsch beantwortet → morgen erneut
+        case ..<1: return 1 // falsch beantwortet → morgen erneut
         case 1: return 1
         case 2: return 2
         case 3: return 4
         case 4: return 7
-        default: return 14    // gelernt (≥ 5) → in zwei Wochen auffrischen
+        default: return 14 // gelernt (≥ 5) → in zwei Wochen auffrischen
         }
     }
 

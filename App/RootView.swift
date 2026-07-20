@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// Wurzel-View mit den fünf Haupt-Tabs. Wird bei Sprachwechsel komplett neu
 /// aufgebaut (`.id(localization.language)`), damit alle Texte aktualisiert werden.

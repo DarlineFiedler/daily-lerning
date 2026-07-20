@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// Tab 2: Globale Suche über ALLE Wörter in ALLEN Gruppen (Wort oder Bedeutung).
 struct SearchView: View {

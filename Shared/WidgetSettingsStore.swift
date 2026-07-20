@@ -33,7 +33,7 @@ enum WidgetSettingsStore {
     /// danach stabil gehalten, damit die Rotation über App-Öffnungen hinweg gleich bleibt.
     static var rotationSeed: UInt64 {
         if d.object(forKey: WidgetSettingsKeys.rotationSeed) == nil {
-            let seed = UInt64.random(in: UInt64.min...UInt64.max)
+            let seed = UInt64.random(in: UInt64.min ... UInt64.max)
             d.set(Int(bitPattern: UInt(seed)), forKey: WidgetSettingsKeys.rotationSeed)
             return seed
         }

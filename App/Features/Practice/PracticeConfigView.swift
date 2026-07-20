@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// Konfiguriert einen Lernvorgang (Gruppen-Auswahl, Status-Filter, Richtung, Modi).
 struct PracticeConfigView: View {
@@ -11,7 +11,7 @@ struct PracticeConfigView: View {
     @State private var selectedStatuses: Set<LearningStatus> = []
     @State private var direction: PracticeDirection = .wordToMeaning
     @State private var selectedModes: Set<PracticeMode> = []
-    @State private var wordLimit: Int? = nil
+    @State private var wordLimit: Int?
     @State private var startSession = false
 
     @State private var presets: [PracticePreset] = []

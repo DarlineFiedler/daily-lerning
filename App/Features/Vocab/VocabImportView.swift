@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 import UniformTypeIdentifiers
 
 /// Importiert mehrere Vokabeln auf einmal – per eingefügtem Text oder Datei

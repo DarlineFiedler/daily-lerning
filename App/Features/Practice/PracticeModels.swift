@@ -79,7 +79,7 @@ struct PracticeConfig {
     /// Leere Menge = alle Modi (= Mix über alles).
     var modes: Set<PracticeMode> = []
     /// Maximale Wortanzahl pro Durchgang. `nil` = alle.
-    var wordLimit: Int? = nil
+    var wordLimit: Int?
 
     var resolvedModes: [PracticeMode] {
         modes.isEmpty ? PracticeMode.available : Array(modes)

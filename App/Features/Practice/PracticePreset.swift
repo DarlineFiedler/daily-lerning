@@ -6,10 +6,10 @@ struct PracticePreset: Codable, Identifiable, Equatable {
     var id: UUID = UUID()
     var name: String
     var groupIDs: [UUID]
-    var statuses: [Int]        // LearningStatus.rawValue
-    var direction: String      // PracticeDirection.rawValue
-    var modes: [String]        // PracticeMode.rawValue
-    var wordLimit: Int?        // nil = alle
+    var statuses: [Int] // LearningStatus.rawValue
+    var direction: String // PracticeDirection.rawValue
+    var modes: [String] // PracticeMode.rawValue
+    var wordLimit: Int? // nil = alle
 }
 
 /// Lädt/speichert die Lern-Voreinstellungen als JSON in `UserDefaults.standard`.

@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// Tab 4: Statistik-Übersicht (global + pro Gruppe) als bunte Kacheln und Karten.
 struct StatisticsView: View {

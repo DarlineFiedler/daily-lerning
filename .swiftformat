@@ -1,0 +1,18 @@
+# SwiftFormat-Konfiguration für DailyHangul
+# Docs: https://github.com/nicklockwood/SwiftFormat/blob/main/Rules.md
+#
+# Bewusst KONSERVATIV: nur eine Whitelist sicherer, verhaltensneutraler Regeln
+# (Imports, Whitespace, redundante Klammern). Keine aggressiven Umbruch-Regeln,
+# damit Diffs klein und reviewbar bleiben.
+#
+# Hinweis: 'trailingCommas' ist bewusst NICHT aktiv – es würde mit SwiftLints
+# Regel 'trailing_comma' kollidieren (die entfernt sie).
+#
+# Lokal formatieren:  swiftformat .
+# Nur prüfen (CI):    swiftformat --lint .
+
+--swiftversion 5.0
+
+--rules sortImports,duplicateImports,trailingSpace,consecutiveSpaces,consecutiveBlankLines,linebreakAtEndOfFile,emptyBraces,redundantParens,spaceAroundOperators,spaceInsideParens,spaceInsideBrackets,spaceAroundBraces,spaceAroundBrackets
+
+--exclude build,DerivedData,**/.build

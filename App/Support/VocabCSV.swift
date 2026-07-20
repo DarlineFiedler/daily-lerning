@@ -74,7 +74,7 @@ enum VocabCSV {
             if inQuotes {
                 if c == "\"" {
                     if i + 1 < chars.count && chars[i + 1] == "\"" {
-                        current.append("\"")   // escaptes Quote
+                        current.append("\"") // escaptes Quote
                         i += 1
                     } else {
                         inQuotes = false
