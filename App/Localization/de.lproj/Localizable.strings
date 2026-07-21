@@ -38,6 +38,9 @@
 "common.close" = "Schließen";
 "common.all" = "Alle";
 "common.start" = "Starten";
+"common.reset" = "Zurücksetzen";
+"common.select" = "Auswählen";
+"common.selectAll" = "Alle auswählen";
 
 /* Gruppen */
 "groups.title" = "Gruppen";
@@ -49,6 +52,8 @@
 "group.color" = "Farbe";
 "group.wordCount" = "%d Wörter";
 "group.deleteConfirm" = "Diese Gruppe und alle enthaltenen Vokabeln löschen?";
+"group.resetAll" = "Status aller zurücksetzen";
+"group.resetAllConfirm" = "Alle Wörter dieser Gruppe auf „Neu“ zurücksetzen? Der Fortschritt geht verloren.";
 
 /* Vokabeln */
 "vocab.new" = "Neue Vokabel";
@@ -65,6 +70,10 @@
 "vocab.empty" = "Noch keine Vokabeln.\nTippe auf +, um eine hinzuzufügen.";
 "vocab.counterInfo" = "Geschafft: %d/%d";
 "vocab.deleteConfirm" = "Diese Vokabel löschen?";
+"vocab.changeStatus" = "Status ändern";
+"vocab.setStatus" = "Status setzen";
+"vocab.selectedCount" = "%d ausgewählt";
+"vocab.resetConfirm" = "Diese Vokabel auf „Neu“ zurücksetzen?";
 
 /* Lernen */
 "practice.start" = "Lernen starten";
