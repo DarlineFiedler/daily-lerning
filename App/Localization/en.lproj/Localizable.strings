@@ -166,6 +166,7 @@
 "home.today.done.title" = "All done today 🎉";
 "home.today.done.subtitle" = "Come back tomorrow for the next round.";
 "home.today.a11y.hint" = "Starts today's round";
+"review.config.title" = "Today's session";
 "review.empty" = "Nothing due — great job! 🎉";
 "settings.reminder.section" = "Reminder";
 "settings.reminder.enable" = "Daily reminder";

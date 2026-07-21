@@ -56,8 +56,7 @@ struct PracticeConfigView: View {
                     if !presets.isEmpty { presetSection }
                     if allGroups.count > 1 { groupSection }
                     statusSection
-                    directionSection
-                    modeSection
+                    DirectionModeSelection(direction: $direction, modes: $selectedModes)
                     countSection
                 }
                 .padding(Theme.Spacing.m)
@@ -180,37 +179,6 @@ struct PracticeConfigView: View {
                 .font(.appCaption)
                 .foregroundStyle(.secondary)
                 .opacity(selectedStatuses.isEmpty ? 1 : 0.4)
-        }
-    }
-
-    private var directionSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-            SectionHeader(L("practice.config.direction"))
-            Picker(L("practice.config.direction"), selection: $direction) {
-                ForEach(PracticeDirection.allCases) { dir in
-                    Text(L(dir.titleKey)).tag(dir)
-                }
-            }
-            .pickerStyle(.segmented)
-        }
-    }
-
-    private var modeSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-            SectionHeader(L("practice.config.modes"))
-            FlowChips {
-                ForEach(PracticeMode.available) { mode in
-                    SelectableChip(
-                        title: L(mode.titleKey),
-                        systemImage: mode.systemImage,
-                        tint: Theme.brandStart,
-                        isSelected: selectedModes.contains(mode)
-                    ) { toggle(&selectedModes, mode) }
-                }
-            }
-            Text(L("practice.config.modesHint"))
-                .font(.appCaption)
-                .foregroundStyle(.secondary)
         }
     }
 

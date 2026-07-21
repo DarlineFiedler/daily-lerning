@@ -166,6 +166,7 @@
 "home.today.done.title" = "Heute alles erledigt 🎉";
 "home.today.done.subtitle" = "Komm morgen wieder für die nächste Runde.";
 "home.today.a11y.hint" = "Startet die heutige Runde";
+"review.config.title" = "Heute üben";
 "review.empty" = "Nichts fällig – super gemacht! 🎉";
 "settings.reminder.section" = "Erinnerung";
 "settings.reminder.enable" = "Tägliche Erinnerung";
