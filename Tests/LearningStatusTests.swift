@@ -89,4 +89,15 @@ final class LearningStatusTests: XCTestCase {
         XCTAssertEqual(vocab.timesPracticed, 0)
         XCTAssertFalse(vocab.hasBeenPracticed)
     }
+
+    // Semantik hinter dem Gruppen-/Mehrfach-Reset: „Neu" löscht auch den Wiederholungsplan.
+    func testManualNewClearsSchedule() {
+        let vocab = Vocab(word: "가다", meaning: "gehen")
+        vocab.setStatusManually(.learned)
+        XCTAssertNotNil(vocab.nextReviewAt) // Gelernt → eingeplant
+        vocab.setStatusManually(.new)
+        XCTAssertEqual(vocab.status, .new)
+        XCTAssertEqual(vocab.successCounter, 0)
+        XCTAssertNil(vocab.nextReviewAt) // Reset macht das Wort sofort fällig
+    }
 }
