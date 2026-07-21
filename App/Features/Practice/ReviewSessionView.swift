@@ -11,7 +11,8 @@ struct ReviewSessionView: View {
 
     @State private var session: PracticeSession?
 
-    private var dueVocabs: [Vocab] { allVocabs.filter { $0.isDue() } }
+    /// Heute noch offene Wörter (lernen bzw. wiederholen) – gleiche Logik wie die Home-Karte.
+    private var dueVocabs: [Vocab] { DailyPlan.today(from: allVocabs).words }
 
     var body: some View {
         NavigationStack {
