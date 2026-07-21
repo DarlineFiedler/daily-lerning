@@ -31,9 +31,29 @@ final class WordOfDayTests: XCTestCase {
 
     func testStableWithinSameDay() {
         let words = [word(.learning, "가"), word(.almostLearned, "나"), word(.learned, "다")]
-        let first = WordOfDay.pick(from: words, now: 3.daysFromNow)
-        let second = WordOfDay.pick(from: words, now: 3.daysFromNow)
-        XCTAssertEqual(first?.id, second?.id)
+        // Gleicher Kalendertag, aber verschiedene Uhrzeiten → gleiches Wort.
+        let calendar = Calendar.current
+        let morning = calendar.startOfDay(for: 3.daysFromNow)
+        let evening = calendar.date(byAdding: .hour, value: 23, to: morning) ?? morning
+        XCTAssertTrue(calendar.isDate(morning, inSameDayAs: evening))
+        XCTAssertEqual(
+            WordOfDay.pick(from: words, now: morning)?.id,
+            WordOfDay.pick(from: words, now: evening)?.id
+        )
+    }
+
+    func testRotatesAcrossDays() {
+        let words = [word(.learning, "가"), word(.almostLearned, "나"), word(.learned, "다")]
+        // Aufeinanderfolgende Tage rotieren durch den Pool: über `count` Tage kommt jedes
+        // Wort genau einmal dran (der Tages-Modulo läuft die Indizes durch).
+        var pickedIDs = Set<Vocab.ID>()
+        for offset in 0 ..< words.count {
+            guard let picked = WordOfDay.pick(from: words, now: offset.daysFromNow) else {
+                return XCTFail("kein Wort für Tag \(offset)")
+            }
+            pickedIDs.insert(picked.id)
+        }
+        XCTAssertEqual(pickedIDs.count, words.count)
     }
 
     func testLearnedCountsAsCandidate() {

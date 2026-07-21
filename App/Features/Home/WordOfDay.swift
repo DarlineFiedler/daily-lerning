@@ -8,10 +8,18 @@ import Foundation
 /// Home-Karte sichtbar bleibt. `now` ist injizierbar (Tests).
 enum WordOfDay {
     static func pick(from vocabs: [Vocab], now: Date = .now) -> Vocab? {
-        let inProgress = vocabs.filter { $0.status != .new }
-        let pool = inProgress.isEmpty ? vocabs : inProgress
+        // Bewusst nicht `inProgress` genannt: Anders als in `DailyPlan` zählt hier auch
+        // „Gelernt" dazu (alles außer „Neu"), nicht nur „Am Lernen"/„Fast gelernt".
+        let started = vocabs.filter { $0.status != .new }
+        let pool = started.isEmpty ? vocabs : started
         guard !pool.isEmpty else { return nil }
-        let day = Calendar.current.ordinality(of: .day, in: .era, for: now) ?? 0
+        // Tages-Index = Anzahl lokaler Kalendertage seit einem festen Referenztag.
+        // Bewusst NICHT `ordinality(of: .day, in: .era)`: das rechnet intern in GMT und legt
+        // den Tageswechsel dadurch je nach Zeitzone versetzt (nicht um lokale Mitternacht).
+        let calendar = Calendar.current
+        let epoch = calendar.startOfDay(for: Date(timeIntervalSinceReferenceDate: 0))
+        let today = calendar.startOfDay(for: now)
+        let day = calendar.dateComponents([.day], from: epoch, to: today).day ?? 0
         return pool[day % pool.count]
     }
 }
