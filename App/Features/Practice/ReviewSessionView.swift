@@ -74,17 +74,18 @@ struct ReviewSessionView: View {
     /// Lädt die gemerkte Auswahl. Nicht (mehr) verfügbare Modi – z.B. Hören ohne
     /// installierte koreanische Stimme – werden ausgefiltert.
     private func loadSelection() {
-        direction = PracticeDirection(rawValue: directionRaw) ?? .mixed
-        let stored = modesRaw.split(separator: ",").compactMap { PracticeMode(rawValue: String($0)) }
-        modes = Set(stored).intersection(Set(PracticeMode.available))
+        let selection = ReviewSelection.load(directionRaw: directionRaw, modesRaw: modesRaw)
+        direction = selection.direction
+        modes = selection.modes
     }
 
     /// Merkt die Auswahl und startet die Session über die heute fälligen Wörter.
     private func start() {
         let due = dueVocabs
         guard !due.isEmpty else { return }
-        directionRaw = direction.rawValue
-        modesRaw = modes.map(\.rawValue).joined(separator: ",")
+        let selection = ReviewSelection(direction: direction, modes: modes)
+        directionRaw = selection.direction.rawValue
+        modesRaw = selection.modesRaw
         session = PracticeSession(
             vocabs: due,
             distractorPool: allVocabs,

@@ -71,6 +71,32 @@ enum ResolvedDirection {
     }
 }
 
+/// Gemerkte Auswahl (Richtung + Modi) für den „Heute“-Lernvorgang. Kapselt das
+/// Serialisieren/Parsen der `@AppStorage`-Werte, damit die Logik unabhängig von
+/// der View getestet werden kann.
+struct ReviewSelection: Equatable {
+    var direction: PracticeDirection = .mixed
+    /// Leere Menge = alle Modi (bisheriges Verhalten).
+    var modes: Set<PracticeMode> = []
+
+    /// Rekonstruiert die Auswahl aus den gespeicherten rawValues. Eine ungültige
+    /// Richtung fällt auf `.mixed` zurück; unbekannte oder nicht (mehr) verfügbare
+    /// Modi – z.B. Hören ohne installierte koreanische Stimme – werden ausgefiltert.
+    static func load(directionRaw: String, modesRaw: String,
+                     available: [PracticeMode] = PracticeMode.available) -> ReviewSelection {
+        let direction = PracticeDirection(rawValue: directionRaw) ?? .mixed
+        let stored = modesRaw.split(separator: ",").compactMap { PracticeMode(rawValue: String($0)) }
+        return ReviewSelection(direction: direction,
+                               modes: Set(stored).intersection(Set(available)))
+    }
+
+    /// CSV der Modus-rawValues (stabil sortiert, damit derselbe Zustand denselben
+    /// gespeicherten String ergibt) – leer = alle Modi.
+    var modesRaw: String {
+        modes.map(\.rawValue).sorted().joined(separator: ",")
+    }
+}
+
 /// Konfiguration eines Lernvorgangs.
 struct PracticeConfig {
     /// Leere Menge = alle Status.
