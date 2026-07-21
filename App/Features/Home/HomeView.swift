@@ -29,12 +29,8 @@ struct HomeView: View {
         })
     }
 
-    /// Wort des Tages – stabil pro Kalendertag ausgewählt.
-    private var wordOfDay: Vocab? {
-        guard !vocabs.isEmpty else { return nil }
-        let day = Calendar.current.ordinality(of: .day, in: .era, for: .now) ?? 0
-        return vocabs[day % vocabs.count]
-    }
+    /// Wort des Tages – stabil pro Kalendertag, bevorzugt Wörter im Lernprozess.
+    private var wordOfDay: Vocab? { WordOfDay.pick(from: vocabs) }
 
     /// Empfohlene Gruppe zum Üben: die mit den meisten noch nicht gelernten Wörtern.
     private var recommendedGroup: VocabGroup? {
