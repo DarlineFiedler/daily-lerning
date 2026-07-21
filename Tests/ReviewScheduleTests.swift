@@ -44,10 +44,12 @@ final class ReviewScheduleTests: XCTestCase {
 
     func testWrongAnswerMakesDueSoon() {
         let vocab = Vocab(word: "가다", meaning: "gehen")
-        for _ in 0 ..< 5 { vocab.registerResult(correct: true) } // gelernt, 14 Tage
-        XCTAssertFalse(vocab.isDue(asOf: .now.addingTimeInterval(7 * 86_400)))
-        vocab.registerResult(correct: false) // Reset → morgen
-        XCTAssertTrue(vocab.isDue(asOf: .now.addingTimeInterval(2 * 86_400)))
+        // Counter steigt nur einmal pro Tag → an fünf aufeinanderfolgenden Tagen bis „gelernt".
+        for day in 0 ..< 5 { vocab.registerResult(correct: true, now: day.daysFromNow) }
+        XCTAssertEqual(vocab.successCounter, 5)
+        // Falsche Antwort am Folgetag (Zeitachse konsistent) → Reset, morgen wieder fällig.
+        vocab.registerResult(correct: false, now: 5.daysFromNow)
+        XCTAssertTrue(vocab.isDue(asOf: 7.daysFromNow))
     }
 
     func testManualNewClearsSchedule() {

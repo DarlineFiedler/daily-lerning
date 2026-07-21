@@ -43,6 +43,7 @@ struct VocabBackup: Codable {
         var timesPracticed: Int
         var lastPracticedAt: Date?
         var nextReviewAt: Date?
+        var lastCountedAt: Date?
         var createdAt: Date
         var groupID: UUID? // Beziehung über stabile id, nicht Objektgraph
     }
@@ -61,6 +62,7 @@ extension VocabBackup {
                      statusRaw: $0.statusRaw, successCounter: $0.successCounter,
                      includeInWidget: $0.includeInWidget, timesPracticed: $0.timesPracticed,
                      lastPracticedAt: $0.lastPracticedAt, nextReviewAt: $0.nextReviewAt,
+                     lastCountedAt: $0.lastCountedAt,
                      createdAt: $0.createdAt, groupID: $0.group?.id)
         }
     }
@@ -188,6 +190,7 @@ extension VocabBackup {
             vocab.timesPracticed = dto.timesPracticed
             vocab.lastPracticedAt = dto.lastPracticedAt
             vocab.nextReviewAt = dto.nextReviewAt
+            vocab.lastCountedAt = dto.lastCountedAt
             vocab.createdAt = dto.createdAt
             vocab.group = dto.groupID.flatMap { groupByID[$0] }
         }

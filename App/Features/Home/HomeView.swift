@@ -15,8 +15,8 @@ struct HomeView: View {
     // MARK: Abgeleitete Werte
 
     private var learnedCount: Int { vocabs.filter { $0.status == .learned }.count }
-    /// Heute fällige Wörter (SRS-lite) über alle Gruppen.
-    private var dueCount: Int { vocabs.filter { $0.isDue() }.count }
+    /// Heutiger Tagesplan (lernen / wiederholen / erledigt) über alle Gruppen.
+    private var plan: DailyPlan.Result { DailyPlan.today(from: vocabs) }
     /// Aktueller Tages-Streak (0, wenn abgelaufen).
     private var streak: Int { StreakStore.displayStreak() }
     private var rate: Int {
@@ -51,7 +51,7 @@ struct HomeView: View {
                     if vocabs.isEmpty {
                         emptyState
                     } else {
-                        if dueCount > 0 { dueCard }
+                        todayCard
                         if let word = wordOfDay { wordOfDayCard(word) }
                         progressSection
                         startPracticeButton
@@ -101,19 +101,38 @@ struct HomeView: View {
             .accessibilityLabel(L("home.streak.a11y", streak))
     }
 
-    // MARK: - Heute fällig
+    // MARK: - Heutiger Tagesplan
 
-    private var dueCard: some View {
+    @ViewBuilder
+    private var todayCard: some View {
+        switch plan.kind {
+        case .learn:
+            todayActionCard(icon: "bolt.heart.fill",
+                            title: L("home.today.learn.title"),
+                            subtitle: L("home.today.learn.count", plan.words.count))
+        case .review:
+            todayActionCard(icon: "arrow.triangle.2.circlepath",
+                            title: L("home.today.review.title"),
+                            subtitle: L("home.today.review.count", plan.words.count))
+        case .done:
+            todayDoneCard
+        case .none:
+            EmptyView()
+        }
+    }
+
+    /// Tappbare Karte, die die heutige Runde startet.
+    private func todayActionCard(icon: String, title: String, subtitle: String) -> some View {
         Button { showReview = true } label: {
             HStack(spacing: Theme.Spacing.m) {
-                Image(systemName: "bolt.heart.fill")
+                Image(systemName: icon)
                     .font(.appTitle2)
                     .foregroundStyle(Theme.brandStart)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(L("home.due.title"))
+                    Text(title)
                         .font(.appHeadline)
                         .foregroundStyle(.primary)
-                    Text(L("home.due.count", dueCount))
+                    Text(subtitle)
                         .font(.appSubheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -127,7 +146,28 @@ struct HomeView: View {
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
-        .accessibilityHint(L("home.due.a11y.hint"))
+        .accessibilityHint(L("home.today.a11y.hint"))
+    }
+
+    /// „Heute alles erledigt" – nicht tappbarer Erfolgs-Zustand.
+    private var todayDoneCard: some View {
+        HStack(spacing: Theme.Spacing.m) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.appTitle2)
+                .foregroundStyle(LearningStatus.learned.color)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(L("home.today.done.title"))
+                    .font(.appHeadline)
+                    .foregroundStyle(.primary)
+                Text(L("home.today.done.subtitle"))
+                    .font(.appSubheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardStyle(padding: Theme.Spacing.l)
+        .accessibilityElement(children: .combine)
     }
 
     private var greeting: String {
