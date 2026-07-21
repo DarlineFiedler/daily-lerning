@@ -1,14 +1,23 @@
 import SwiftData
 import SwiftUI
 
-/// Startet ohne Konfig-Schritt eine gruppenübergreifende Wiederholung aller heute
-/// fälligen Wörter (SRS-lite). Nutzt dieselbe `PracticeSession`-Engine wie das
-/// gruppenbasierte Üben – nur mit anderem Wort-Pool (alle Modi, gemischte Richtung).
+/// Gruppenübergreifende Wiederholung aller heute fälligen Wörter (SRS-lite).
+/// Vor dem Start lässt sich Richtung + Modi wählen (z.B. Hören abwählen, wenn man
+/// gerade nicht hören kann); die Auswahl wird gemerkt. Nutzt danach dieselbe
+/// `PracticeSession`-Engine wie das gruppenbasierte Üben – nur mit dem „heute
+/// fällig"-Wort-Pool aus `DailyPlan`.
 struct ReviewSessionView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Query private var allVocabs: [Vocab]
 
+    /// Gemerkte Auswahl (App-übergreifend). Richtung als rawValue, Modi als
+    /// CSV der rawValues – leer = alle Modi (wie bisheriges Verhalten).
+    @AppStorage("reviewDirection") private var directionRaw = PracticeDirection.mixed.rawValue
+    @AppStorage("reviewModes") private var modesRaw = ""
+
+    @State private var direction: PracticeDirection = .mixed
+    @State private var modes: Set<PracticeMode> = []
     @State private var session: PracticeSession?
 
     /// Heute noch offene Wörter (lernen bzw. wiederholen) – gleiche Logik wie die Home-Karte.
@@ -19,23 +28,69 @@ struct ReviewSessionView: View {
             Group {
                 if let session {
                     PracticeContainerView(session: session, onClose: { dismiss() })
-                } else {
+                } else if dueVocabs.isEmpty {
                     emptyState
+                } else {
+                    configStep
                 }
             }
             .background(Theme.background.ignoresSafeArea())
         }
-        .onAppear {
-            guard session == nil else { return }
-            let due = dueVocabs
-            guard !due.isEmpty else { return }
-            session = PracticeSession(
-                vocabs: due,
-                distractorPool: allVocabs,
-                config: PracticeConfig(statuses: [], direction: .mixed, modes: []),
-                context: context
-            )
+        .onAppear(perform: loadSelection)
+    }
+
+    // MARK: - Auswahl-Schritt
+
+    private var configStep: some View {
+        ScrollView {
+            DirectionModeSelection(direction: $direction, modes: $modes)
+                .padding(Theme.Spacing.m)
         }
+        .navigationTitle(L("review.config.title"))
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button(L("common.close")) { dismiss() }
+            }
+        }
+        .safeAreaInset(edge: .bottom) { startBar }
+    }
+
+    private var startBar: some View {
+        VStack(spacing: 6) {
+            Button(action: start) {
+                Label(L("common.start"), systemImage: "play.fill")
+            }
+            .buttonStyle(.primary)
+
+            Text(L("group.wordCount", dueVocabs.count))
+                .font(.appCaption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(Theme.Spacing.m)
+        .background(.ultraThinMaterial)
+    }
+
+    /// Lädt die gemerkte Auswahl. Nicht (mehr) verfügbare Modi – z.B. Hören ohne
+    /// installierte koreanische Stimme – werden ausgefiltert.
+    private func loadSelection() {
+        direction = PracticeDirection(rawValue: directionRaw) ?? .mixed
+        let stored = modesRaw.split(separator: ",").compactMap { PracticeMode(rawValue: String($0)) }
+        modes = Set(stored).intersection(Set(PracticeMode.available))
+    }
+
+    /// Merkt die Auswahl und startet die Session über die heute fälligen Wörter.
+    private func start() {
+        let due = dueVocabs
+        guard !due.isEmpty else { return }
+        directionRaw = direction.rawValue
+        modesRaw = modes.map(\.rawValue).joined(separator: ",")
+        session = PracticeSession(
+            vocabs: due,
+            distractorPool: allVocabs,
+            config: PracticeConfig(statuses: [], direction: direction, modes: modes),
+            context: context
+        )
     }
 
     private var emptyState: some View {
