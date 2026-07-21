@@ -19,6 +19,7 @@ struct VocabRow: View {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.appTitle3)
                     .foregroundStyle(isSelected ? Color.accentColor : Color.secondary.opacity(0.4))
+                    .accessibilityHidden(true)
             }
 
             StatusDot(status: vocab.status)
@@ -53,6 +54,10 @@ struct VocabRow: View {
         .padding(.vertical, 2)
         .contentShape(Rectangle())
         .onTapGesture(perform: onSelect)
+        // Im Auswahl-Modus ist die ganze Zeile ein tippbares Auswahl-Element; sonst
+        // bleiben Widget-Button & Co. eigenständig für VoiceOver erreichbar.
+        .accessibilityElement(children: isSelecting ? .combine : .contain)
+        .accessibilityAddTraits(isSelecting && isSelected ? .isSelected : [])
     }
 
     private func toggleWidget() {

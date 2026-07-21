@@ -90,6 +90,29 @@ final class LearningStatusTests: XCTestCase {
         XCTAssertFalse(vocab.hasBeenPracticed)
     }
 
+    // Semantik hinter dem Mehrfach-/Kontextmenü-„Status setzen": jeder Fall aus
+    // `LearningStatus.allCases` (wie im Menü angeboten) setzt Status + Counter korrekt
+    // und plant – außer bei „Neu" – eine Wiederholung ein.
+    func testManualStatusForAllCasesAlignsCounterAndSchedule() {
+        let expectedCounter: [LearningStatus: Int] = [
+            .new: 0,
+            .learning: LearningStatus.learningThreshold,
+            .almostLearned: LearningStatus.almostLearnedThreshold,
+            .learned: LearningStatus.masteredThreshold
+        ]
+        for status in LearningStatus.allCases {
+            let vocab = Vocab(word: "가다", meaning: "gehen")
+            vocab.setStatusManually(status)
+            XCTAssertEqual(vocab.status, status)
+            XCTAssertEqual(vocab.successCounter, expectedCounter[status])
+            if status == .new {
+                XCTAssertNil(vocab.nextReviewAt) // „Neu" → sofort fällig, kein Plan
+            } else {
+                XCTAssertNotNil(vocab.nextReviewAt) // sonst eingeplant
+            }
+        }
+    }
+
     // Semantik hinter dem Gruppen-/Mehrfach-Reset: „Neu" löscht auch den Wiederholungsplan.
     func testManualNewClearsSchedule() {
         let vocab = Vocab(word: "가다", meaning: "gehen")

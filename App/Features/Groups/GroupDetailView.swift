@@ -42,9 +42,7 @@ struct GroupDetailView: View {
                 if group.vocabs.isEmpty {
                     emptyState
                 } else {
-                    if !isSelecting {
-                        filterChips
-                    }
+                    filterChips
                     ForEach(vocabs) { vocab in
                         row(vocab)
                     }
