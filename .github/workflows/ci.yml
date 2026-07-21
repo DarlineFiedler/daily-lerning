@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Versionen bewusst GEPINNT (nicht "brew install ... latest") → reproduzierbare
       # CI. Ein neues SwiftLint/SwiftFormat-Release, das --strict verschärft, kann so
@@ -75,7 +75,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install XcodeGen
         run: brew install xcodegen
