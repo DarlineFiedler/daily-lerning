@@ -108,8 +108,10 @@ struct ReviewSessionView: View {
                 .padding(.horizontal, Theme.Spacing.xl)
         }
         .padding(Theme.Spacing.l)
+        .navigationTitle(L("review.config.title"))
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .cancellationAction) {
                 Button(L("common.close")) { dismiss() }
             }
         }

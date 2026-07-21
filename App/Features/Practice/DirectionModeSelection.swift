@@ -8,11 +8,21 @@ struct DirectionModeSelection: View {
     @Binding var direction: PracticeDirection
     @Binding var modes: Set<PracticeMode>
 
+    /// Verfügbare Modi werden einmal beim Erscheinen ermittelt statt bei jedem
+    /// Render (z.B. jedem Chip-Tap): die Verfügbarkeitsprüfung fragt über
+    /// AVFoundation nach einer installierten Stimme. Der Startwert lässt Hören
+    /// zunächst weg (reiner Array-Filter, kein AVFoundation-Aufruf) und wird in
+    /// `onAppear` durch das echte Ergebnis ersetzt – so bleibt der Render-Pfad frei
+    /// vom teuren Aufruf, und eine zwischenzeitlich installierte Stimme wird beim
+    /// erneuten Öffnen berücksichtigt.
+    @State private var availableModes: [PracticeMode] = PracticeMode.available(hasVoice: false)
+
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.l) {
             directionSection
             modeSection
         }
+        .onAppear { availableModes = PracticeMode.available }
     }
 
     private var directionSection: some View {
@@ -31,7 +41,7 @@ struct DirectionModeSelection: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             SectionHeader(L("practice.config.modes"))
             FlowChips {
-                ForEach(PracticeMode.available) { mode in
+                ForEach(availableModes) { mode in
                     SelectableChip(
                         title: L(mode.titleKey),
                         systemImage: mode.systemImage,
