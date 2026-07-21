@@ -38,6 +38,9 @@
 "common.close" = "Close";
 "common.all" = "All";
 "common.start" = "Start";
+"common.reset" = "Reset";
+"common.select" = "Select";
+"common.selectAll" = "Select All";
 
 /* Groups */
 "groups.title" = "Groups";
@@ -49,6 +52,8 @@
 "group.color" = "Color";
 "group.wordCount" = "%d words";
 "group.deleteConfirm" = "Delete this group and all its vocabulary?";
+"group.resetAll" = "Reset all statuses";
+"group.resetAllConfirm" = "Reset all words in this group to “New”? Progress will be lost.";
 
 /* Vocabulary */
 "vocab.new" = "New Word";
@@ -65,6 +70,10 @@
 "vocab.empty" = "No words yet.\nTap + to add one.";
 "vocab.counterInfo" = "Streak: %d/%d";
 "vocab.deleteConfirm" = "Delete this word?";
+"vocab.changeStatus" = "Change status";
+"vocab.setStatus" = "Set status";
+"vocab.selectedCount" = "%d selected";
+"vocab.resetConfirm" = "Reset this word to “New”?";
 
 /* Practice */
 "practice.start" = "Start Practice";
