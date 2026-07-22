@@ -63,8 +63,8 @@ struct Achievement: Identifiable, Equatable {
 }
 
 /// Momentaufnahme aller Kennzahlen, aus denen sich Badges ableiten. Wird aus den
-/// Vokabeldaten (gelernte/gesamte Wörter, längster Streak) plus dem gemerkten
-/// Lernverhalten (`AchievementProgress`) zusammengesetzt.
+/// Vokabeldaten (gelernte/gesamte Wörter, längster Streak, gemeisterte Gruppe) plus
+/// dem gemerkten Lernverhalten (`AchievementProgress`) zusammengesetzt.
 struct AchievementMetrics: Equatable {
     var learnedWords = 0
     var totalWords = 0
@@ -75,8 +75,33 @@ struct AchievementMetrics: Equatable {
     var perfectRounds = 0
     var nightOwl = false
     var earlyBird = false
+    // Verhaltens-/Kalender-Flags (aus dem gesammelten Fortschritt).
+    var afterWork = false
+    var weekend = false
+    var usedListening = false
+    var comeback = false
+    var selfCorrection = false
+    var allModesOneDay = false
+    var doublePack = false
+    var ghostHour = false
+    var fridayThe13th = false
+    var newYearsEve = false
+    var serienComeback = false
+    // Vokabel-/Gruppen-abhängige Flags.
+    var schnapszahl = false
+    var groupMastered = false
+    // Zählbare Serien/Vielfalt.
+    var distinctSeasons = 0
+    var sameModeDayStreak = 0
+    var nightDayStreak = 0
+    var oneWordDayStreak = 0
+    var flawlessRoundStreak = 0
 
-    static func from(progress: AchievementProgress, learnedWords: Int, totalWords: Int, longestStreak: Int) -> AchievementMetrics {
+    static func from(progress: AchievementProgress,
+                     learnedWords: Int,
+                     totalWords: Int,
+                     longestStreak: Int,
+                     groupMastered: Bool = false) -> AchievementMetrics {
         AchievementMetrics(
             learnedWords: learnedWords,
             totalWords: totalWords,
@@ -86,15 +111,71 @@ struct AchievementMetrics: Equatable {
             sessionsCompleted: progress.sessionsCompleted,
             perfectRounds: progress.perfectRounds,
             nightOwl: progress.nightOwl,
-            earlyBird: progress.earlyBird
+            earlyBird: progress.earlyBird,
+            afterWork: progress.afterWork,
+            weekend: progress.weekend,
+            usedListening: progress.modesUsed.contains(PracticeMode.listening.rawValue),
+            comeback: progress.comeback,
+            selfCorrection: progress.selfCorrection,
+            allModesOneDay: progress.allModesOneDay,
+            doublePack: progress.doublePack,
+            ghostHour: progress.ghostHour,
+            fridayThe13th: progress.fridayThe13th,
+            newYearsEve: progress.newYearsEve,
+            serienComeback: progress.serienComeback,
+            // „Schnapszahl": exakt 111 oder 222 gelernte Wörter (Easter Egg).
+            schnapszahl: learnedWords == 111 || learnedWords == 222,
+            groupMastered: groupMastered,
+            distinctSeasons: progress.seasons.count,
+            sameModeDayStreak: progress.sameMode.best,
+            nightDayStreak: progress.nightNights.best,
+            oneWordDayStreak: progress.oneWordDays.best,
+            flawlessRoundStreak: progress.flawlessRun.best
         )
     }
 }
 
+/// Serie aufeinanderfolgender *Kalendertage*, an denen eine Bedingung erfüllt war
+/// (z.B. Nächte nach Mitternacht). Mehrfach am selben Tag ist idempotent, eine Lücke
+/// setzt die laufende Serie zurück; `best` merkt sich das je erreichte Maximum.
+struct DayRun: Equatable, Codable {
+    var lastDay: Date?
+    var run = 0
+    var best = 0
+
+    mutating func note(day: Date, calendar: Calendar) {
+        let d = calendar.startOfDay(for: day)
+        guard let last = lastDay else {
+            run = 1
+            lastDay = d
+            best = Swift.max(best, run)
+            return
+        }
+        if calendar.isDate(last, inSameDayAs: d) { return } // heute schon gezählt
+        let gap = calendar.dateComponents([.day], from: last, to: d).day ?? 0
+        run = gap == 1 ? run + 1 : 1
+        lastDay = d
+        best = Swift.max(best, run)
+    }
+}
+
+/// Serie aufeinanderfolgender *Runden*, in denen eine Bedingung erfüllt war
+/// (z.B. fehlerfrei). Ein Fehlschlag setzt zurück; `best` hält das Maximum.
+struct RoundRun: Equatable, Codable {
+    var run = 0
+    var best = 0
+
+    mutating func note(success: Bool) {
+        run = success ? run + 1 : 0
+        best = Swift.max(best, run)
+    }
+}
+
 /// Aus dem Lernverhalten gesammelter Fortschritt, der sich NICHT direkt aus den
-/// Vokabeldaten ableiten lässt (welche Modi genutzt, an welchen Wochentagen geübt,
-/// wie viele Runden …). Reine Wertlogik – die Persistenz übernimmt `AchievementStore`.
-struct AchievementProgress: Equatable {
+/// Vokabeldaten ableiten lässt (welche Modi genutzt, an welchen Wochentagen/Uhrzeiten
+/// geübt, Serien …). Reine Wertlogik – die Persistenz übernimmt `AchievementStore`.
+/// `Codable`, weil der Zustand als JSON in den geteilten Defaults liegt.
+struct AchievementProgress: Equatable, Codable {
     var modesUsed: Set<String> = [] // PracticeMode.rawValue
     var weekdays: Set<Int> = [] // Calendar-Wochentag 1…7
     var sessionsCompleted = 0
@@ -102,14 +183,163 @@ struct AchievementProgress: Equatable {
     var nightOwl = false
     var earlyBird = false
 
-    /// Verbucht eine beendete Übungsrunde. `hour` ist die Stunde (0…23) des Rundenendes.
-    mutating func recordSession(modes: Set<PracticeMode>, weekday: Int, hour: Int, isPerfect: Bool) {
-        modesUsed.formUnion(modes.map(\.rawValue))
+    // Einfache, einmal erreichbare Flags.
+    var afterWork = false // 18–19:59 Uhr geübt
+    var weekend = false // Sa/So geübt
+    var comeback = false // nach ≥3 Tagen Pause wieder geübt
+    var selfCorrection = false // zuvor falsches Wort später richtig
+    var ghostHour = false // Runde exakt um 00:00 beendet
+    var fridayThe13th = false // an einem Freitag, dem 13.
+    var newYearsEve = false // am 31.12.
+    var allModesOneDay = false // alle 4 Modi an einem Kalendertag
+    var doublePack = false // ≥2 Runden am selben Tag
+    var serienComeback = false // nach gerissenem Streak einen längeren aufgebaut
+
+    // Meteorologische Jahreszeiten (0=Winter,1=Frühling,2=Sommer,3=Herbst).
+    var seasons: Set<Int> = []
+
+    // Serien.
+    var sameMode = DayRun() // gleicher (einziger) Modus an Folgetagen
+    var sameModeMode: String? // Modus, der die aktuelle sameMode-Serie trägt
+    var nightNights = DayRun() // Folge-Nächte nach Mitternacht
+    var oneWordDays = DayRun() // Folgetage mit genau 1 neuem Wort
+    var flawlessRun = RoundRun() // aufeinanderfolgende fehlerfreie Runden
+
+    // Tagespuffer (wird beim Tageswechsel zurückgesetzt).
+    var currentDay: Date?
+    var modesToday: Set<String> = []
+    var sessionsToday = 0
+    var newWordsToday = 0
+    // Rollback-Puffer für „genau 1 Wort/Tag", falls später ein 2. Wort dazukommt.
+    var oneWordCountedToday = false
+    var oneWordPreRun = 0
+    var oneWordPreLastDay: Date?
+
+    // Comeback-/Serien-Comeback-Zustand.
+    var lastSessionDay: Date?
+    var lastStreakValue = 0
+    var hadBreak = false
+    var preBreakStreak = 0
+
+    /// Meteorologische Jahreszeit (Nordhalbkugel) für einen Monat 1…12.
+    static func season(forMonth month: Int) -> Int {
+        switch month {
+        case 12, 1, 2: return 0 // Winter
+        case 3, 4, 5: return 1 // Frühling
+        case 6, 7, 8: return 2 // Sommer
+        default: return 3 // Herbst
+        }
+    }
+
+    /// Verbucht eine beendete Übungsrunde und aktualisiert alle abgeleiteten Serien/Flags.
+    /// - Parameters:
+    ///   - modes: die in der Runde genutzten Modi.
+    ///   - date: Zeitpunkt des Rundenendes (Uhrzeit/Datum bestimmen viele Flags).
+    ///   - isPerfect: fehlerfrei mit genug Wörtern (siehe `PracticeSession`).
+    ///   - isFlawless: fehlerfrei, unabhängig von der Wortanzahl (für die Fehlerfrei-Serie).
+    ///   - selfCorrected: ein zuvor falsch beantwortetes Wort wurde diesmal richtig.
+    ///   - newlyLearned: Anzahl in dieser Runde neu auf „gelernt" gestiegener Wörter.
+    ///   - currentStreak: aktueller Tages-Streak (für das Serien-Comeback).
+    mutating func recordSession(modes: Set<PracticeMode>,
+                                date: Date,
+                                isPerfect: Bool,
+                                isFlawless: Bool = false,
+                                selfCorrected: Bool = false,
+                                newlyLearned: Int = 0,
+                                currentStreak: Int = 0,
+                                calendar: Calendar = .current) {
+        let modeRaws = Set(modes.map(\.rawValue))
+        let day = calendar.startOfDay(for: date)
+        let comps = calendar.dateComponents([.weekday, .hour, .minute, .month, .day], from: date)
+        let weekday = comps.weekday ?? 1
+        let hour = comps.hour ?? 0
+        let minute = comps.minute ?? 0
+        let month = comps.month ?? 1
+        let dayOfMonth = comps.day ?? 1
+
+        // --- Basis (wie bisher) ---
+        modesUsed.formUnion(modeRaws)
         weekdays.insert(weekday)
         sessionsCompleted += 1
         if isPerfect { perfectRounds += 1 }
         if hour < 5 { nightOwl = true } // 0–4:59 Uhr → Nachteule
         if (5 ..< 8).contains(hour) { earlyBird = true } // 5–7:59 Uhr → Früher Vogel
+
+        // --- Einfache Kalender-/Uhrzeit-Flags ---
+        if (18 ..< 20).contains(hour) { afterWork = true } // Feierabend
+        if weekday == 1 || weekday == 7 { weekend = true } // 1=So, 7=Sa
+        if hour == 0, minute == 0 { ghostHour = true } // exakt Mitternacht
+        if weekday == 6, dayOfMonth == 13 { fridayThe13th = true } // 6=Fr
+        if month == 12, dayOfMonth == 31 { newYearsEve = true }
+        if selfCorrected { selfCorrection = true }
+        seasons.insert(Self.season(forMonth: month))
+
+        // --- Fehlerfrei-Serie (Runden-basiert) ---
+        flawlessRun.note(success: isFlawless)
+
+        // --- Nächte nach Mitternacht (Tages-Serie) ---
+        if hour < 5 { nightNights.note(day: day, calendar: calendar) }
+
+        // --- Gleicher Modus an Folgetagen (nur Ein-Modus-Runden, erste des Tages) ---
+        if modeRaws.count == 1, let onlyMode = modeRaws.first {
+            let alreadyToday = sameMode.lastDay.map { calendar.isDate($0, inSameDayAs: day) } ?? false
+            if !alreadyToday {
+                let gap = sameMode.lastDay.map { calendar.dateComponents([.day], from: $0, to: day).day ?? 0 }
+                if gap == 1, sameModeMode == onlyMode {
+                    sameMode.run += 1
+                } else {
+                    sameMode.run = 1
+                    sameModeMode = onlyMode
+                }
+                sameMode.lastDay = day
+                sameMode.best = Swift.max(sameMode.best, sameMode.run)
+            }
+        }
+
+        // --- Tagespuffer (Doppelpack, alle Modi, genau 1 Wort) ---
+        if currentDay.map({ !calendar.isDate($0, inSameDayAs: day) }) ?? true {
+            currentDay = day
+            modesToday = []
+            sessionsToday = 0
+            newWordsToday = 0
+            oneWordCountedToday = false
+        }
+        modesToday.formUnion(modeRaws)
+        sessionsToday += 1
+        newWordsToday += newlyLearned
+        if modesToday.count >= PracticeMode.allCases.count { allModesOneDay = true }
+        if sessionsToday >= 2 { doublePack = true }
+
+        // „Ein Wort am Tag": Tag zählt, solange genau 1 neues Wort. Kommt am selben
+        // Tag ein zweites dazu, wird die (optimistisch gezählte) Serie zurückgerollt;
+        // `best` bleibt bewusst stehen (augenzwinkerndes Easter-Egg).
+        if newWordsToday == 1, !oneWordCountedToday {
+            oneWordPreRun = oneWordDays.run
+            oneWordPreLastDay = oneWordDays.lastDay
+            oneWordDays.note(day: day, calendar: calendar)
+            oneWordCountedToday = true
+        } else if newWordsToday >= 2, oneWordCountedToday {
+            oneWordDays.run = oneWordPreRun
+            oneWordDays.lastDay = oneWordPreLastDay
+            oneWordCountedToday = false
+        }
+
+        // --- Comeback nach Pause (Tages-Gap zur letzten Session) ---
+        if let last = lastSessionDay {
+            let gap = calendar.dateComponents([.day], from: calendar.startOfDay(for: last), to: day).day ?? 0
+            if gap >= 3 { comeback = true }
+        }
+        lastSessionDay = day
+
+        // --- Serien-Comeback: nach gerissenem Streak einen längeren aufbauen ---
+        if currentStreak < lastStreakValue {
+            hadBreak = true
+            preBreakStreak = lastStreakValue
+        }
+        if hadBreak, preBreakStreak >= 2, currentStreak > preBreakStreak {
+            serienComeback = true
+        }
+        lastStreakValue = currentStreak
     }
 }
 
@@ -141,7 +371,38 @@ enum AchievementCatalog {
         // Augenzwinkernd
         Achievement(id: "perfect", category: .fun, emoji: "✨", requirement: .count(\.perfectRounds, 1)),
         Achievement(id: "nightOwl", category: .fun, emoji: "🦉", requirement: .flag(\.nightOwl)),
-        Achievement(id: "earlyBird", category: .fun, emoji: "🐦", requirement: .flag(\.earlyBird))
+        Achievement(id: "earlyBird", category: .fun, emoji: "🐦", requirement: .flag(\.earlyBird)),
+
+        // --- Erweiterung: Quick Wins ---
+        Achievement(id: "comeback", category: .streak, emoji: "🔙", requirement: .flag(\.comeback)),
+        Achievement(id: "afterWork", category: .fun, emoji: "🌆", requirement: .flag(\.afterWork)),
+        Achievement(id: "weekend", category: .variety, emoji: "🎉", requirement: .flag(\.weekend)),
+        Achievement(id: "listening", category: .variety, emoji: "🎧", requirement: .flag(\.usedListening)),
+        Achievement(id: "selfCorrect", category: .sessions, emoji: "🔁", requirement: .flag(\.selfCorrection)),
+
+        // --- Erweiterung: Mittelschwer ---
+        Achievement(id: "doublePack", category: .sessions, emoji: "✌️", requirement: .flag(\.doublePack)),
+        Achievement(id: "allModesDay", category: .variety, emoji: "🎯", requirement: .flag(\.allModesOneDay)),
+        Achievement(id: "seasons", category: .variety, emoji: "🍂", requirement: .count(\.distinctSeasons, 4)),
+        Achievement(id: "sameModeStreak", category: .variety, emoji: "🔂", requirement: .count(\.sameModeDayStreak, 5)),
+        Achievement(id: "flawlessStreak", category: .sessions, emoji: "🎖️", requirement: .count(\.flawlessRoundStreak, 3)),
+
+        // --- Erweiterung: Prestige ---
+        Achievement(id: "serienComeback", category: .streak, emoji: "🎢", requirement: .flag(\.serienComeback)),
+        Achievement(id: "learned1000", category: .learned, emoji: "🏛️", requirement: .count(\.learnedWords, 1000)),
+        Achievement(id: "streak365", category: .streak, emoji: "🎆", requirement: .count(\.longestStreak, 365)),
+        Achievement(id: "perfektionist", category: .fun, emoji: "🌟", requirement: .count(\.perfectRounds, 10)),
+        Achievement(id: "nightStreak", category: .fun, emoji: "🌃", requirement: .count(\.nightDayStreak, 3)),
+
+        // --- Erweiterung: Spaßig ---
+        Achievement(id: "ghostHour", category: .fun, emoji: "👻", requirement: .flag(\.ghostHour)),
+        Achievement(id: "friday13", category: .fun, emoji: "🃏", requirement: .flag(\.fridayThe13th)),
+        Achievement(id: "newYearsEve", category: .fun, emoji: "🎇", requirement: .flag(\.newYearsEve)),
+        Achievement(id: "schnapszahl", category: .fun, emoji: "🔢", requirement: .flag(\.schnapszahl)),
+        Achievement(id: "oneWordDay", category: .fun, emoji: "🐢", requirement: .count(\.oneWordDayStreak, 7)),
+
+        // --- Erweiterung: Themen ---
+        Achievement(id: "themenMeister", category: .learned, emoji: "🗂️", requirement: .flag(\.groupMastered))
     ]
 }
 

@@ -6,6 +6,10 @@ import SwiftData
 /// die *neu* freigeschalteten Badges zurück (für das Freischalt-Feedback).
 @MainActor
 enum AchievementService {
+    /// Mindestgröße einer Gruppe, damit ihr vollständiges Lernen als „Themen-Meister"
+    /// zählt – verhindert, dass eine winzige Gruppe das Badge trivial freischaltet.
+    static let themenMeisterMinSize = 5
+
     /// Baut die aktuellen Metriken aus dem Store + den Vokabeldaten.
     static func metrics(context: ModelContext, progress: AchievementProgress = AchievementStore.progress) -> AchievementMetrics {
         let learnedRaw = LearningStatus.learned.rawValue
@@ -14,7 +18,18 @@ enum AchievementService {
         return AchievementMetrics.from(progress: progress,
                                        learnedWords: learned,
                                        totalWords: total,
-                                       longestStreak: StreakStore.longest)
+                                       longestStreak: StreakStore.longest,
+                                       groupMastered: hasMasteredGroup(context: context))
+    }
+
+    /// Ist mindestens eine ausreichend große Vokabelgruppe komplett gelernt?
+    private static func hasMasteredGroup(context: ModelContext) -> Bool {
+        let learnedRaw = LearningStatus.learned.rawValue
+        let groups = (try? context.fetch(FetchDescriptor<VocabGroup>())) ?? []
+        return groups.contains { group in
+            group.vocabs.count >= themenMeisterMinSize
+                && group.vocabs.allSatisfy { $0.statusRaw == learnedRaw }
+        }
     }
 
     /// Wertet den aktuellen Stand aus und schaltet neue Badges frei (persistiert).
@@ -31,13 +46,21 @@ enum AchievementService {
     /// - Returns: die neu freigeschalteten Badges.
     @discardableResult
     static func registerSession(modes: Set<PracticeMode>,
-                                weekday: Int,
-                                hour: Int,
+                                date: Date = .now,
                                 isPerfect: Bool,
-                                context: ModelContext,
-                                on date: Date = .now) -> [Achievement] {
+                                isFlawless: Bool = false,
+                                selfCorrected: Bool = false,
+                                newlyLearned: Int = 0,
+                                currentStreak: Int = 0,
+                                context: ModelContext) -> [Achievement] {
         var progress = AchievementStore.progress
-        progress.recordSession(modes: modes, weekday: weekday, hour: hour, isPerfect: isPerfect)
+        progress.recordSession(modes: modes,
+                               date: date,
+                               isPerfect: isPerfect,
+                               isFlawless: isFlawless,
+                               selfCorrected: selfCorrected,
+                               newlyLearned: newlyLearned,
+                               currentStreak: currentStreak)
         AchievementStore.progress = progress
 
         let unlocked = AchievementEvaluator.newlyUnlocked(metrics: metrics(context: context, progress: progress),

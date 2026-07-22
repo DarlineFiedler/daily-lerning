@@ -3,6 +3,8 @@ import Foundation
 enum AchievementKeys {
     static let unlockedIDs = "achievements.unlockedIDs"
     static let unlockDates = "achievements.unlockDates" // [id: timeIntervalSince1970]
+    static let progress = "achievements.progress.v2" // JSON-kodierter AchievementProgress
+    // Legacy-Skalar-Keys – nur noch für die einmalige Migration alter Installationen.
     static let modesUsed = "achievements.modesUsed"
     static let weekdays = "achievements.weekdays"
     static let sessions = "achievements.sessions"
@@ -22,23 +24,29 @@ enum AchievementStore {
 
     static var progress: AchievementProgress {
         get {
-            AchievementProgress(
-                modesUsed: Set(d.stringArray(forKey: AchievementKeys.modesUsed) ?? []),
-                weekdays: Set((d.array(forKey: AchievementKeys.weekdays) as? [Int]) ?? []),
-                sessionsCompleted: d.integer(forKey: AchievementKeys.sessions),
-                perfectRounds: d.integer(forKey: AchievementKeys.perfectRounds),
-                nightOwl: d.bool(forKey: AchievementKeys.nightOwl),
-                earlyBird: d.bool(forKey: AchievementKeys.earlyBird)
-            )
+            // Aktueller Zustand liegt als JSON vor; sonst einmalig aus den Legacy-Keys migrieren.
+            if let data = d.data(forKey: AchievementKeys.progress),
+               let decoded = try? JSONDecoder().decode(AchievementProgress.self, from: data) {
+                return decoded
+            }
+            return legacyProgress()
         }
         set {
-            d.set(Array(newValue.modesUsed), forKey: AchievementKeys.modesUsed)
-            d.set(Array(newValue.weekdays), forKey: AchievementKeys.weekdays)
-            d.set(newValue.sessionsCompleted, forKey: AchievementKeys.sessions)
-            d.set(newValue.perfectRounds, forKey: AchievementKeys.perfectRounds)
-            d.set(newValue.nightOwl, forKey: AchievementKeys.nightOwl)
-            d.set(newValue.earlyBird, forKey: AchievementKeys.earlyBird)
+            guard let data = try? JSONEncoder().encode(newValue) else { return }
+            d.set(data, forKey: AchievementKeys.progress)
         }
+    }
+
+    /// Baut den Fortschritt aus den alten Skalar-Keys (Installationen vor der JSON-Ablage).
+    private static func legacyProgress() -> AchievementProgress {
+        AchievementProgress(
+            modesUsed: Set(d.stringArray(forKey: AchievementKeys.modesUsed) ?? []),
+            weekdays: Set((d.array(forKey: AchievementKeys.weekdays) as? [Int]) ?? []),
+            sessionsCompleted: d.integer(forKey: AchievementKeys.sessions),
+            perfectRounds: d.integer(forKey: AchievementKeys.perfectRounds),
+            nightOwl: d.bool(forKey: AchievementKeys.nightOwl),
+            earlyBird: d.bool(forKey: AchievementKeys.earlyBird)
+        )
     }
 
     // MARK: - Freigeschaltete Badges
