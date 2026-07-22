@@ -41,6 +41,10 @@ final class PracticeSession {
     private(set) var missedVocabs: [Vocab] = []
     /// Wörter, deren Status in dieser Session aufgestiegen ist.
     private(set) var leveledUpVocabs: [Vocab] = []
+    /// In dieser Runde neu freigeschaltete Badges (für das Freischalt-Feedback).
+    private(set) var newlyUnlocked: [Achievement] = []
+    /// Verhindert, dass die Runden-Auswertung (Achievements) mehrfach läuft.
+    private var didFinalize = false
 
     init(vocabs: [Vocab], distractorPool: [Vocab], config: PracticeConfig, context: ModelContext) {
         self.context = context
@@ -83,6 +87,25 @@ final class PracticeSession {
         StreakStore.registerActivity() // idempotent pro Kalendertag
         context.saveOrLog()
         index += 1
+        if isFinished { finalizeRound() }
+    }
+
+    /// Einmalige Auswertung am Rundenende: Übungsrunde verbuchen und ggf. neue
+    /// Badges freischalten. Idempotent pro Runde (`didFinalize`).
+    private func finalizeRound() {
+        guard !didFinalize else { return }
+        didFinalize = true
+        let cal = Calendar.current
+        let now = Date.now
+        // Fehlerfreie Runde mit genug Wörtern → „Makellos".
+        let isPerfect = wrongCount == 0 && total >= 5
+        newlyUnlocked = AchievementService.registerSession(
+            modes: Set(items.map(\.mode)),
+            weekday: cal.component(.weekday, from: now),
+            hour: cal.component(.hour, from: now),
+            isPerfect: isPerfect,
+            context: context
+        )
     }
 
     /// Startet denselben Satz Wörter erneut.
@@ -104,6 +127,8 @@ final class PracticeSession {
         wrongCount = 0
         missedVocabs = []
         leveledUpVocabs = []
+        newlyUnlocked = []
+        didFinalize = false
     }
 
     // MARK: - Aufgaben-Aufbau
