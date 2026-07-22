@@ -257,46 +257,56 @@ struct AchievementProgress: Equatable, Codable {
         let month = comps.month ?? 1
         let dayOfMonth = comps.day ?? 1
 
-        // --- Basis (wie bisher) ---
+        if selfCorrected { selfCorrection = true }
+        recordBasics(modeRaws: modeRaws, weekday: weekday, hour: hour, month: month, isPerfect: isPerfect)
+        recordSpecialDates(weekday: weekday, hour: hour, minute: minute, dayOfMonth: dayOfMonth, month: month)
+        recordSeries(modeRaws: modeRaws, day: day, hour: hour, isFlawless: isFlawless, calendar: calendar)
+        recordDayBuffer(modeRaws: modeRaws, day: day, newlyLearned: newlyLearned, calendar: calendar)
+        recordComeback(day: day, currentStreak: currentStreak, calendar: calendar)
+    }
+
+    // MARK: - Teil-Schritte von recordSession (getrennt für geringe Komplexität)
+
+    /// Zähler + einfache Tages-/Uhrzeit-Flags (Basis, Feierabend, Wochenende, Jahreszeit).
+    private mutating func recordBasics(modeRaws: Set<String>, weekday: Int, hour: Int, month: Int, isPerfect: Bool) {
         modesUsed.formUnion(modeRaws)
         weekdays.insert(weekday)
         sessionsCompleted += 1
         if isPerfect { perfectRounds += 1 }
         if hour < 5 { nightOwl = true } // 0–4:59 Uhr → Nachteule
         if (5 ..< 8).contains(hour) { earlyBird = true } // 5–7:59 Uhr → Früher Vogel
-
-        // --- Einfache Kalender-/Uhrzeit-Flags ---
         if (18 ..< 20).contains(hour) { afterWork = true } // Feierabend
         if weekday == 1 || weekday == 7 { weekend = true } // 1=So, 7=Sa
+        seasons.insert(Self.season(forMonth: month))
+    }
+
+    /// Seltene Kalender-Flags (Geisterstunde, Freitag der 13., Silvester).
+    private mutating func recordSpecialDates(weekday: Int, hour: Int, minute: Int, dayOfMonth: Int, month: Int) {
         if hour == 0, minute == 0 { ghostHour = true } // exakt Mitternacht
         if weekday == 6, dayOfMonth == 13 { fridayThe13th = true } // 6=Fr
         if month == 12, dayOfMonth == 31 { newYearsEve = true }
-        if selfCorrected { selfCorrection = true }
-        seasons.insert(Self.season(forMonth: month))
+    }
 
-        // --- Fehlerfrei-Serie (Runden-basiert) ---
+    /// Runden-/Tages-Serien: fehlerfrei, Nächte nach Mitternacht, gleicher Modus an Folgetagen.
+    private mutating func recordSeries(modeRaws: Set<String>, day: Date, hour: Int, isFlawless: Bool, calendar: Calendar) {
         flawlessRun.note(success: isFlawless)
-
-        // --- Nächte nach Mitternacht (Tages-Serie) ---
         if hour < 5 { nightNights.note(day: day, calendar: calendar) }
-
-        // --- Gleicher Modus an Folgetagen (nur Ein-Modus-Runden, erste des Tages) ---
-        if modeRaws.count == 1, let onlyMode = modeRaws.first {
-            let alreadyToday = sameMode.lastDay.map { calendar.isDate($0, inSameDayAs: day) } ?? false
-            if !alreadyToday {
-                let gap = sameMode.lastDay.map { calendar.dateComponents([.day], from: $0, to: day).day ?? 0 }
-                if gap == 1, sameModeMode == onlyMode {
-                    sameMode.run += 1
-                } else {
-                    sameMode.run = 1
-                    sameModeMode = onlyMode
-                }
-                sameMode.lastDay = day
-                sameMode.best = Swift.max(sameMode.best, sameMode.run)
-            }
+        // Gleicher (einziger) Modus an Folgetagen – nur die erste Ein-Modus-Runde des Tages.
+        guard modeRaws.count == 1, let onlyMode = modeRaws.first else { return }
+        if sameMode.lastDay.map({ calendar.isDate($0, inSameDayAs: day) }) ?? false { return }
+        let gap = sameMode.lastDay.map { calendar.dateComponents([.day], from: $0, to: day).day ?? 0 }
+        if gap == 1, sameModeMode == onlyMode {
+            sameMode.run += 1
+        } else {
+            sameMode.run = 1
+            sameModeMode = onlyMode
         }
+        sameMode.lastDay = day
+        sameMode.best = Swift.max(sameMode.best, sameMode.run)
+    }
 
-        // --- Tagespuffer (Doppelpack, alle Modi, genau 1 Wort) ---
+    /// Tagespuffer: Doppelpack, alle Modi an einem Tag, „genau 1 Wort am Tag".
+    private mutating func recordDayBuffer(modeRaws: Set<String>, day: Date, newlyLearned: Int, calendar: Calendar) {
         if currentDay.map({ !calendar.isDate($0, inSameDayAs: day) }) ?? true {
             currentDay = day
             modesToday = []
@@ -309,10 +319,9 @@ struct AchievementProgress: Equatable, Codable {
         newWordsToday += newlyLearned
         if modesToday.count >= PracticeMode.allCases.count { allModesOneDay = true }
         if sessionsToday >= 2 { doublePack = true }
-
-        // „Ein Wort am Tag": Tag zählt, solange genau 1 neues Wort. Kommt am selben
-        // Tag ein zweites dazu, wird die (optimistisch gezählte) Serie zurückgerollt;
-        // `best` bleibt bewusst stehen (augenzwinkerndes Easter-Egg).
+        // „Ein Wort am Tag": Tag zählt, solange genau 1 neues Wort. Kommt am selben Tag
+        // ein zweites dazu, wird die optimistisch gezählte Serie zurückgerollt; `best`
+        // bleibt bewusst stehen (augenzwinkerndes Easter-Egg).
         if newWordsToday == 1, !oneWordCountedToday {
             oneWordPreRun = oneWordDays.run
             oneWordPreLastDay = oneWordDays.lastDay
@@ -323,15 +332,15 @@ struct AchievementProgress: Equatable, Codable {
             oneWordDays.lastDay = oneWordPreLastDay
             oneWordCountedToday = false
         }
+    }
 
-        // --- Comeback nach Pause (Tages-Gap zur letzten Session) ---
+    /// Comeback nach ≥3 Tagen Pause + Serien-Comeback nach gerissenem Streak.
+    private mutating func recordComeback(day: Date, currentStreak: Int, calendar: Calendar) {
         if let last = lastSessionDay {
             let gap = calendar.dateComponents([.day], from: calendar.startOfDay(for: last), to: day).day ?? 0
             if gap >= 3 { comeback = true }
         }
         lastSessionDay = day
-
-        // --- Serien-Comeback: nach gerissenem Streak einen längeren aufbauen ---
         if currentStreak < lastStreakValue {
             hadBreak = true
             preBreakStreak = lastStreakValue

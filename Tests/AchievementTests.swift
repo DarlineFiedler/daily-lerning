@@ -281,7 +281,7 @@ final class AchievementTests: XCTestCase {
     private static let storeKeys = [
         AchievementKeys.unlockedIDs, AchievementKeys.unlockDates, AchievementKeys.progress,
         AchievementKeys.modesUsed, AchievementKeys.weekdays, AchievementKeys.sessions,
-        AchievementKeys.perfectRounds, AchievementKeys.nightOwl, AchievementKeys.earlyBird,
+        AchievementKeys.perfectRounds, AchievementKeys.nightOwl, AchievementKeys.earlyBird
     ]
     private var savedDefaults: [String: Any?] = [:]
 
@@ -293,8 +293,11 @@ final class AchievementTests: XCTestCase {
         }
         defer {
             for key in Self.storeKeys {
-                if let value = savedDefaults[key], let value { d.set(value, forKey: key) }
-                else { d.removeObject(forKey: key) }
+                if let value = savedDefaults[key], let value {
+                    d.set(value, forKey: key)
+                } else {
+                    d.removeObject(forKey: key)
+                }
             }
             savedDefaults = [:]
         }
