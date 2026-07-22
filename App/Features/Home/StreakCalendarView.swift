@@ -5,6 +5,8 @@ import SwiftUI
 struct StreakCalendarView: View {
     private let activeDays: Set<Date>
     private let jokerDays: Set<Date>
+    /// Ältester verfolgter Tag – vorab berechnet, statt pro Zelle neu zu ermitteln.
+    private let firstTrackedDay: Date?
     private let calendar: Calendar
     private let today: Date
 
@@ -13,8 +15,11 @@ struct StreakCalendarView: View {
     init(activeDays: [Date], jokerUses: [Date], calendar: Calendar = .current, today: Date = .now) {
         self.calendar = calendar
         self.today = today
-        self.activeDays = Set(activeDays.map { calendar.startOfDay(for: $0) })
-        jokerDays = Set(jokerUses.map { calendar.startOfDay(for: $0) })
+        let active = Set(activeDays.map { calendar.startOfDay(for: $0) })
+        let joker = Set(jokerUses.map { calendar.startOfDay(for: $0) })
+        self.activeDays = active
+        jokerDays = joker
+        firstTrackedDay = active.union(joker).min()
         _monthAnchor = State(initialValue: today)
     }
 
@@ -135,10 +140,6 @@ struct StreakCalendarView: View {
     }
 
     // MARK: - Berechnungen
-
-    private var firstTrackedDay: Date? {
-        activeDays.union(jokerDays).min()
-    }
 
     /// Tage des angezeigten Monats, mit führenden `nil`-Platzhaltern bis zum
     /// ersten Wochentag (respektiert `firstWeekday`).

@@ -137,6 +137,21 @@ final class StreakTests: XCTestCase {
         XCTAssertEqual(s.displayStreak(asOf: day(2026, 7, 16), calendar: cal, maxJokers: maxJokers), 0)
     }
 
+    func testHistoryOlderThanRetentionIsPruned() {
+        // Registrierdatum liegt `historyRetentionDays` nach `keep`; die Grenze fällt
+        // damit genau auf `keep`, sodass `stale` (1 Tag davor) herausfällt.
+        let keep = day(2026, 7, 16)
+        let register = cal.date(byAdding: .day, value: StreakState.historyRetentionDays, to: keep)!
+        let stale = cal.date(byAdding: .day, value: -1, to: keep)!
+        var s = StreakState(lastActiveDay: keep, weekAnchor: cal.startOfWeek(for: keep),
+                            jokerUses: [stale], activeDays: [stale, keep])
+        s = s.registeringActivity(on: register, calendar: cal, maxJokers: maxJokers)
+        let active = Set(s.activeDays.map { cal.startOfDay(for: $0) })
+        XCTAssertFalse(active.contains(cal.startOfDay(for: stale)), "Zu alte aktive Tage werden entfernt")
+        XCTAssertTrue(active.contains(cal.startOfDay(for: keep)), "Tage genau an der Grenze bleiben erhalten")
+        XCTAssertTrue(s.jokerUses.isEmpty, "Zu alte Joker-Einsätze werden entfernt")
+    }
+
     // MARK: - Aktive Tage (Kalender)
 
     func testActiveDaysAreRecorded() {

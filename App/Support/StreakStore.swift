@@ -24,6 +24,11 @@ struct StreakState: Equatable {
     /// Alle Tage (Tagesanfang) mit mindestens einer Aktivität – für den Kalender.
     var activeDays: [Date] = []
 
+    /// Aufbewahrungsfenster (Tage) für den Verlauf (`activeDays`, `jokerUses`).
+    /// Groß genug für die Kalenderansicht, verhindert aber unbegrenztes Wachstum
+    /// im geteilten `UserDefaults`.
+    static let historyRetentionDays = 400
+
     /// Vergibt fällige Wochenjoker: 1 pro angebrochener Kalenderwoche seit
     /// `weekAnchor`, gedeckelt bei `max`. Idempotent innerhalb derselben Woche.
     /// Beim allerersten Aufruf gibt es sofort einen Startjoker.
@@ -48,6 +53,7 @@ struct StreakState: Equatable {
     /// der Joker-Vorrat nicht, startet die Streak neu bei 1. Idempotent pro Tag.
     func registeringActivity(on date: Date, calendar: Calendar, maxJokers: Int) -> StreakState {
         var s = grantingJokers(asOf: date, calendar: calendar, max: maxJokers)
+        s.pruneHistory(before: date, calendar: calendar)
         let today = calendar.startOfDay(for: date)
         if !s.activeDays.contains(today) { s.activeDays.append(today) }
 
@@ -101,6 +107,14 @@ struct StreakState: Equatable {
         let missed = gap - 1
         return s.jokers >= missed ? s.current : 0
     }
+
+    /// Entfernt Verlaufseinträge, die älter als `historyRetentionDays` sind.
+    private mutating func pruneHistory(before date: Date, calendar: Calendar) {
+        let start = calendar.startOfDay(for: date)
+        guard let cutoff = calendar.date(byAdding: .day, value: -Self.historyRetentionDays, to: start) else { return }
+        activeDays.removeAll { $0 < cutoff }
+        jokerUses.removeAll { $0 < cutoff }
+    }
 }
 
 /// Tages-Streak (aufeinanderfolgende Kalendertage mit mindestens einer geübten
@@ -149,7 +163,9 @@ enum StreakStore {
     /// Vergibt fällige Wochenjoker und persistiert sie. Beim App-Start bzw. beim
     /// Anzeigen des Home-Screens aufrufen, damit der Joker-Stand aktuell ist.
     static func settle(on date: Date = .now, calendar: Calendar = .current) {
-        save(load().grantingJokers(asOf: date, calendar: calendar, max: maxJokers))
+        let state = load()
+        let granted = state.grantingJokers(asOf: date, calendar: calendar, max: maxJokers)
+        if granted != state { save(granted) } // nur schreiben, wenn sich etwas ändert
     }
 
     /// Aktueller Streak, aber 0, wenn abgelaufen und nicht mehr per Joker rettbar.
