@@ -7,6 +7,7 @@ struct AchievementUnlockBanner: View {
     let achievements: [Achievement]
 
     @State private var shown = false
+    @State private var hideTask: Task<Void, Never>?
 
     var body: some View {
         Group {
@@ -55,11 +56,15 @@ struct AchievementUnlockBanner: View {
         .accessibilityAddTraits(.isStaticText)
     }
 
-    /// Einblenden und nach kurzer Zeit automatisch wieder ausblenden.
+    /// Einblenden und nach kurzer Zeit automatisch wieder ausblenden. Ein evtl.
+    /// noch laufender Ausblend-Timer wird verworfen, damit eine neue Badge-Charge
+    /// nicht vom Timer der vorigen vorzeitig ausgeblendet wird.
     private func reveal() {
         shown = true
-        Task {
+        hideTask?.cancel()
+        hideTask = Task {
             try? await Task.sleep(for: .seconds(3.5))
+            guard !Task.isCancelled else { return }
             shown = false
         }
     }

@@ -117,4 +117,54 @@ final class AchievementTests: XCTestCase {
     func testEmptyMetricsUnlockNothing() {
         XCTAssertTrue(AchievementEvaluator.newlyUnlocked(metrics: AchievementMetrics(), alreadyUnlocked: []).isEmpty)
     }
+
+    // MARK: - Persistenz (AchievementStore)
+
+    /// Sichert und leert die Achievement-Keys vor jedem Store-Test und stellt sie
+    /// danach exakt wieder her, damit der geteilte App-Group-Container nicht leakt.
+    private static let storeKeys = [
+        AchievementKeys.unlockedIDs, AchievementKeys.unlockDates, AchievementKeys.modesUsed,
+        AchievementKeys.weekdays, AchievementKeys.sessions, AchievementKeys.perfectRounds,
+        AchievementKeys.nightOwl, AchievementKeys.earlyBird,
+    ]
+    private var savedDefaults: [String: Any?] = [:]
+
+    private func withCleanStore(_ body: () -> Void) {
+        let d = AppGroup.defaults
+        for key in Self.storeKeys {
+            savedDefaults[key] = d.object(forKey: key)
+            d.removeObject(forKey: key)
+        }
+        defer {
+            for key in Self.storeKeys {
+                if let value = savedDefaults[key], let value { d.set(value, forKey: key) }
+                else { d.removeObject(forKey: key) }
+            }
+            savedDefaults = [:]
+        }
+        body()
+    }
+
+    func testProgressRoundTripsThroughDefaults() {
+        withCleanStore {
+            var p = AchievementProgress()
+            p.recordSession(modes: [.review, .writing], weekday: 3, hour: 2, isPerfect: true)
+            p.recordSession(modes: [.listening], weekday: 6, hour: 6, isPerfect: false)
+            AchievementStore.progress = p
+            // Frisch aus den Defaults gelesen muss identisch sein (inkl. Set<Int>-Bridging).
+            XCTAssertEqual(AchievementStore.progress, p)
+        }
+    }
+
+    func testMarkUnlockedIsIdempotentAndKeepsFirstDate() {
+        withCleanStore {
+            let badge = AchievementCatalog.all[0]
+            let first = Date(timeIntervalSince1970: 1_000_000)
+            let later = Date(timeIntervalSince1970: 2_000_000)
+            AchievementStore.markUnlocked([badge], on: first)
+            AchievementStore.markUnlocked([badge], on: later) // erneut → darf Datum nicht überschreiben
+            XCTAssertEqual(AchievementStore.unlockedIDs, [badge.id])
+            XCTAssertEqual(AchievementStore.unlockDate(for: badge.id), first)
+        }
+    }
 }
