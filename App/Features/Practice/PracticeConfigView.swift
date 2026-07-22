@@ -18,9 +18,6 @@ struct PracticeConfigView: View {
     @State private var showingSavePreset = false
     @State private var newPresetName = ""
 
-    /// Wählbare Session-Längen (nil = alle).
-    private let limitOptions: [Int?] = [10, 20, 50, nil]
-
     /// `preselected` sind die beim Öffnen bereits gewählten Gruppen. Standardmäßig
     /// leer – leere Auswahl bedeutet „alle Gruppen" (siehe `resolvedGroups`).
     init(preselected: [VocabGroup] = []) {
@@ -57,7 +54,7 @@ struct PracticeConfigView: View {
                     if allGroups.count > 1 { groupSection }
                     statusSection
                     DirectionModeSelection(direction: $direction, modes: $selectedModes)
-                    countSection
+                    WordLimitSelection(wordLimit: $wordLimit)
                 }
                 .padding(Theme.Spacing.m)
             }
@@ -141,22 +138,6 @@ struct PracticeConfigView: View {
                             Label(L("common.delete"), systemImage: "trash")
                         }
                     }
-                }
-            }
-        }
-    }
-
-    private var countSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-            SectionHeader(L("practice.config.count"))
-            FlowChips {
-                ForEach(limitOptions, id: \.self) { option in
-                    SelectableChip(
-                        title: option.map(String.init) ?? L("practice.count.all"),
-                        systemImage: "number",
-                        tint: Theme.brandStart,
-                        isSelected: wordLimit == option
-                    ) { wordLimit = option }
                 }
             }
         }

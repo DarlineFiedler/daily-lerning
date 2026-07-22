@@ -15,13 +15,22 @@ struct ReviewSessionView: View {
     /// CSV der rawValues – leer = alle Modi (wie bisheriges Verhalten).
     @AppStorage("reviewDirection") private var directionRaw = PracticeDirection.mixed.rawValue
     @AppStorage("reviewModes") private var modesRaw = ""
+    @AppStorage("reviewWordLimit") private var wordLimitRaw = 0
 
     @State private var direction: PracticeDirection = .mixed
     @State private var modes: Set<PracticeMode> = []
+    @State private var wordLimit: Int?
     @State private var session: PracticeSession?
 
     /// Heute noch offene Wörter (lernen bzw. wiederholen) – gleiche Logik wie die Home-Karte.
     private var dueVocabs: [Vocab] { DailyPlan.today(from: allVocabs).words }
+
+    /// So viele Wörter werden diesen Durchgang tatsächlich abgefragt (Begrenzung
+    /// berücksichtigt). Die übrigen bleiben für heute offen und tauchen beim
+    /// nächsten Öffnen erneut im Pool auf.
+    private var effectiveCount: Int {
+        min(dueVocabs.count, wordLimit ?? dueVocabs.count)
+    }
 
     var body: some View {
         NavigationStack {
@@ -43,8 +52,11 @@ struct ReviewSessionView: View {
 
     private var configStep: some View {
         ScrollView {
-            DirectionModeSelection(direction: $direction, modes: $modes)
-                .padding(Theme.Spacing.m)
+            VStack(alignment: .leading, spacing: Theme.Spacing.l) {
+                DirectionModeSelection(direction: $direction, modes: $modes)
+                WordLimitSelection(wordLimit: $wordLimit)
+            }
+            .padding(Theme.Spacing.m)
         }
         .navigationTitle(L("review.config.title"))
         .navigationBarTitleDisplayMode(.inline)
@@ -63,7 +75,7 @@ struct ReviewSessionView: View {
             }
             .buttonStyle(.primary)
 
-            Text(L("group.wordCount", dueVocabs.count))
+            Text(L("group.wordCount", effectiveCount))
                 .font(.appCaption)
                 .foregroundStyle(.secondary)
         }
@@ -74,22 +86,29 @@ struct ReviewSessionView: View {
     /// Lädt die gemerkte Auswahl. Nicht (mehr) verfügbare Modi – z.B. Hören ohne
     /// installierte koreanische Stimme – werden ausgefiltert.
     private func loadSelection() {
-        let selection = ReviewSelection.load(directionRaw: directionRaw, modesRaw: modesRaw)
+        let selection = ReviewSelection.load(directionRaw: directionRaw, modesRaw: modesRaw,
+                                             wordLimitRaw: wordLimitRaw)
         direction = selection.direction
         modes = selection.modes
+        wordLimit = selection.wordLimit
     }
 
     /// Merkt die Auswahl und startet die Session über die heute fälligen Wörter.
+    /// Bei gesetzter Wortanzahl nimmt die Session nur einen Teil des Pools; die
+    /// übrigen Wörter bleiben für heute offen und erscheinen beim nächsten Öffnen
+    /// erneut (siehe `DailyPlan`).
     private func start() {
         let due = dueVocabs
         guard !due.isEmpty else { return }
-        let selection = ReviewSelection(direction: direction, modes: modes)
+        let selection = ReviewSelection(direction: direction, modes: modes, wordLimit: wordLimit)
         directionRaw = selection.direction.rawValue
         modesRaw = selection.modesRaw
+        wordLimitRaw = selection.wordLimitRaw
         session = PracticeSession(
             vocabs: due,
             distractorPool: allVocabs,
-            config: PracticeConfig(statuses: [], direction: direction, modes: modes),
+            config: PracticeConfig(statuses: [], direction: direction, modes: modes,
+                                   wordLimit: wordLimit),
             context: context
         )
     }

@@ -78,16 +78,21 @@ struct ReviewSelection: Equatable {
     var direction: PracticeDirection = .mixed
     /// Leere Menge = alle Modi (bisheriges Verhalten).
     var modes: Set<PracticeMode> = []
+    /// Maximale Wortanzahl pro Durchgang. `nil` = alle heute fälligen Wörter.
+    var wordLimit: Int?
 
     /// Rekonstruiert die Auswahl aus den gespeicherten rawValues. Eine ungültige
     /// Richtung fällt auf `.mixed` zurück; unbekannte oder nicht (mehr) verfügbare
     /// Modi – z.B. Hören ohne installierte koreanische Stimme – werden ausgefiltert.
-    static func load(directionRaw: String, modesRaw: String,
+    /// `wordLimitRaw` ≤ 0 bedeutet „alle Wörter" (`nil`), da `@AppStorage` kein
+    /// optionales Int kennt.
+    static func load(directionRaw: String, modesRaw: String, wordLimitRaw: Int = 0,
                      available: [PracticeMode] = PracticeMode.available) -> ReviewSelection {
         let direction = PracticeDirection(rawValue: directionRaw) ?? .mixed
         let stored = modesRaw.split(separator: ",").compactMap { PracticeMode(rawValue: String($0)) }
         return ReviewSelection(direction: direction,
-                               modes: Set(stored).intersection(Set(available)))
+                               modes: Set(stored).intersection(Set(available)),
+                               wordLimit: wordLimitRaw > 0 ? wordLimitRaw : nil)
     }
 
     /// CSV der Modus-rawValues (stabil sortiert, damit derselbe Zustand denselben
@@ -95,6 +100,9 @@ struct ReviewSelection: Equatable {
     var modesRaw: String {
         modes.map(\.rawValue).sorted().joined(separator: ",")
     }
+
+    /// Für `@AppStorage` speicherbare Wortanzahl – 0 = alle (`nil`).
+    var wordLimitRaw: Int { wordLimit ?? 0 }
 }
 
 /// Konfiguration eines Lernvorgangs.

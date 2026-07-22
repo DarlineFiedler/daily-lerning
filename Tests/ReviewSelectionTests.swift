@@ -58,12 +58,40 @@ final class ReviewSelectionTests: XCTestCase {
         XCTAssertEqual(a, "multipleChoice,writing")
     }
 
+    // MARK: - Wortanzahl (wordLimit)
+
+    func testLoadDefaultsToNilWordLimit() {
+        // Kein gespeicherter Wert (0) = keine Begrenzung.
+        let selection = ReviewSelection.load(directionRaw: "", modesRaw: "", available: allModes)
+        XCTAssertNil(selection.wordLimit)
+    }
+
+    func testLoadParsesWordLimit() {
+        let selection = ReviewSelection.load(directionRaw: "mixed", modesRaw: "",
+                                             wordLimitRaw: 20, available: allModes)
+        XCTAssertEqual(selection.wordLimit, 20)
+    }
+
+    func testLoadTreatsNonPositiveWordLimitAsAll() {
+        for raw in [0, -1] {
+            let selection = ReviewSelection.load(directionRaw: "mixed", modesRaw: "",
+                                                 wordLimitRaw: raw, available: allModes)
+            XCTAssertNil(selection.wordLimit)
+        }
+    }
+
+    func testWordLimitRawIsZeroWhenNil() {
+        XCTAssertEqual(ReviewSelection(direction: .mixed, modes: [], wordLimit: nil).wordLimitRaw, 0)
+    }
+
     // MARK: - Round-Trip
 
     func testRoundTripPreservesSelection() {
-        let original = ReviewSelection(direction: .meaningToWord, modes: [.review, .writing])
+        let original = ReviewSelection(direction: .meaningToWord, modes: [.review, .writing],
+                                       wordLimit: 10)
         let restored = ReviewSelection.load(directionRaw: original.direction.rawValue,
                                             modesRaw: original.modesRaw,
+                                            wordLimitRaw: original.wordLimitRaw,
                                             available: allModes)
         XCTAssertEqual(restored, original)
     }
