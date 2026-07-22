@@ -11,6 +11,7 @@ struct HomeView: View {
     @State private var practiceGroup: VocabGroup?
     @State private var showingNewGroup = false
     @State private var showReview = false
+    @State private var showStreakDetail = false
 
     // MARK: Abgeleitete Werte
 
@@ -19,6 +20,8 @@ struct HomeView: View {
     private var plan: DailyPlan.Result { DailyPlan.today(from: vocabs) }
     /// Aktueller Tages-Streak (0, wenn abgelaufen).
     private var streak: Int { StreakStore.displayStreak() }
+    /// Verfügbare Streak-Freeze-Joker.
+    private var jokers: Int { StreakStore.availableJokers() }
     private var rate: Int {
         guard !vocabs.isEmpty else { return 0 }
         return Int(round(Double(learnedCount) / Double(vocabs.count) * 100))
@@ -59,10 +62,17 @@ struct HomeView: View {
             }
             .background(Theme.background.ignoresSafeArea())
             .navigationBarHidden(true)
+            .onAppear { StreakStore.settle() }
             .sheet(item: $revealWord) { WordRevealSheet(wordID: $0.id) }
             .sheet(item: $practiceGroup) { _ in PracticeConfigView() }
             .sheet(isPresented: $showingNewGroup) { GroupEditView(group: nil) }
             .sheet(isPresented: $showReview) { ReviewSessionView() }
+            .sheet(isPresented: $showStreakDetail) {
+                StreakDetailView(streak: streak, longest: StreakStore.longest,
+                                 jokers: jokers, maxJokers: StreakStore.maxJokers,
+                                 jokerUses: StreakStore.jokerUses,
+                                 activeDays: StreakStore.activeDays)
+            }
         }
     }
 
@@ -76,7 +86,7 @@ struct HomeView: View {
                         .font(.appTitle3)
                         .opacity(0.9)
                     Spacer()
-                    if streak > 0 { streakBadge }
+                    if streak > 0 || jokers > 0 { streakCluster }
                 }
                 Text(greeting)
                     .font(.appLargeTitle)
@@ -88,13 +98,35 @@ struct HomeView: View {
         .padding(.top, Theme.Spacing.m)
     }
 
+    /// Tappbare Badge-Gruppe (Streak + Joker) – öffnet die Detailansicht.
+    private var streakCluster: some View {
+        Button { showStreakDetail = true } label: {
+            HStack(spacing: Theme.Spacing.xs) {
+                if streak > 0 { streakBadge }
+                if jokers > 0 { jokerBadge }
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint(L("home.streak.detail.hint"))
+    }
+
     private var streakBadge: some View {
-        Label(L("home.streak", streak), systemImage: "flame.fill")
+        badge(L("home.streak", streak), systemImage: "flame.fill")
+            .accessibilityLabel(L("home.streak.a11y", streak))
+    }
+
+    private var jokerBadge: some View {
+        badge("\(jokers)", systemImage: "snowflake")
+            .accessibilityLabel(L("home.jokers.a11y", jokers))
+    }
+
+    private func badge(_ text: String, systemImage: String) -> some View {
+        Label(text, systemImage: systemImage)
             .font(.appCaption.weight(.bold))
             .padding(.horizontal, Theme.Spacing.s)
             .padding(.vertical, Theme.Spacing.xs)
             .background(.white.opacity(0.22), in: Capsule())
-            .accessibilityLabel(L("home.streak.a11y", streak))
     }
 
     // MARK: - Heutiger Tagesplan
