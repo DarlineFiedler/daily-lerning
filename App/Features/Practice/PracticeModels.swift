@@ -103,6 +103,13 @@ struct ReviewSelection: Equatable {
 
     /// Für `@AppStorage` speicherbare Wortanzahl – 0 = alle (`nil`).
     var wordLimitRaw: Int { wordLimit ?? 0 }
+
+    /// Wie viele Wörter aus einem Pool von `poolCount` fälligen tatsächlich
+    /// abgefragt werden: die Begrenzung greift, sonst der ganze Pool. Spiegelt das
+    /// `prefix` in `PracticeSession`, damit die Start-Bar keine zu hohe Zahl zeigt.
+    func effectiveCount(poolCount: Int) -> Int {
+        min(poolCount, wordLimit ?? poolCount)
+    }
 }
 
 /// Konfiguration eines Lernvorgangs.

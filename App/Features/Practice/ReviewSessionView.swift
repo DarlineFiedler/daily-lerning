@@ -29,7 +29,7 @@ struct ReviewSessionView: View {
     /// berücksichtigt). Die übrigen bleiben für heute offen und tauchen beim
     /// nächsten Öffnen erneut im Pool auf.
     private var effectiveCount: Int {
-        min(dueVocabs.count, wordLimit ?? dueVocabs.count)
+        ReviewSelection(wordLimit: wordLimit).effectiveCount(poolCount: dueVocabs.count)
     }
 
     var body: some View {

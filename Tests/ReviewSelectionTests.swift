@@ -84,6 +84,29 @@ final class ReviewSelectionTests: XCTestCase {
         XCTAssertEqual(ReviewSelection(direction: .mixed, modes: [], wordLimit: nil).wordLimitRaw, 0)
     }
 
+    // MARK: - effectiveCount (Begrenzung vs. Pool)
+
+    func testEffectiveCountUsesFullPoolWhenNoLimit() {
+        let selection = ReviewSelection(direction: .mixed, modes: [], wordLimit: nil)
+        XCTAssertEqual(selection.effectiveCount(poolCount: 30), 30)
+    }
+
+    func testEffectiveCountCapsToWordLimit() {
+        let selection = ReviewSelection(direction: .mixed, modes: [], wordLimit: 10)
+        XCTAssertEqual(selection.effectiveCount(poolCount: 30), 10)
+    }
+
+    func testEffectiveCountClampsToPoolWhenLimitExceedsPool() {
+        // 50 gewählt, aber nur 12 fällig → 12 (Start-Bar darf nicht überzeichnen).
+        let selection = ReviewSelection(direction: .mixed, modes: [], wordLimit: 50)
+        XCTAssertEqual(selection.effectiveCount(poolCount: 12), 12)
+    }
+
+    func testEffectiveCountIsZeroForEmptyPool() {
+        let selection = ReviewSelection(direction: .mixed, modes: [], wordLimit: 10)
+        XCTAssertEqual(selection.effectiveCount(poolCount: 0), 0)
+    }
+
     // MARK: - Round-Trip
 
     func testRoundTripPreservesSelection() {
