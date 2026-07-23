@@ -55,6 +55,7 @@ struct GroupEditView: View {
             let count = (try? context.fetchCount(FetchDescriptor<VocabGroup>())) ?? 0
             let newGroup = VocabGroup(name: trimmedName, colorHex: colorHex, sortOrder: count)
             context.insert(newGroup)
+            AchievementService.recordEvent(\.groupCreated, context: context) // „Ordnungssinn"
         }
         context.saveOrLog()
         dismiss()

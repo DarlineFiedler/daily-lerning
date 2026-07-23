@@ -233,6 +233,62 @@ final class AchievementTests: XCTestCase {
         XCTAssertTrue(p.serienComeback)
     }
 
+    // MARK: - Neue Badges: Kalender, Comeback-König, Sprachmix, Meta
+
+    func testHangulDayFlag() {
+        let cal = Self.utc
+        var p = AchievementProgress()
+        p.recordSession(modes: [.review], date: date(2025, 10, 9, 12), isPerfect: false, calendar: cal)
+        XCTAssertTrue(p.hangulDay)
+        var other = AchievementProgress()
+        other.recordSession(modes: [.review], date: date(2025, 10, 10, 12), isPerfect: false, calendar: cal)
+        XCTAssertFalse(other.hangulDay)
+    }
+
+    func testFullMoonFlag() {
+        let cal = Self.utc
+        var p = AchievementProgress()
+        // 2026-01-03 ist ein Vollmond-Datum in der festen Liste.
+        p.recordSession(modes: [.review], date: date(2026, 1, 3, 20), isPerfect: false, calendar: cal)
+        XCTAssertTrue(p.fullMoon)
+        var other = AchievementProgress()
+        other.recordSession(modes: [.review], date: date(2026, 1, 4, 20), isPerfect: false, calendar: cal)
+        XCTAssertFalse(other.fullMoon)
+    }
+
+    func testComebackCountForKing() {
+        let cal = Self.utc
+        var p = AchievementProgress()
+        p.recordSession(modes: [.review], date: date(2024, 3, 1, 12), isPerfect: false, calendar: cal)
+        p.recordSession(modes: [.review], date: date(2024, 3, 5, 12), isPerfect: false, calendar: cal) // Comeback 1
+        p.recordSession(modes: [.review], date: date(2024, 3, 20, 12), isPerfect: false, calendar: cal) // Comeback 2
+        p.recordSession(modes: [.review], date: date(2024, 4, 1, 12), isPerfect: false, calendar: cal) // Comeback 3
+        XCTAssertEqual(p.comebackCount, 3)
+    }
+
+    func testSprachmixThreeGroupsOneDay() {
+        let cal = Self.utc
+        var p = AchievementProgress()
+        p.recordSession(modes: [.review], date: date(2024, 2, 1, 9), isPerfect: false, groups: ["A"], calendar: cal)
+        p.recordSession(modes: [.review], date: date(2024, 2, 1, 10), isPerfect: false, groups: ["B"], calendar: cal)
+        XCTAssertFalse(p.sprachmix)
+        p.recordSession(modes: [.review], date: date(2024, 2, 1, 11), isPerfect: false, groups: ["C"], calendar: cal)
+        XCTAssertTrue(p.sprachmix) // 3 verschiedene Gruppen am selben Tag
+        // Am nächsten Tag ist der Gruppen-Puffer zurückgesetzt.
+        p.recordSession(modes: [.review], date: date(2024, 2, 2, 9), isPerfect: false, groups: ["A"], calendar: cal)
+        XCTAssertEqual(p.groupsToday, ["A"])
+    }
+
+    func testMetaBadgeNeedsAllOthers() {
+        let meta = AchievementCatalog.all.first { $0.requirement == .meta }
+        XCTAssertNotNil(meta)
+        XCTAssertFalse(meta!.isUnlocked(AchievementMetrics(unlockedBadges: 5, totalBadges: 10)))
+        XCTAssertTrue(meta!.isUnlocked(AchievementMetrics(unlockedBadges: 10, totalBadges: 10)))
+        // Ohne bekannte Gesamtzahl (Default-Metriken) darf Meta nicht auslösen.
+        XCTAssertFalse(meta!.isUnlocked(AchievementMetrics()))
+        XCTAssertEqual(meta!.progressText(AchievementMetrics(unlockedBadges: 3, totalBadges: 10)), "3 / 10")
+    }
+
     // MARK: - Auswertung
 
     func testEvaluatorReturnsOnlyNewlyUnlocked() {

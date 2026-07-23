@@ -19,7 +19,10 @@ enum AchievementService {
                                        learnedWords: learned,
                                        totalWords: total,
                                        longestStreak: StreakStore.longest,
-                                       groupMastered: hasMasteredGroup(context: context))
+                                       groupMastered: hasMasteredGroup(context: context),
+                                       allGroupsMastered: hasMasteredAllGroups(context: context),
+                                       everUsedJoker: !StreakStore.jokerUses.isEmpty,
+                                       unlockedIDs: AchievementStore.unlockedIDs)
     }
 
     /// Ist mindestens eine ausreichend große Vokabelgruppe komplett gelernt?
@@ -29,6 +32,19 @@ enum AchievementService {
         return groups.contains { group in
             group.vocabs.count >= themenMeisterMinSize
                 && group.vocabs.allSatisfy { $0.statusRaw == learnedRaw }
+        }
+    }
+
+    /// Sind *alle* nicht-leeren Vokabelgruppen komplett gelernt (härtere Version von
+    /// „Themen-Meister")? Verlangt insgesamt genug Wörter, damit es nicht trivial ist.
+    private static func hasMasteredAllGroups(context: ModelContext) -> Bool {
+        let learnedRaw = LearningStatus.learned.rawValue
+        let groups = (try? context.fetch(FetchDescriptor<VocabGroup>())) ?? []
+        let nonEmpty = groups.filter { !$0.vocabs.isEmpty }
+        let totalVocabs = nonEmpty.reduce(0) { $0 + $1.vocabs.count }
+        guard !nonEmpty.isEmpty, totalVocabs >= themenMeisterMinSize else { return false }
+        return nonEmpty.allSatisfy { group in
+            group.vocabs.allSatisfy { $0.statusRaw == learnedRaw }
         }
     }
 
@@ -52,6 +68,7 @@ enum AchievementService {
                                 selfCorrected: Bool = false,
                                 newlyLearned: Int = 0,
                                 currentStreak: Int = 0,
+                                groups: Set<String> = [],
                                 context: ModelContext) -> [Achievement] {
         var progress = AchievementStore.progress
         progress.recordSession(modes: modes,
@@ -60,7 +77,26 @@ enum AchievementService {
                                isFlawless: isFlawless,
                                selfCorrected: selfCorrected,
                                newlyLearned: newlyLearned,
-                               currentStreak: currentStreak)
+                               currentStreak: currentStreak,
+                               groups: groups)
+        AchievementStore.progress = progress
+
+        let unlocked = AchievementEvaluator.newlyUnlocked(metrics: metrics(context: context, progress: progress),
+                                                          alreadyUnlocked: AchievementStore.unlockedIDs)
+        AchievementStore.markUnlocked(unlocked, on: date)
+        return unlocked
+    }
+
+    /// Setzt ein einfaches Ereignis-Flag im Fortschritt (z.B. „Suche benutzt") und
+    /// wertet sofort aus. Idempotent: ist das Flag schon gesetzt, passiert nichts.
+    /// - Returns: die dadurch neu freigeschalteten Badges (für ein evtl. Feedback).
+    @discardableResult
+    static func recordEvent(_ keyPath: WritableKeyPath<AchievementProgress, Bool>,
+                            date: Date = .now,
+                            context: ModelContext) -> [Achievement] {
+        var progress = AchievementStore.progress
+        guard !progress[keyPath: keyPath] else { return [] }
+        progress[keyPath: keyPath] = true
         AchievementStore.progress = progress
 
         let unlocked = AchievementEvaluator.newlyUnlocked(metrics: metrics(context: context, progress: progress),

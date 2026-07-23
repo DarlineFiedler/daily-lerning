@@ -118,6 +118,7 @@ final class PracticeSession {
             selfCorrected: didSelfCorrect,
             newlyLearned: newlyLearnedCount,
             currentStreak: StreakStore.current,
+            groups: Set(items.compactMap { $0.vocab.group?.id.uuidString }),
             context: context
         )
     }

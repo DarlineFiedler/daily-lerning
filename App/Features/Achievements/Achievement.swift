@@ -19,11 +19,14 @@ struct Achievement: Identifiable, Equatable {
         var titleKey: String { "ach.category.\(rawValue)" }
     }
 
-    /// Freischalt-Bedingung – entweder eine zählbare Schwelle (mit Fortschrittsbalken)
-    /// oder ein einfaches Ja/Nein-Flag.
+    /// Freischalt-Bedingung – eine zählbare Schwelle (mit Fortschrittsbalken),
+    /// ein einfaches Ja/Nein-Flag oder das Meta-Ziel „alle anderen Badges".
     enum Requirement: Equatable {
         case count(KeyPath<AchievementMetrics, Int>, Int)
         case flag(KeyPath<AchievementMetrics, Bool>)
+        /// 100 %: alle übrigen (nicht-Meta-)Badges sind freigeschaltet. Wird aus
+        /// `unlockedBadges`/`totalBadges` in den Metriken abgeleitet.
+        case meta
     }
 
     /// Stabile ID – zugleich Baustein der Localization-Keys. Nie ändern (sonst gilt
@@ -41,6 +44,7 @@ struct Achievement: Identifiable, Equatable {
         switch requirement {
         case let .count(keyPath, target): return metrics[keyPath: keyPath] >= target
         case let .flag(keyPath): return metrics[keyPath: keyPath]
+        case .meta: return metrics.totalBadges > 0 && metrics.unlockedBadges >= metrics.totalBadges
         }
     }
 
@@ -52,13 +56,23 @@ struct Achievement: Identifiable, Equatable {
             return min(1, Double(metrics[keyPath: keyPath]) / Double(target))
         case let .flag(keyPath):
             return metrics[keyPath: keyPath] ? 1 : 0
+        case .meta:
+            guard metrics.totalBadges > 0 else { return 0 }
+            return min(1, Double(metrics.unlockedBadges) / Double(metrics.totalBadges))
         }
     }
 
-    /// „x / y" für zählbare Ziele – für Flags gibt es nichts zu zählen (`nil`).
+    /// „x / y" für zählbare Ziele (auch das Meta-Ziel) – für Flags gibt es nichts
+    /// zu zählen (`nil`).
     func progressText(_ metrics: AchievementMetrics) -> String? {
-        guard case let .count(keyPath, target) = requirement else { return nil }
-        return "\(min(metrics[keyPath: keyPath], target)) / \(target)"
+        switch requirement {
+        case let .count(keyPath, target):
+            return "\(min(metrics[keyPath: keyPath], target)) / \(target)"
+        case .meta:
+            return "\(min(metrics.unlockedBadges, metrics.totalBadges)) / \(metrics.totalBadges)"
+        case .flag:
+            return nil
+        }
     }
 }
 
@@ -87,22 +101,42 @@ struct AchievementMetrics: Equatable {
     var fridayThe13th = false
     var newYearsEve = false
     var serienComeback = false
+    var hangulDay = false
+    var fullMoon = false
+    var sprachmix = false
+    // Ereignis-Flags aus der App-Nutzung (außerhalb der Übungsrunde).
+    var searchUsed = false
+    var languageChanged = false
+    var widgetUsed = false
+    var groupCreated = false
     // Vokabel-/Gruppen-abhängige Flags.
     var schnapszahl = false
     var groupMastered = false
+    var allGroupsMastered = false
+    var everUsedJoker = false
     // Zählbare Serien/Vielfalt.
     var distinctSeasons = 0
     var sameModeDayStreak = 0
     var nightDayStreak = 0
     var oneWordDayStreak = 0
     var flawlessRoundStreak = 0
+    var comebackCount = 0
+    // Meta-Abschluss: freigeschaltete vs. gesamte (nicht-Meta-)Badges.
+    var unlockedBadges = 0
+    var totalBadges = 0
 
     static func from(progress: AchievementProgress,
                      learnedWords: Int,
                      totalWords: Int,
                      longestStreak: Int,
-                     groupMastered: Bool = false) -> AchievementMetrics {
-        AchievementMetrics(
+                     groupMastered: Bool = false,
+                     allGroupsMastered: Bool = false,
+                     everUsedJoker: Bool = false,
+                     unlockedIDs: Set<String> = [],
+                     catalog: [Achievement] = AchievementCatalog.all) -> AchievementMetrics {
+        // Für das Meta-Badge zählen alle Badges außer dem Meta-Badge selbst.
+        let nonMeta = catalog.filter { $0.requirement != .meta }
+        return AchievementMetrics(
             learnedWords: learnedWords,
             totalWords: totalWords,
             longestStreak: longestStreak,
@@ -123,14 +157,26 @@ struct AchievementMetrics: Equatable {
             fridayThe13th: progress.fridayThe13th,
             newYearsEve: progress.newYearsEve,
             serienComeback: progress.serienComeback,
+            hangulDay: progress.hangulDay,
+            fullMoon: progress.fullMoon,
+            sprachmix: progress.sprachmix,
+            searchUsed: progress.searchUsed,
+            languageChanged: progress.languageChanged,
+            widgetUsed: progress.widgetUsed,
+            groupCreated: progress.groupCreated,
             // „Schnapszahl": exakt 111 oder 222 gelernte Wörter (Easter Egg).
             schnapszahl: learnedWords == 111 || learnedWords == 222,
             groupMastered: groupMastered,
+            allGroupsMastered: allGroupsMastered,
+            everUsedJoker: everUsedJoker,
             distinctSeasons: progress.seasons.count,
             sameModeDayStreak: progress.sameMode.best,
             nightDayStreak: progress.nightNights.best,
             oneWordDayStreak: progress.oneWordDays.best,
-            flawlessRoundStreak: progress.flawlessRun.best
+            flawlessRoundStreak: progress.flawlessRun.best,
+            comebackCount: progress.comebackCount,
+            unlockedBadges: nonMeta.filter { unlockedIDs.contains($0.id) }.count,
+            totalBadges: nonMeta.count
         )
     }
 }
@@ -194,6 +240,18 @@ struct AchievementProgress: Equatable, Codable {
     var allModesOneDay = false // alle 4 Modi an einem Kalendertag
     var doublePack = false // ≥2 Runden am selben Tag
     var serienComeback = false // nach gerissenem Streak einen längeren aufgebaut
+    var hangulDay = false // am 9. Oktober (한글날) geübt
+    var fullMoon = false // an einem Vollmond-Datum geübt
+    var sprachmix = false // Wörter aus ≥3 Gruppen an einem Tag geübt
+
+    // Zähler für mehrfache Comebacks (nach je ≥3 Tagen Pause wieder geübt).
+    var comebackCount = 0
+
+    // Ereignis-Flags aus der App-Nutzung (außerhalb der Übungsrunde gesetzt).
+    var searchUsed = false // die Suche einmal benutzt
+    var languageChanged = false // Sprache in den Einstellungen gewechselt
+    var widgetUsed = false // über das Lock-Screen-Widget geöffnet
+    var groupCreated = false // eine eigene Vokabelgruppe angelegt
 
     // Meteorologische Jahreszeiten (0=Winter,1=Frühling,2=Sommer,3=Herbst).
     var seasons: Set<Int> = []
@@ -210,6 +268,7 @@ struct AchievementProgress: Equatable, Codable {
     var modesToday: Set<String> = []
     var sessionsToday = 0
     var newWordsToday = 0
+    var groupsToday: Set<String> = [] // an diesem Tag geübte Vokabelgruppen (für „Sprachmix")
     // Rollback-Puffer für „genau 1 Wort/Tag", falls später ein 2. Wort dazukommt.
     var oneWordCountedToday = false
     var oneWordPreRun = 0
@@ -247,21 +306,23 @@ struct AchievementProgress: Equatable, Codable {
                                 selfCorrected: Bool = false,
                                 newlyLearned: Int = 0,
                                 currentStreak: Int = 0,
+                                groups: Set<String> = [],
                                 calendar: Calendar = .current) {
         let modeRaws = Set(modes.map(\.rawValue))
         let day = calendar.startOfDay(for: date)
-        let comps = calendar.dateComponents([.weekday, .hour, .minute, .month, .day], from: date)
+        let comps = calendar.dateComponents([.weekday, .hour, .minute, .year, .month, .day], from: date)
         let weekday = comps.weekday ?? 1
         let hour = comps.hour ?? 0
         let minute = comps.minute ?? 0
+        let year = comps.year ?? 0
         let month = comps.month ?? 1
         let dayOfMonth = comps.day ?? 1
 
         if selfCorrected { selfCorrection = true }
         recordBasics(modeRaws: modeRaws, weekday: weekday, hour: hour, month: month, isPerfect: isPerfect)
-        recordSpecialDates(weekday: weekday, hour: hour, minute: minute, dayOfMonth: dayOfMonth, month: month)
+        recordSpecialDates(weekday: weekday, hour: hour, minute: minute, year: year, month: month, dayOfMonth: dayOfMonth)
         recordSeries(modeRaws: modeRaws, day: day, hour: hour, isFlawless: isFlawless, calendar: calendar)
-        recordDayBuffer(modeRaws: modeRaws, day: day, newlyLearned: newlyLearned, calendar: calendar)
+        recordDayBuffer(modeRaws: modeRaws, day: day, newlyLearned: newlyLearned, groups: groups, calendar: calendar)
         recordComeback(day: day, currentStreak: currentStreak, calendar: calendar)
     }
 
@@ -280,11 +341,13 @@ struct AchievementProgress: Equatable, Codable {
         seasons.insert(Self.season(forMonth: month))
     }
 
-    /// Seltene Kalender-Flags (Geisterstunde, Freitag der 13., Silvester).
-    private mutating func recordSpecialDates(weekday: Int, hour: Int, minute: Int, dayOfMonth: Int, month: Int) {
+    /// Seltene Kalender-Flags (Geisterstunde, Freitag der 13., Silvester, 한글날, Vollmond).
+    private mutating func recordSpecialDates(weekday: Int, hour: Int, minute: Int, year: Int, month: Int, dayOfMonth: Int) {
         if hour == 0, minute == 0 { ghostHour = true } // exakt Mitternacht
         if weekday == 6, dayOfMonth == 13 { fridayThe13th = true } // 6=Fr
         if month == 12, dayOfMonth == 31 { newYearsEve = true }
+        if month == 10, dayOfMonth == 9 { hangulDay = true } // 한글날, Tag des Hangeul
+        if FullMoonDates.contains(year: year, month: month, day: dayOfMonth) { fullMoon = true }
     }
 
     /// Runden-/Tages-Serien: fehlerfrei, Nächte nach Mitternacht, gleicher Modus an Folgetagen.
@@ -305,20 +368,23 @@ struct AchievementProgress: Equatable, Codable {
         sameMode.best = Swift.max(sameMode.best, sameMode.run)
     }
 
-    /// Tagespuffer: Doppelpack, alle Modi an einem Tag, „genau 1 Wort am Tag".
-    private mutating func recordDayBuffer(modeRaws: Set<String>, day: Date, newlyLearned: Int, calendar: Calendar) {
+    /// Tagespuffer: Doppelpack, alle Modi an einem Tag, „genau 1 Wort am Tag", Sprachmix.
+    private mutating func recordDayBuffer(modeRaws: Set<String>, day: Date, newlyLearned: Int, groups: Set<String>, calendar: Calendar) {
         if currentDay.map({ !calendar.isDate($0, inSameDayAs: day) }) ?? true {
             currentDay = day
             modesToday = []
             sessionsToday = 0
             newWordsToday = 0
+            groupsToday = []
             oneWordCountedToday = false
         }
         modesToday.formUnion(modeRaws)
         sessionsToday += 1
         newWordsToday += newlyLearned
+        groupsToday.formUnion(groups)
         if modesToday.count >= PracticeMode.allCases.count { allModesOneDay = true }
         if sessionsToday >= 2 { doublePack = true }
+        if groupsToday.count >= 3 { sprachmix = true } // Wörter aus ≥3 Gruppen an einem Tag
         // „Ein Wort am Tag": Tag zählt, solange genau 1 neues Wort. Kommt am selben Tag
         // ein zweites dazu, wird die optimistisch gezählte Serie zurückgerollt; `best`
         // bleibt bewusst stehen (augenzwinkerndes Easter-Egg).
@@ -338,7 +404,10 @@ struct AchievementProgress: Equatable, Codable {
     private mutating func recordComeback(day: Date, currentStreak: Int, calendar: Calendar) {
         if let last = lastSessionDay {
             let gap = calendar.dateComponents([.day], from: calendar.startOfDay(for: last), to: day).day ?? 0
-            if gap >= 3 { comeback = true }
+            if gap >= 3 {
+                comeback = true
+                comebackCount += 1 // jedes erneute Comeback zählt (für „Comeback-König")
+            }
         }
         lastSessionDay = day
         if currentStreak < lastStreakValue {
@@ -349,6 +418,27 @@ struct AchievementProgress: Equatable, Codable {
             serienComeback = true
         }
         lastStreakValue = currentStreak
+    }
+}
+
+/// Feste Liste von Vollmond-Daten (lokales Kalenderdatum) für das verspielte
+/// „Mondschein"-Badge. Rein kosmetisch – Näherungswerte reichen völlig.
+enum FullMoonDates {
+    /// Vollmonde 2025–2027 als (Jahr, Monat, Tag).
+    static let all: Set<[Int]> = [
+        // 2025
+        [2025, 1, 13], [2025, 2, 12], [2025, 3, 14], [2025, 4, 13], [2025, 5, 12], [2025, 6, 11],
+        [2025, 7, 10], [2025, 8, 9], [2025, 9, 7], [2025, 10, 7], [2025, 11, 5], [2025, 12, 4],
+        // 2026
+        [2026, 1, 3], [2026, 2, 1], [2026, 3, 3], [2026, 4, 2], [2026, 5, 1], [2026, 5, 31],
+        [2026, 6, 29], [2026, 7, 29], [2026, 8, 28], [2026, 9, 26], [2026, 10, 26], [2026, 11, 24], [2026, 12, 24],
+        // 2027
+        [2027, 1, 22], [2027, 2, 20], [2027, 3, 22], [2027, 4, 20], [2027, 5, 20], [2027, 6, 19],
+        [2027, 7, 18], [2027, 8, 17], [2027, 9, 15], [2027, 10, 15], [2027, 11, 14], [2027, 12, 13],
+    ]
+
+    static func contains(year: Int, month: Int, day: Int) -> Bool {
+        all.contains([year, month, day])
     }
 }
 
@@ -411,7 +501,23 @@ enum AchievementCatalog {
         Achievement(id: "oneWordDay", category: .fun, emoji: "🐢", requirement: .count(\.oneWordDayStreak, 7)),
 
         // --- Erweiterung: Themen ---
-        Achievement(id: "themenMeister", category: .learned, emoji: "🗂️", requirement: .flag(\.groupMastered))
+        Achievement(id: "themenMeister", category: .learned, emoji: "🗂️", requirement: .flag(\.groupMastered)),
+
+        // --- Erweiterung: Meilensteine & App-Nutzung ---
+        Achievement(id: "learned2000", category: .learned, emoji: "🏔️", requirement: .count(\.learnedWords, 2000)),
+        Achievement(id: "firstGroup", category: .learned, emoji: "🗃️", requirement: .flag(\.groupCreated)),
+        Achievement(id: "alleGruppen", category: .learned, emoji: "🗂️👑", requirement: .flag(\.allGroupsMastered)),
+        Achievement(id: "comebackKoenig", category: .streak, emoji: "🔂", requirement: .count(\.comebackCount, 3)),
+        Achievement(id: "retter", category: .streak, emoji: "🧊", requirement: .flag(\.everUsedJoker)),
+        Achievement(id: "sprachmix", category: .variety, emoji: "🌍", requirement: .flag(\.sprachmix)),
+        Achievement(id: "firstSearch", category: .fun, emoji: "🔍", requirement: .flag(\.searchUsed)),
+        Achievement(id: "settingsExplorer", category: .fun, emoji: "⚙️", requirement: .flag(\.languageChanged)),
+        Achievement(id: "widgetActive", category: .fun, emoji: "📱", requirement: .flag(\.widgetUsed)),
+        Achievement(id: "hangulDay", category: .fun, emoji: "🎊", requirement: .flag(\.hangulDay)),
+        Achievement(id: "mondSchein", category: .fun, emoji: "🌕", requirement: .flag(\.fullMoon)),
+
+        // --- Meta: 100 % ---
+        Achievement(id: "vollendung", category: .fun, emoji: "🏆✨", requirement: .meta)
     ]
 }
 
