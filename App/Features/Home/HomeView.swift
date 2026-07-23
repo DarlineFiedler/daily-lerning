@@ -271,10 +271,16 @@ struct HomeView: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// „14.–20. Juli" – lokalisierter Datumsbereich der Rückblick-Woche.
+    /// „14.–20. Juli" – lokalisierter Datumsbereich der Rückblick-Woche. Nutzt die
+    /// in-App gewählte Sprache (nicht die Geräte-Locale), konsistent mit den übrigen
+    /// Datumsausgaben. `DateIntervalFormatter` liest die SwiftUI-`\.locale` nicht,
+    /// daher muss sie explizit gesetzt werden.
     private func weekRangeText(_ weekStart: Date) -> String {
-        let end = Calendar.current.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
+        let calendar = Calendar.current
+        let end = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
         let formatter = DateIntervalFormatter()
+        formatter.calendar = calendar
+        formatter.locale = LocalizationManager.shared.localeForFormatting
         formatter.dateStyle = .medium
         formatter.timeStyle = .none
         return formatter.string(from: weekStart, to: end)
