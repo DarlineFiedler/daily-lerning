@@ -101,13 +101,29 @@ Zusätzlich:
 
 ### Lokal vor dem Push prüfen
 
+> **Wichtig – Tool-Versionen:** Die CI pinnt feste Versionen (aktuell **SwiftLint
+> 0.65.0** und **SwiftFormat 0.62.1**, siehe `ci.yml`). Ein neueres `brew`-Release
+> kann lokal *andere* Verstöße melden als die CI. Version prüfen mit
+> `swiftlint version` bzw. `swiftformat --version` – im Zweifel die in `ci.yml`
+> gepinnte Version verwenden.
+
 ```bash
 brew install swiftlint swiftformat   # einmalig
 
-swiftlint --strict     # Lint (0 Verstöße erwartet)
-swiftformat .          # Formatierung anwenden …
-swiftformat . --lint   # … oder nur prüfen
+# 1) PRÜFEN – exakt das, was die CI ausführt (0 Verstöße erwartet)
+swiftlint lint --strict
+swiftformat . --lint
+
+# 2) AUTOMATISCH FIXEN, wo möglich
+swiftlint --fix        # behebt auto-korrigierbare Regeln (Kommas, Einrückung, …)
+swiftformat .          # wendet die Formatierung an
 ```
+
+Nach dem Fixen `swiftlint lint --strict` erneut laufen lassen, bis
+`Found 0 violations` erscheint. **Nicht jede Regel ist auto-fixbar:** z. B.
+`cyclomatic_complexity` (Funktion zu komplex) oder `function_parameter_count` (zu
+viele Parameter) musst du von Hand auflösen – meist, indem du die Funktion in
+kleinere Teilfunktionen zerlegst.
 
 Konfiguration: [`.swiftlint.yml`](.swiftlint.yml) (idiomatische Kurznamen &
 Fachbegriffe erlaubt) und [`.swiftformat`](.swiftformat) (bewusst konservative

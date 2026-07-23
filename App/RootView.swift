@@ -57,6 +57,7 @@ struct RootView: View {
         .onOpenURL { url in
             if let id = DeepLink.wordID(from: url) {
                 deepLink = IdentifiableID(id: id)
+                AchievementService.recordEvent(\.widgetUsed, context: context) // „Widget-Fan"
             } else if DeepLink.isReview(url) {
                 showReview = true
             }

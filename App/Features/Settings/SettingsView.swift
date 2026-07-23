@@ -184,6 +184,9 @@ struct SettingsView: View {
             .navigationTitle(L("tab.settings"))
             .onChange(of: interval) { refreshWidget() }
             .onChange(of: showMeaning) { refreshWidget() }
+            .onChange(of: localization.language) {
+                AchievementService.recordEvent(\.languageChanged, context: context) // „Einstellungs-Entdecker"
+            }
             .onChange(of: reminderEnabled) { _, enabled in
                 if enabled {
                     Task {
