@@ -168,6 +168,12 @@
 "home.today.a11y.hint" = "Starts today's round";
 "home.streak.detail.hint" = "Shows streak and freeze details";
 "home.jokers.a11y" = "%d streak freezes available";
+"home.weekly.title" = "Weekly review";
+"home.weekly.practiced" = "words practiced";
+"home.weekly.learned" = "newly learned";
+"home.weekly.streak" = "day streak";
+"home.weekly.delta.up" = "+%d %% more than last week";
+"home.weekly.delta.down" = "%d %% less than last week";
 "streak.detail.title" = "Streak & Freezes";
 "streak.detail.current" = "Current";
 "streak.detail.longest" = "Best";

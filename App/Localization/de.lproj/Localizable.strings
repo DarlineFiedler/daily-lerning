@@ -168,6 +168,12 @@
 "home.today.a11y.hint" = "Startet die heutige Runde";
 "home.streak.detail.hint" = "Zeigt Streak- und Joker-Details";
 "home.jokers.a11y" = "%d Streak-Freeze-Joker verfügbar";
+"home.weekly.title" = "Wochenrückblick";
+"home.weekly.practiced" = "Wörter geübt";
+"home.weekly.learned" = "neu gelernt";
+"home.weekly.streak" = "Tage-Streak";
+"home.weekly.delta.up" = "+%d %% mehr als in der Vorwoche";
+"home.weekly.delta.down" = "%d %% weniger als in der Vorwoche";
 "streak.detail.title" = "Streak & Joker";
 "streak.detail.current" = "Aktuell";
 "streak.detail.longest" = "Rekord";

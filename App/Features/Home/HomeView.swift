@@ -20,6 +20,8 @@ struct HomeView: View {
     private var plan: DailyPlan.Result { DailyPlan.today(from: vocabs) }
     /// Aktueller Tages-Streak (0, wenn abgelaufen).
     private var streak: Int { StreakStore.displayStreak() }
+    /// Rückblick auf die letzte abgeschlossene Kalenderwoche (für die Wochen-Karte).
+    private var weeklyReview: WeeklyReview { WeeklyReviewStore.currentReview() }
     /// Verfügbare Streak-Freeze-Joker.
     private var jokers: Int { StreakStore.availableJokers() }
     private var rate: Int {
@@ -51,6 +53,7 @@ struct HomeView: View {
                         emptyState
                     } else {
                         todayCard
+                        if weeklyReview.hasActivity { weeklyReviewCard }
                         if let word = wordOfDay { wordOfDayCard(word) }
                         progressSection
                         startPracticeButton
@@ -232,6 +235,63 @@ struct HomeView: View {
             .cardStyle(padding: Theme.Spacing.l)
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - Wochenrückblick
+
+    /// Kompakte Karte mit den Zahlen der letzten abgeschlossenen Woche.
+    private var weeklyReviewCard: some View {
+        let review = weeklyReview
+        return VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            HStack(alignment: .firstTextBaseline) {
+                Label(L("home.weekly.title"), systemImage: "calendar")
+                    .font(.appCaption.weight(.semibold))
+                    .foregroundStyle(Theme.brandStart)
+                Spacer()
+                Text(weekRangeText(review.weekStart))
+                    .font(.appCaption)
+                    .foregroundStyle(.secondary)
+            }
+            HStack(spacing: Theme.Spacing.s) {
+                StatTile(value: "\(review.practicedCount)", label: L("home.weekly.practiced"),
+                         systemImage: "checkmark.circle.fill", tint: Theme.brandStart)
+                StatTile(value: "\(review.newlyLearnedCount)", label: L("home.weekly.learned"),
+                         systemImage: "star.fill", tint: LearningStatus.learned.color)
+                StatTile(value: "\(review.streak)", label: L("home.weekly.streak"),
+                         systemImage: "flame.fill", tint: Theme.brandEnd)
+            }
+            if let delta = review.deltaPercent {
+                Label(weeklyDeltaText(delta), systemImage: deltaIcon(delta))
+                    .font(.appCaption.weight(.medium))
+                    .foregroundStyle(delta >= 0 ? LearningStatus.learned.color : .secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardStyle(padding: Theme.Spacing.l)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// „14.–20. Juli" – lokalisierter Datumsbereich der Rückblick-Woche. Nutzt die
+    /// in-App gewählte Sprache (nicht die Geräte-Locale), konsistent mit den übrigen
+    /// Datumsausgaben. `DateIntervalFormatter` liest die SwiftUI-`\.locale` nicht,
+    /// daher muss sie explizit gesetzt werden.
+    private func weekRangeText(_ weekStart: Date) -> String {
+        let calendar = Calendar.current
+        let end = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
+        let formatter = DateIntervalFormatter()
+        formatter.calendar = calendar
+        formatter.locale = LocalizationManager.shared.localeForFormatting
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: weekStart, to: end)
+    }
+
+    private func weeklyDeltaText(_ delta: Int) -> String {
+        delta >= 0 ? L("home.weekly.delta.up", delta) : L("home.weekly.delta.down", abs(delta))
+    }
+
+    private func deltaIcon(_ delta: Int) -> String {
+        delta >= 0 ? "arrow.up.right" : "arrow.down.right"
     }
 
     // MARK: - Fortschritt

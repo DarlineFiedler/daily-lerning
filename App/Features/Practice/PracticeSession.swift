@@ -95,6 +95,9 @@ final class PracticeSession {
             missedVocabs.append(item.vocab)
         }
         StreakStore.registerActivity() // idempotent pro Kalendertag
+        // Wochenrückblick füttern: distinct geübtes Wort + evtl. Erstaufstieg auf „Gelernt".
+        let becameLearned = before != .learned && item.vocab.status == .learned
+        WeeklyReviewStore.record(wordID: item.vocab.id, becameLearned: becameLearned)
         context.saveOrLog()
         index += 1
         if isFinished { finalizeRound() }
