@@ -313,14 +313,11 @@ struct AchievementProgress: Equatable, Codable {
         let comps = calendar.dateComponents([.weekday, .hour, .minute, .year, .month, .day], from: date)
         let weekday = comps.weekday ?? 1
         let hour = comps.hour ?? 0
-        let minute = comps.minute ?? 0
-        let year = comps.year ?? 0
         let month = comps.month ?? 1
-        let dayOfMonth = comps.day ?? 1
 
         if selfCorrected { selfCorrection = true }
         recordBasics(modeRaws: modeRaws, weekday: weekday, hour: hour, month: month, isPerfect: isPerfect)
-        recordSpecialDates(weekday: weekday, hour: hour, minute: minute, year: year, month: month, dayOfMonth: dayOfMonth)
+        recordSpecialDates(comps: comps)
         recordSeries(modeRaws: modeRaws, day: day, hour: hour, isFlawless: isFlawless, calendar: calendar)
         recordDayBuffer(modeRaws: modeRaws, day: day, newlyLearned: newlyLearned, groups: groups, calendar: calendar)
         recordComeback(day: day, currentStreak: currentStreak, calendar: calendar)
@@ -342,7 +339,13 @@ struct AchievementProgress: Equatable, Codable {
     }
 
     /// Seltene Kalender-Flags (Geisterstunde, Freitag der 13., Silvester, 한글날, Vollmond).
-    private mutating func recordSpecialDates(weekday: Int, hour: Int, minute: Int, year: Int, month: Int, dayOfMonth: Int) {
+    private mutating func recordSpecialDates(comps: DateComponents) {
+        let weekday = comps.weekday ?? 1
+        let hour = comps.hour ?? 0
+        let minute = comps.minute ?? 0
+        let year = comps.year ?? 0
+        let month = comps.month ?? 1
+        let dayOfMonth = comps.day ?? 1
         if hour == 0, minute == 0 { ghostHour = true } // exakt Mitternacht
         if weekday == 6, dayOfMonth == 13 { fridayThe13th = true } // 6=Fr
         if month == 12, dayOfMonth == 31 { newYearsEve = true }
