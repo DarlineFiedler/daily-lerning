@@ -41,6 +41,16 @@ final class PracticeSession {
     private(set) var missedVocabs: [Vocab] = []
     /// Wörter, deren Status in dieser Session aufgestiegen ist.
     private(set) var leveledUpVocabs: [Vocab] = []
+    /// In dieser Runde neu freigeschaltete Badges (für das Freischalt-Feedback).
+    private(set) var newlyUnlocked: [Achievement] = []
+    /// Wurde ein zuvor falsch beantwortetes Wort in dieser Runde richtig beantwortet?
+    /// (für das „Selbstkorrektur"-Badge).
+    private var didSelfCorrect = false
+    /// Anzahl der in dieser Runde neu auf „gelernt" aufgestiegenen Wörter
+    /// (für das „Ein Wort am Tag"-Badge).
+    private var newlyLearnedCount = 0
+    /// Verhindert, dass die Runden-Auswertung (Achievements) mehrfach läuft.
+    private var didFinalize = false
 
     init(vocabs: [Vocab], distractorPool: [Vocab], config: PracticeConfig, context: ModelContext) {
         self.context = context
@@ -69,12 +79,16 @@ final class PracticeSession {
     func submit(correct: Bool) {
         guard let item = currentItem else { return }
         let before = item.vocab.status
+        // Zuvor falsch/zurückgesetzt? (geübt, aber Erfolgs-Counter auf 0) – für „Selbstkorrektur".
+        let wasPreviouslyWrong = item.vocab.timesPracticed > 0 && item.vocab.successCounter == 0
         item.vocab.registerResult(correct: correct)
         if correct {
             correctCount += 1
+            if wasPreviouslyWrong { didSelfCorrect = true }
             // Aufstieg? (rawValue steigt mit dem Lernfortschritt).
             if item.vocab.status.rawValue > before.rawValue {
                 leveledUpVocabs.append(item.vocab)
+                if item.vocab.status == .learned, before != .learned { newlyLearnedCount += 1 }
             }
         } else {
             wrongCount += 1
@@ -86,6 +100,30 @@ final class PracticeSession {
         WeeklyReviewStore.record(wordID: item.vocab.id, becameLearned: becameLearned)
         context.saveOrLog()
         index += 1
+        if isFinished { finalizeRound() }
+    }
+
+    /// Einmalige Auswertung am Rundenende: Übungsrunde verbuchen und ggf. neue
+    /// Badges freischalten. Idempotent pro Runde (`didFinalize`).
+    private func finalizeRound() {
+        guard !didFinalize else { return }
+        didFinalize = true
+        let now = Date.now
+        // Fehlerfreie Runde mit genug Wörtern → „Makellos". `isFlawless` gilt für die
+        // Fehlerfrei-Serie schon ohne Mindestwortzahl.
+        let isPerfect = wrongCount == 0 && total >= 5
+        let isFlawless = wrongCount == 0 && total >= 1
+        newlyUnlocked = AchievementService.registerSession(
+            modes: Set(items.map(\.mode)),
+            date: now,
+            isPerfect: isPerfect,
+            isFlawless: isFlawless,
+            selfCorrected: didSelfCorrect,
+            newlyLearned: newlyLearnedCount,
+            currentStreak: StreakStore.current,
+            groups: Set(items.compactMap { $0.vocab.group?.id.uuidString }),
+            context: context
+        )
     }
 
     /// Startet denselben Satz Wörter erneut.
@@ -107,6 +145,10 @@ final class PracticeSession {
         wrongCount = 0
         missedVocabs = []
         leveledUpVocabs = []
+        newlyUnlocked = []
+        didSelfCorrect = false
+        newlyLearnedCount = 0
+        didFinalize = false
     }
 
     // MARK: - Aufgaben-Aufbau

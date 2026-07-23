@@ -51,6 +51,12 @@ struct SearchView: View {
             .background(Theme.background.ignoresSafeArea())
             .navigationTitle(L("search.title"))
             .searchable(text: $query, prompt: L("search.placeholder"))
+            .onChange(of: query) { _, newValue in
+                // Erste echte Sucheingabe schaltet das „Spürnase"-Badge frei.
+                if !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    AchievementService.recordEvent(\.searchUsed, context: context)
+                }
+            }
             .sheet(item: $editingVocab) { vocab in
                 VocabEditView(vocab: vocab, group: vocab.group)
             }

@@ -35,6 +35,9 @@ struct PracticeContainerView: View {
         // Haptik für die wichtigsten Lern-Momente (richtig/falsch).
         .sensoryFeedback(.success, trigger: session.correctCount)
         .sensoryFeedback(.error, trigger: session.wrongCount)
+        .overlay(alignment: .top) {
+            AchievementUnlockBanner(achievements: session.newlyUnlocked)
+        }
     }
 
     private var progressHeader: some View {

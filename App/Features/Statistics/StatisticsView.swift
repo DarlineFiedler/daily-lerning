@@ -18,6 +18,8 @@ struct StatisticsView: View {
         return Int(round(Double(learnedCount) / Double(vocabs.count) * 100))
     }
 
+    @State private var showAchievements = false
+
     var body: some View {
         NavigationStack {
             Group {
@@ -35,6 +37,16 @@ struct StatisticsView: View {
             }
             .background(Theme.background.ignoresSafeArea())
             .navigationTitle(L("tab.stats"))
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showAchievements = true
+                    } label: {
+                        Label(L("ach.title"), systemImage: "trophy.fill")
+                    }
+                }
+            }
+            .sheet(isPresented: $showAchievements) { AchievementsView() }
         }
     }
 
