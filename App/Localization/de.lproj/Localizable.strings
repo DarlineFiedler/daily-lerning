@@ -67,6 +67,11 @@
 "vocab.status" = "Status";
 "vocab.details" = "Details";
 "vocab.widgetToggle" = "Auf dem Lock Screen anzeigen";
+"vocab.emojiSection" = "Merkhilfe";
+"vocab.emojiPlaceholder" = "Emoji";
+"vocab.emojiHint" = "Ein optionales Emoji als visuelle Eselsbrücke. Wird passend zur Bedeutung vorgeschlagen und kann geändert oder entfernt werden.";
+"vocab.emojiSuggestion" = "Vorschlag übernehmen: %@";
+"vocab.emojiRemove" = "Emoji entfernen";
 "vocab.empty" = "Noch keine Vokabeln.\nTippe auf +, um eine hinzuzufügen.";
 "vocab.counterInfo" = "Geschafft: %d/%d";
 "vocab.deleteConfirm" = "Diese Vokabel löschen?";
