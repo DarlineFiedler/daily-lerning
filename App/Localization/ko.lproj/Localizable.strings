@@ -168,6 +168,12 @@
 "home.today.a11y.hint" = "오늘의 학습을 시작합니다";
 "home.streak.detail.hint" = "연속 학습과 프리즈 정보를 봅니다";
 "home.jokers.a11y" = "사용 가능한 스트릭 프리즈 %d개";
+"home.weekly.title" = "주간 리뷰";
+"home.weekly.practiced" = "학습한 단어";
+"home.weekly.learned" = "새로 익힘";
+"home.weekly.streak" = "일 연속";
+"home.weekly.delta.up" = "지난주보다 %d %% 증가";
+"home.weekly.delta.down" = "지난주보다 %d %% 감소";
 "streak.detail.title" = "연속 학습 & 프리즈";
 "streak.detail.current" = "현재";
 "streak.detail.longest" = "최고 기록";
