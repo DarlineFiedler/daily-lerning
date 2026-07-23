@@ -49,6 +49,12 @@ final class EmojiSuggestionServiceTests: XCTestCase {
         XCTAssertEqual(EmojiSuggestionService.suggest(for: "koreanisches Essen"), "🍽️")
     }
 
+    func testIgnoresTrailingPunctuation() {
+        // Anhängende Satzzeichen dürfen den Wort-Treffer nicht verhindern.
+        XCTAssertEqual(EmojiSuggestionService.suggest(for: "Katze!"), "🐱")
+        XCTAssertEqual(EmojiSuggestionService.suggest(for: "der kleine Hund."), "🐶")
+    }
+
     // MARK: - Mehrdeutigkeiten deterministisch
 
     func testAmbiguityIsDeterministicLeftToRight() {

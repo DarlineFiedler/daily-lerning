@@ -25,14 +25,17 @@ enum EmojiSuggestionService {
             .split(whereSeparator: { ",;/".contains($0) })
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
-        for part in parts where table[part] != nil {
-            return table[part]
+        for part in parts {
+            if let hit = table[part] { return hit }
         }
 
-        // 3) Einzelne Wörter über alle Teile (für Mehrwort-Bedeutungen).
+        // 3) Einzelne Wörter über alle Teile (für Mehrwort-Bedeutungen). Anhängende
+        // Satzzeichen (z. B. „Katze!") werden je Wort abgeschnitten, damit sie den
+        // Tabellen-Treffer nicht verhindern.
         for part in parts {
             for token in part.split(separator: " ") {
-                if let hit = table[String(token)] { return hit }
+                let word = String(token).trimmingCharacters(in: .punctuationCharacters)
+                if !word.isEmpty, let hit = table[word] { return hit }
             }
         }
         return nil
