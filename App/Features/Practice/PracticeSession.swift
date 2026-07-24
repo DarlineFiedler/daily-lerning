@@ -161,23 +161,41 @@ final class PracticeSession {
             let mode = modes.randomElement() ?? .review
             // Hör-Modus: immer Koreanisch hören → Bedeutung wählen.
             let direction = mode == .listening ? .wordToMeaning : ResolvedDirection.resolve(config.direction)
-            let choices = makeChoices(for: vocab, pool: distractorPool, direction: direction)
+            let choices = makeChoices(for: vocab, sessionVocabs: vocabs, pool: distractorPool, direction: direction)
             return PracticeItem(vocab: vocab, mode: mode, direction: direction, choices: choices)
         }
     }
 
     // MARK: - Multiple-Choice-Optionen
 
-    private static func makeChoices(for vocab: Vocab, pool: [Vocab], direction: ResolvedDirection) -> [Vocab] {
-        // Distraktoren mit eindeutiger Antwortseite auswählen: kein Distraktor
-        // darf denselben Antworttext wie die richtige Antwort (oder ein bereits
-        // gewählter Distraktor) haben – sonst wäre die Frage mehrdeutig.
+    private static func makeChoices(for vocab: Vocab, sessionVocabs: [Vocab], pool: [Vocab], direction: ResolvedDirection) -> [Vocab] {
         let answerText: (Vocab) -> String = {
             direction == .wordToMeaning ? $0.meaning : $0.word
         }
+        // Kandidaten nach Nähe zum Zielwort schichten, damit die Distraktoren
+        // möglichst Wörter sind, die im Lernvorgang vorkommen (statt nie gesehener
+        // Zufallswörter, unter denen das gesuchte Wort sofort heraussticht):
+        // 1. andere Wörter aus diesem Durchgang → 2. Wörter derselben Gruppe →
+        // 3. Rest des Pools (nur als Auffüllung für kleine Sessions).
+        let sessionIDs = Set(sessionVocabs.map(\.id))
+        let tier1 = sessionVocabs.filter { $0.id != vocab.id }.shuffled()
+        let remaining = pool.filter { !sessionIDs.contains($0.id) }
+        let tier2: [Vocab]
+        let tier3: [Vocab]
+        if let groupID = vocab.group?.id {
+            tier2 = remaining.filter { $0.group?.id == groupID }.shuffled()
+            tier3 = remaining.filter { $0.group?.id != groupID }.shuffled()
+        } else {
+            tier2 = []
+            tier3 = remaining.shuffled()
+        }
+
+        // Distraktoren mit eindeutiger Antwortseite auswählen: kein Distraktor
+        // darf denselben Antworttext wie die richtige Antwort (oder ein bereits
+        // gewählter Distraktor) haben – sonst wäre die Frage mehrdeutig.
         var seenAnswers: Set<String> = [answerText(vocab)]
         var distractors: [Vocab] = []
-        for candidate in pool.shuffled() where candidate.id != vocab.id {
+        for candidate in tier1 + tier2 + tier3 where candidate.id != vocab.id {
             guard seenAnswers.insert(answerText(candidate)).inserted else { continue }
             distractors.append(candidate)
             if distractors.count == 3 { break }

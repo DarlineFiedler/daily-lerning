@@ -22,12 +22,18 @@ final class PracticeSessionTests: XCTestCase {
         super.tearDown()
     }
 
-    private func makeVocabs(_ count: Int) -> [Vocab] {
+    private func makeVocabs(_ count: Int, group: VocabGroup? = nil, prefix: String = "") -> [Vocab] {
         (0 ..< count).map { i in
-            let v = Vocab(word: "단어\(i)", meaning: "Wort \(i)")
+            let v = Vocab(word: "\(prefix)단어\(i)", meaning: "\(prefix)Wort \(i)", group: group)
             context.insert(v)
             return v
         }
+    }
+
+    private func makeGroup(_ name: String) -> VocabGroup {
+        let g = VocabGroup(name: name)
+        context.insert(g)
+        return g
     }
 
     func testWordLimitCapsItemCount() {
@@ -130,6 +136,59 @@ final class PracticeSessionTests: XCTestCase {
         XCTAssertFalse(session.items.isEmpty)
         XCTAssertTrue(session.items.allSatisfy { $0.mode == .listening })
         XCTAssertTrue(session.items.allSatisfy { $0.direction == .wordToMeaning })
+    }
+
+    /// Distraktoren werden bevorzugt aus den Wörtern des laufenden Durchgangs
+    /// gezogen: 4 Session-Wörter reichen exakt für Ziel + 3 Distraktoren, obwohl
+    /// der Pool viel größer ist – jede Option muss ein Session-Wort sein.
+    func testChoicesPreferSessionWords() {
+        let session = makeVocabs(4)
+        let extra = makeVocabs(16, prefix: "x")
+        let sessionIDs = Set(session.map(\.id))
+        let practice = PracticeSession(
+            vocabs: session, distractorPool: session + extra,
+            config: PracticeConfig(modes: [.multipleChoice]), context: context
+        )
+        XCTAssertFalse(practice.items.isEmpty)
+        for item in practice.items {
+            XCTAssertEqual(item.choices.count, 4)
+            XCTAssertTrue(item.choices.allSatisfy { sessionIDs.contains($0.id) })
+        }
+    }
+
+    /// Reicht die Session nicht, kommen die Distraktoren aus derselben Gruppe –
+    /// nicht aus einer fremden Gruppe.
+    func testChoicesFallBackToSameGroup() throws {
+        let groupA = makeGroup("A")
+        let groupB = makeGroup("B")
+        let session = makeVocabs(1, group: groupA, prefix: "a")
+        let moreA = makeVocabs(5, group: groupA, prefix: "a")
+        let moreB = makeVocabs(5, group: groupB, prefix: "b")
+        let groupAIDs = Set((session + moreA).map(\.id))
+        let target = session[0]
+        let practice = PracticeSession(
+            vocabs: session, distractorPool: session + moreA + moreB,
+            config: PracticeConfig(modes: [.multipleChoice]), context: context
+        )
+        let item = try XCTUnwrap(practice.items.first)
+        let distractors = item.choices.filter { $0.id != target.id }
+        XCTAssertEqual(distractors.count, 3)
+        XCTAssertTrue(distractors.allSatisfy { groupAIDs.contains($0.id) })
+    }
+
+    /// Mini-Session (1 Wort ohne Gruppe): es müssen trotzdem 4 Optionen mit
+    /// eindeutiger Antwortseite entstehen, aufgefüllt aus dem Rest des Pools.
+    func testChoicesFillUpForTinySession() throws {
+        let session = makeVocabs(1)
+        let extra = makeVocabs(10, prefix: "x")
+        let practice = PracticeSession(
+            vocabs: session, distractorPool: session + extra,
+            config: PracticeConfig(modes: [.multipleChoice]), context: context
+        )
+        let item = try XCTUnwrap(practice.items.first)
+        XCTAssertEqual(item.choices.count, 4)
+        let answers = item.choices.map(\.meaning)
+        XCTAssertEqual(Set(answers).count, 4) // eindeutige Antwortseite, keine Duplikate
     }
 
     func testResolvedModesUsesExplicitModesWhenSet() {
