@@ -193,9 +193,12 @@ final class PracticeSession {
         // Distraktoren mit eindeutiger Antwortseite auswählen: kein Distraktor
         // darf denselben Antworttext wie die richtige Antwort (oder ein bereits
         // gewählter Distraktor) haben – sonst wäre die Frage mehrdeutig.
+        // Das Zielwort selbst ist bereits ausgeschlossen: tier1 filtert es raus,
+        // tier2/tier3 stammen aus `remaining` (ohne Session-IDs, die das Ziel
+        // enthalten). Zudem liegt sein Antworttext schon in `seenAnswers`.
         var seenAnswers: Set<String> = [answerText(vocab)]
         var distractors: [Vocab] = []
-        for candidate in tier1 + tier2 + tier3 where candidate.id != vocab.id {
+        for candidate in tier1 + tier2 + tier3 {
             guard seenAnswers.insert(answerText(candidate)).inserted else { continue }
             distractors.append(candidate)
             if distractors.count == 3 { break }

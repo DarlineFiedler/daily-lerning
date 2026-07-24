@@ -162,7 +162,7 @@ final class PracticeSessionTests: XCTestCase {
         let groupA = makeGroup("A")
         let groupB = makeGroup("B")
         let session = makeVocabs(1, group: groupA, prefix: "a")
-        let moreA = makeVocabs(5, group: groupA, prefix: "a")
+        let moreA = makeVocabs(5, group: groupA, prefix: "a2")
         let moreB = makeVocabs(5, group: groupB, prefix: "b")
         let groupAIDs = Set((session + moreA).map(\.id))
         let target = session[0]
