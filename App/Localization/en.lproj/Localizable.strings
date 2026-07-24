@@ -67,6 +67,11 @@
 "vocab.status" = "Status";
 "vocab.details" = "Details";
 "vocab.widgetToggle" = "Show on Lock Screen";
+"vocab.emojiSection" = "Memory aid";
+"vocab.emojiPlaceholder" = "Emoji";
+"vocab.emojiHint" = "An optional emoji as a visual mnemonic. Suggested from the meaning; you can change or remove it.";
+"vocab.emojiSuggestion" = "Use suggestion: %@";
+"vocab.emojiRemove" = "Remove emoji";
 "vocab.empty" = "No words yet.\nTap + to add one.";
 "vocab.counterInfo" = "Streak: %d/%d";
 "vocab.deleteConfirm" = "Delete this word?";

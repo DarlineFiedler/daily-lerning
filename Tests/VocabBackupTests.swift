@@ -34,6 +34,7 @@ final class VocabBackupTests: XCTestCase {
         let group = VocabGroup(name: "Verben", colorHex: "#22CC88", sortOrder: 3)
         context.insert(group)
         let vocab = Vocab(word: "가다", meaning: "gehen", example: "학교에 가다", group: group)
+        vocab.emoji = "🚶"
         vocab.includeInWidget = true
         vocab.setStatusManually(.almostLearned) // setzt statusRaw, counter, nextReviewAt
         vocab.timesPracticed = 5
@@ -71,6 +72,7 @@ final class VocabBackupTests: XCTestCase {
         XCTAssertEqual(v.word, "가다")
         XCTAssertEqual(v.meaning, "gehen")
         XCTAssertEqual(v.example, "학교에 가다")
+        XCTAssertEqual(v.emoji, "🚶")
         XCTAssertTrue(v.includeInWidget)
         XCTAssertEqual(v.status, .almostLearned)
         XCTAssertEqual(v.successCounter, vocab.successCounter)
@@ -110,7 +112,7 @@ final class VocabBackupTests: XCTestCase {
         backup.vocabs[0].meaning = "geändert"
         let extraID = UUID()
         backup.vocabs.append(VocabBackup.VocabDTO(
-            id: extraID, word: "오다", meaning: "kommen", example: nil,
+            id: extraID, word: "오다", meaning: "kommen", example: nil, emoji: nil,
             statusRaw: 0, successCounter: 0, includeInWidget: false,
             timesPracticed: 0, lastPracticedAt: nil, nextReviewAt: nil,
             lastCountedAt: nil, createdAt: .now, groupID: group.id))
@@ -138,7 +140,7 @@ final class VocabBackupTests: XCTestCase {
         backup.vocabs[0].meaning = "sollte-ignoriert-werden"
         let extraID = UUID()
         backup.vocabs.append(VocabBackup.VocabDTO(
-            id: extraID, word: "오다", meaning: "kommen", example: nil,
+            id: extraID, word: "오다", meaning: "kommen", example: nil, emoji: nil,
             statusRaw: 0, successCounter: 0, includeInWidget: false,
             timesPracticed: 0, lastPracticedAt: nil, nextReviewAt: nil,
             lastCountedAt: nil, createdAt: .now, groupID: group.id))

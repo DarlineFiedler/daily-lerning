@@ -67,6 +67,11 @@
 "vocab.status" = "상태";
 "vocab.details" = "세부 정보";
 "vocab.widgetToggle" = "잠금 화면에 표시";
+"vocab.emojiSection" = "기억 도우미";
+"vocab.emojiPlaceholder" = "이모지";
+"vocab.emojiHint" = "뜻을 시각적으로 기억하기 위한 선택 이모지입니다. 뜻에 따라 자동 제안되며 변경하거나 삭제할 수 있습니다.";
+"vocab.emojiSuggestion" = "제안 사용: %@";
+"vocab.emojiRemove" = "이모지 삭제";
 "vocab.empty" = "아직 단어가 없습니다.\n+ 를 눌러 추가하세요.";
 "vocab.counterInfo" = "연속 정답: %d/%d";
 "vocab.deleteConfirm" = "이 단어를 삭제할까요?";

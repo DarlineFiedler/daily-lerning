@@ -24,6 +24,12 @@ struct VocabRow: View {
 
             StatusDot(status: vocab.status)
 
+            if let emoji = vocab.emoji, !emoji.isEmpty {
+                Text(emoji)
+                    .font(.appTitle3)
+                    .accessibilityHidden(true)
+            }
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(vocab.word)
                     .font(.appHeadline)

@@ -8,6 +8,11 @@ final class Vocab {
     var word: String = "" // Lernsprache (z.B. Hangul)
     var meaning: String = "" // Muttersprache / Bedeutung
     var example: String? // optionaler Freitext (Beispielsatz)
+    /// Optionale visuelle Merkhilfe (ein Emoji). Wird beim Anlegen/Bearbeiten anhand der
+    /// Bedeutung automatisch vorgeschlagen (siehe [[EmojiSuggestionService]]), ist aber
+    /// jederzeit manuell änderbar/entfernbar. Additiv eingeführt; SwiftData migriert
+    /// bestehende Stores automatisch (Default `nil` = kein Emoji).
+    var emoji: String?
 
     var statusRaw: Int = LearningStatus.new.rawValue
     var successCounter: Int = 0 // Streak aufeinanderfolgender richtiger Antworten
