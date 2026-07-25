@@ -99,6 +99,7 @@ struct GroupListView: View {
         context.saveOrLog()
         pendingDelete = nil
         WidgetSnapshotWriter.refresh(context: context)
+        BadgeUpdater.refresh(context: context)
     }
 
     /// Verschiebt eine Gruppe um `offset` Positionen (tauscht `sortOrder` mit dem Nachbarn).

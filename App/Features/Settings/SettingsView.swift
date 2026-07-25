@@ -37,6 +37,9 @@ struct SettingsView: View {
     @AppStorage(ReminderKeys.minute, store: AppGroup.defaults)
     private var reminderMinute = 0
 
+    @AppStorage(BadgeKeys.enabled, store: AppGroup.defaults)
+    private var badgeEnabled = false
+
     @AppStorage(GoalKeys.metric, store: AppGroup.defaults)
     private var goalMetricRaw = GoalMetric.practiced.rawValue
     @AppStorage(GoalKeys.weekly, store: AppGroup.defaults)
@@ -89,10 +92,13 @@ struct SettingsView: View {
                             Label(L("settings.reminder.time"), systemImage: "clock.badge")
                         }
                     }
+                    Toggle(isOn: $badgeEnabled) {
+                        Label(L("settings.badge.enable"), systemImage: "app.badge")
+                    }
                 } header: {
                     Text(L("settings.reminder.section"))
                 } footer: {
-                    Text(L("settings.reminder.hint"))
+                    Text(L("settings.reminder.hint") + "\n" + L("settings.badge.hint"))
                 }
 
                 // MARK: Ziel
@@ -238,6 +244,19 @@ struct SettingsView: View {
             }
             .onChange(of: reminderHour) { rescheduleReminder() }
             .onChange(of: reminderMinute) { rescheduleReminder() }
+            .onChange(of: badgeEnabled) { _, enabled in
+                if enabled {
+                    Task {
+                        if await NotificationScheduler.requestAuthorization() {
+                            BadgeUpdater.refresh(context: context)
+                        } else {
+                            badgeEnabled = false // Berechtigung verweigert
+                        }
+                    }
+                } else {
+                    BadgeUpdater.setBadge(0)
+                }
+            }
         }
     }
 
@@ -274,6 +293,7 @@ struct SettingsView: View {
 
     private func refreshWidget() {
         WidgetSnapshotWriter.refresh(context: context)
+        BadgeUpdater.refresh(context: context)
     }
 
     // MARK: - Sicherung
@@ -303,6 +323,7 @@ struct SettingsView: View {
         }
         context.saveOrLog()
         WidgetSnapshotWriter.refresh(context: context)
+        BadgeUpdater.refresh(context: context)
         packMessage = L("wordpacks.result", total.added, total.updated, total.skipped)
     }
 
@@ -326,6 +347,7 @@ struct SettingsView: View {
         }
         backup.apply(into: context)
         WidgetSnapshotWriter.refresh(context: context)
+        BadgeUpdater.refresh(context: context)
         restoreMessage = L("settings.backup.restored", backup.vocabs.count, backup.groups.count)
     }
 }

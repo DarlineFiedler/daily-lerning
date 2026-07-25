@@ -212,6 +212,8 @@
 "settings.reminder.enable" = "Daily reminder";
 "settings.reminder.time" = "Time";
 "settings.reminder.hint" = "Get a daily nudge to practice.";
+"settings.badge.enable" = "Due words on app icon";
+"settings.badge.hint" = "Shows the number of words due today as a badge on the app icon.";
 "settings.goal.section" = "Your goal";
 "settings.goal.metric" = "Goal type";
 "settings.goal.metric.practiced" = "Words practiced";

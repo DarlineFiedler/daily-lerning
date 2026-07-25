@@ -320,6 +320,7 @@ struct GroupDetailView: View {
         for vocab in targets { vocab.setStatusManually(status) }
         context.saveOrLog()
         WidgetSnapshotWriter.refresh(context: context)
+        BadgeUpdater.refresh(context: context)
         exitSelection()
     }
 
@@ -328,6 +329,7 @@ struct GroupDetailView: View {
         context.saveOrLog()
         pendingDelete = nil
         WidgetSnapshotWriter.refresh(context: context)
+        BadgeUpdater.refresh(context: context)
     }
 
     /// Öffnet aus dem Duplikat-Dialog heraus die bestehende Vokabel. Der aufrufende Editor

@@ -212,6 +212,8 @@
 "settings.reminder.enable" = "Tägliche Erinnerung";
 "settings.reminder.time" = "Uhrzeit";
 "settings.reminder.hint" = "Erhalte täglich eine Erinnerung zum Üben.";
+"settings.badge.enable" = "Fällige Wörter aufs App-Icon";
+"settings.badge.hint" = "Zeigt die Anzahl heute offener Wörter als Badge am App-Icon.";
 "settings.goal.section" = "Dein Ziel";
 "settings.goal.metric" = "Zielart";
 "settings.goal.metric.practiced" = "Geübte Wörter";

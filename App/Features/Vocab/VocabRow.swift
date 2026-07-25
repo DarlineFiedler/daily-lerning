@@ -73,5 +73,6 @@ struct VocabRow: View {
         vocab.includeInWidget.toggle()
         context.saveOrLog()
         WidgetSnapshotWriter.refresh(context: context)
+        BadgeUpdater.refresh(context: context)
     }
 }
