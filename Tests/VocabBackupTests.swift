@@ -38,6 +38,7 @@ final class VocabBackupTests: XCTestCase {
         vocab.includeInWidget = true
         vocab.setStatusManually(.almostLearned) // setzt statusRaw, counter, nextReviewAt
         vocab.timesPracticed = 5
+        vocab.totalWrongCount = 4
         vocab.lastCountedAt = .now
         context.insert(vocab)
         try context.save()
@@ -77,6 +78,7 @@ final class VocabBackupTests: XCTestCase {
         XCTAssertEqual(v.status, .almostLearned)
         XCTAssertEqual(v.successCounter, vocab.successCounter)
         XCTAssertEqual(v.timesPracticed, 5)
+        XCTAssertEqual(v.totalWrongCount, 4)
         // Datum via ISO8601 (ms-genau) → mit kleiner Toleranz vergleichen.
         let expectedDue = try XCTUnwrap(vocab.nextReviewAt).timeIntervalSinceReferenceDate
         let actualDue = try XCTUnwrap(v.nextReviewAt).timeIntervalSinceReferenceDate
