@@ -7,6 +7,11 @@ struct PracticePreset: Codable, Identifiable, Equatable {
     var name: String
     var groupIDs: [UUID]
     var statuses: [Int] // LearningStatus.rawValue
+    /// TOPIK-Niveaus (TopikLevel.rawValue); leer/`nil` = alle. Optional (Default `nil`),
+    /// damit vor diesem Feld gespeicherte Presets weiterhin dekodiert werden – ein
+    /// fehlender Schlüssel würde bei einem nicht-optionalen Feld den Decode werfen und
+    /// alle gespeicherten Presets verwerfen (siehe [[TopikLevel]]).
+    var topikLevels: [Int]? = nil
     var direction: String // PracticeDirection.rawValue
     var modes: [String] // PracticeMode.rawValue
     var wordLimit: Int? // nil = alle

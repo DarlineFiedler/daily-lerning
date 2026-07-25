@@ -9,6 +9,7 @@ struct PracticeConfigView: View {
 
     @State private var selectedGroupIDs: Set<UUID>
     @State private var selectedStatuses: Set<LearningStatus> = []
+    @State private var selectedTopikLevels: Set<TopikLevel> = []
     @State private var direction: PracticeDirection = .wordToMeaning
     @State private var selectedModes: Set<PracticeMode> = []
     @State private var wordLimit: Int?
@@ -29,10 +30,12 @@ struct PracticeConfigView: View {
         selectedGroupIDs.isEmpty ? allGroups : allGroups.filter { selectedGroupIDs.contains($0.id) }
     }
 
-    /// Wörter, die zur aktuellen Auswahl passen (leere Statusmenge = alle).
+    /// Wörter, die zur aktuellen Auswahl passen. Leere Status- bzw. TOPIK-Menge = alle.
+    /// Bei aktivem TOPIK-Filter fallen nicht eingestufte Wörter (`topikLevel == nil`) weg.
     private var pool: [Vocab] {
         resolvedGroups.flatMap(\.vocabs).filter {
-            selectedStatuses.isEmpty || selectedStatuses.contains($0.status)
+            (selectedStatuses.isEmpty || selectedStatuses.contains($0.status)) &&
+                (selectedTopikLevels.isEmpty || $0.topikLevel.map(selectedTopikLevels.contains) ?? false)
         }
     }
 
@@ -53,6 +56,7 @@ struct PracticeConfigView: View {
                     if !presets.isEmpty { presetSection }
                     if allGroups.count > 1 { groupSection }
                     statusSection
+                    topikSection
                     DirectionModeSelection(direction: $direction, modes: $selectedModes)
                     WordLimitSelection(wordLimit: $wordLimit)
                 }
@@ -163,6 +167,26 @@ struct PracticeConfigView: View {
         }
     }
 
+    private var topikSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(L("practice.config.topik"))
+            FlowChips {
+                ForEach(TopikLevel.allCases) { level in
+                    SelectableChip(
+                        title: L(level.titleKey),
+                        systemImage: "graduationcap.fill",
+                        tint: Theme.brandStart,
+                        isSelected: selectedTopikLevels.contains(level)
+                    ) { toggle(&selectedTopikLevels, level) }
+                }
+            }
+            Text(L("common.all"))
+                .font(.appCaption)
+                .foregroundStyle(.secondary)
+                .opacity(selectedTopikLevels.isEmpty ? 1 : 0.4)
+        }
+    }
+
     private var startBar: some View {
         VStack(spacing: 6) {
             Button { startSession = true } label: {
@@ -196,6 +220,7 @@ struct PracticeConfigView: View {
             name: name,
             groupIDs: Array(selectedGroupIDs),
             statuses: selectedStatuses.map(\.rawValue),
+            topikLevels: selectedTopikLevels.map(\.rawValue),
             direction: direction.rawValue,
             modes: selectedModes.map(\.rawValue),
             wordLimit: wordLimit
@@ -211,6 +236,7 @@ struct PracticeConfigView: View {
         let existing = Set(allGroups.map(\.id))
         selectedGroupIDs = Set(preset.groupIDs).intersection(existing)
         selectedStatuses = Set(preset.statuses.compactMap(LearningStatus.init(rawValue:)))
+        selectedTopikLevels = Set((preset.topikLevels ?? []).compactMap(TopikLevel.init(rawValue:)))
         direction = PracticeDirection(rawValue: preset.direction) ?? .wordToMeaning
         selectedModes = Set(preset.modes.compactMap(PracticeMode.init(rawValue:)))
             .intersection(PracticeMode.available)

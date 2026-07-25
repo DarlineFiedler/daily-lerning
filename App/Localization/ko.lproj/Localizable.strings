@@ -85,6 +85,7 @@
 "practice.config.title" = "학습";
 "practice.config.groups" = "그룹";
 "practice.config.statuses" = "어떤 단어?";
+"practice.config.topik" = "TOPIK 등급";
 "practice.config.direction" = "방향";
 "practice.config.modes" = "학습 모드";
 "practice.config.modesHint" = "여러 개 선택 가능 (= 혼합). 미선택 시 전체 사용.";

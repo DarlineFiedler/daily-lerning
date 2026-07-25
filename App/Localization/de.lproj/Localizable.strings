@@ -85,6 +85,7 @@
 "practice.config.title" = "Lernvorgang";
 "practice.config.groups" = "Gruppen";
 "practice.config.statuses" = "Welche Wörter?";
+"practice.config.topik" = "TOPIK-Niveau";
 "practice.config.direction" = "Richtung";
 "practice.config.modes" = "Lernmodi";
 "practice.config.modesHint" = "Mehrere wählbar (= Mix). Ohne Auswahl wird alles genutzt.";
