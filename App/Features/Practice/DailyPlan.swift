@@ -22,24 +22,14 @@ enum DailyPlan {
 
     /// Berechnet den heutigen Plan aus allen Vokabeln. `now` ist injizierbar (Tests).
     static func today(from vocabs: [Vocab], now: Date = .now) -> Result {
-        let calendar = Calendar.current
-        func handledToday(_ vocab: Vocab) -> Bool {
-            guard let last = vocab.lastPracticedAt else { return false }
-            return calendar.isDate(last, inSameDayAs: now)
-        }
+        let partition = partition(vocabs, now: now)
 
-        let inProgress = vocabs.filter { $0.status == .learning || $0.status == .almostLearned }
-        let learned = vocabs.filter { $0.status == .learned }
-
-        let toLearn = inProgress.filter { !handledToday($0) }
-        if !toLearn.isEmpty { return Result(kind: .learn, words: toLearn) }
-
-        let toReview = learned.filter { !handledToday($0) }
-        if !toReview.isEmpty { return Result(kind: .review, words: toReview) }
+        if !partition.toLearn.isEmpty { return Result(kind: .learn, words: partition.toLearn) }
+        if !partition.toReview.isEmpty { return Result(kind: .review, words: partition.toReview) }
 
         // Nichts mehr offen: „alles erledigt" nur zeigen, wenn überhaupt Wörter im Lernprozess
         // sind (also schon mindestens einmal durchgenommen wurden, Status ≠ „Neu").
-        if !inProgress.isEmpty || !learned.isEmpty {
+        if !partition.inProgress.isEmpty || !partition.learned.isEmpty {
             return Result(kind: .done, words: [])
         }
         return Result(kind: .none, words: [])
@@ -48,6 +38,17 @@ enum DailyPlan {
     /// Anzahl der heute noch offenen Wörter (zu lernen + aufzufrischen) – für das App-Icon-Badge.
     /// Tagesbasiert wie `today(...)`: neue, nie geübte Wörter (Status „Neu") sind ausgeschlossen.
     static func openWordCount(from vocabs: [Vocab], now: Date = .now) -> Int {
+        let partition = partition(vocabs, now: now)
+        return partition.toLearn.count + partition.toReview.count
+    }
+
+    /// Teilt die Vokabeln in die Lern- (`learning`/`almostLearned`) und Wiederhol-Stufe
+    /// (`learned`) auf und filtert jeweils die heute schon bearbeiteten heraus – die
+    /// gemeinsame, tagesbasierte Grundlage von `today(...)` und `openWordCount(...)`.
+    private static func partition(
+        _ vocabs: [Vocab],
+        now: Date
+    ) -> (inProgress: [Vocab], learned: [Vocab], toLearn: [Vocab], toReview: [Vocab]) {
         let calendar = Calendar.current
         func handledToday(_ vocab: Vocab) -> Bool {
             guard let last = vocab.lastPracticedAt else { return false }
@@ -56,9 +57,11 @@ enum DailyPlan {
 
         let inProgress = vocabs.filter { $0.status == .learning || $0.status == .almostLearned }
         let learned = vocabs.filter { $0.status == .learned }
-
-        let toLearn = inProgress.filter { !handledToday($0) }
-        let toReview = learned.filter { !handledToday($0) }
-        return toLearn.count + toReview.count
+        return (
+            inProgress: inProgress,
+            learned: learned,
+            toLearn: inProgress.filter { !handledToday($0) },
+            toReview: learned.filter { !handledToday($0) }
+        )
     }
 }

@@ -9,8 +9,8 @@ options:
 
 settings:
   base:
-    MARKETING_VERSION: "2.7.2"
-    CURRENT_PROJECT_VERSION: "40"
+    MARKETING_VERSION: "2.7.3"
+    CURRENT_PROJECT_VERSION: "41"
     SWIFT_VERSION: "5.0"
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: ""
