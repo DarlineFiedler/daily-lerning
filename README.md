@@ -69,6 +69,19 @@ Oder einfach in Xcode das Schema **DailyHangul** wählen und ▶︎ drücken.
 > Die **App-Group** (Datenaustausch App↔Widget) ist auf kostenlosen Konten evtl.
 > eingeschränkt – im Simulator funktioniert alles.
 
+#### Automatische 7-Tage-Neusignierung (ohne Kabel + Xcode)
+
+Damit die App nicht jede Woche manuell neu installiert werden muss, gibt es die
+**SideStore**-Einrichtung: eine sideload-fähige `.ipa` bauen und von SideStore
+on-device alle 7 Tage automatisch neu signieren lassen.
+
+```bash
+./scripts/build-ipa.sh   # → build/DailyHangul.ipa
+```
+
+Vollständige Anleitung (Einrichtung, Datenerhalt, Risiken):
+[`docs/sideloading.md`](docs/sideloading.md).
+
 ## Projektstruktur
 
 ```
