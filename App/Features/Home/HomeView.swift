@@ -20,9 +20,9 @@ struct HomeView: View {
     @AppStorage(GoalKeys.metric, store: AppGroup.defaults)
     private var goalMetricRaw = GoalMetric.practiced.rawValue
     @AppStorage(GoalKeys.weekly, store: AppGroup.defaults)
-    private var weeklyGoal = 20
+    private var weeklyGoal = GoalOptions.defaultWeekly
     @AppStorage(GoalKeys.daily, store: AppGroup.defaults)
-    private var dailyGoal = 5
+    private var dailyGoal = GoalOptions.defaultDaily
 
     // MARK: Abgeleitete Werte
 

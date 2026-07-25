@@ -26,6 +26,10 @@ enum GoalMetric: String, CaseIterable, Identifiable {
 enum GoalOptions {
     static let weekly = [0, 5, 10, 15, 20, 30, 50, 75, 100]
     static let daily = [0, 1, 2, 3, 5, 8, 10, 15, 20]
+    /// Standard: kein Ziel gesetzt – die Ziel-Karte erscheint erst, wenn der Nutzer
+    /// bewusst einen Wert wählt (verhindert ungefragte Karten/Badges nach Update).
+    static let defaultWeekly = 0
+    static let defaultDaily = 0
 }
 
 /// Zusammenfassung einer abgeschlossenen Kalenderwoche – rein abgeleitet, für die
