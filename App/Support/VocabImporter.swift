@@ -2,7 +2,8 @@ import Foundation
 import SwiftData
 
 /// Zentrale Import-Logik: fügt geparste Zeilen in eine (bei Bedarf neu angelegte)
-/// Gruppe ein und überspringt Dubletten. Wird von den mitgelieferten Wortpaketen und
+/// Gruppe ein. Neue Wörter werden angelegt, bei Dubletten nur fehlende Angaben ergänzt
+/// (bestehende Werte bleiben unangetastet). Wird von den mitgelieferten Wortpaketen und
 /// vom manuellen Import-Sheet genutzt.
 enum VocabImporter {
 
@@ -19,21 +20,18 @@ enum VocabImporter {
                    skipped: lhs.skipped + rhs.skipped)
         }
 
-        /// Übernimmt Bedeutung/Beispiel/TOPIK einer Zeile in eine bestehende Vokabel und
-        /// zählt das Ergebnis (`updated`, falls sich etwas geändert hat, sonst `skipped`).
-        /// Ein Beispiel oder TOPIK-Level wird nur gesetzt, wenn die Zeile es liefert – ein
-        /// leeres Feld löscht also keine bereits gepflegten Werte.
+        /// Füllt **nur fehlende** Beispiel-/TOPIK-Angaben einer bestehenden Vokabel aus der
+        /// Zeile nach und zählt das Ergebnis (`updated`, falls etwas ergänzt wurde, sonst
+        /// `skipped`). Bereits gepflegte Werte – auch die Bedeutung – bleiben unangetastet,
+        /// damit ein Re-Import manuell bearbeitete Felder niemals überschreibt; ein leeres
+        /// Feld in der Zeile löscht ebenso wenig einen vorhandenen Wert.
         mutating func applyUpdate(from row: VocabCSV.Row, to vocab: Vocab) {
             var changed = false
-            if vocab.meaning != row.meaning {
-                vocab.meaning = row.meaning
-                changed = true
-            }
-            if let example = row.example, vocab.example != example {
+            if vocab.example?.isEmpty ?? true, let example = row.example {
                 vocab.example = example
                 changed = true
             }
-            if let topik = row.topik, vocab.topikLevel != topik {
+            if vocab.topikLevel == nil, let topik = row.topik {
                 vocab.topikLevel = topik
                 changed = true
             }
@@ -45,10 +43,10 @@ enum VocabImporter {
     /// `existingGroups`, sonst neu angelegt). Der Abgleich erfolgt über das normalisierte
     /// koreanische Wort (Leerraum getrimmt, Groß-/Kleinschreibung egal):
     /// - neues Wort → anlegen (`added`),
-    /// - vorhandenes Wort → Bedeutung/Beispiel/TOPIK aus der Zeile **aktualisieren**
-    ///   (`updated`), sofern sich etwas ändert – der Lernfortschritt (Status, Zähler,
-    ///   Fälligkeit …) bleibt dabei unberührt,
-    /// - vorhandenes Wort ohne Änderung → `skipped`.
+    /// - vorhandenes Wort → **nur fehlende** Beispiel-/TOPIK-Angaben aus der Zeile
+    ///   ergänzen (`updated`); bereits gepflegte Werte inkl. Bedeutung und der
+    ///   Lernfortschritt (Status, Zähler, Fälligkeit …) bleiben unberührt,
+    /// - vorhandenes Wort ohne zu füllende Lücke → `skipped`.
     /// Speichert **nicht**; das übernimmt der Aufrufer (z.B. einmal nach mehreren Paketen).
     @discardableResult
     static func importRows(_ rows: [VocabCSV.Row],

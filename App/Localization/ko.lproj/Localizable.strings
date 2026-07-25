@@ -240,7 +240,7 @@
 "topik.ii" = "TOPIK II";
 
 "wordpacks.section" = "단어 묶음";
-"wordpacks.hint" = "미리 만들어진 단어 목록을 묶음 이름의 그룹으로 가져옵니다. 이미 있는 단어는 건너뜁니다.";
+"wordpacks.hint" = "미리 만들어진 단어 목록을 묶음 이름의 그룹으로 가져옵니다. 이미 있는 단어는 유지되며 비어 있는 정보만 채워집니다.";
 "wordpacks.count" = "%d개 단어";
 "wordpacks.importAll" = "모두 가져오기";
 "wordpacks.result" = "%d개 추가 · %d개 업데이트 · %d개 건너뜀";

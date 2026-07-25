@@ -12,8 +12,8 @@ struct TopikBadge: View {
                 .fontWeight(.semibold)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(Color.accentColor.opacity(0.15), in: Capsule())
-                .foregroundStyle(Color.accentColor)
+                .background(Theme.brandStart.opacity(0.15), in: Capsule())
+                .foregroundStyle(Theme.brandStart)
                 .accessibilityLabel(L(level.titleKey))
         }
     }

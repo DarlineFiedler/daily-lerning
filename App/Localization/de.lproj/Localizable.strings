@@ -240,7 +240,7 @@
 "topik.ii" = "TOPIK II";
 
 "wordpacks.section" = "Wortpakete";
-"wordpacks.hint" = "Fertige Wörterlisten in eine Gruppe mit dem Paketnamen laden. Bereits vorhandene Wörter werden übersprungen.";
+"wordpacks.hint" = "Fertige Wörterlisten in eine Gruppe mit dem Paketnamen laden. Bereits vorhandene Wörter bleiben erhalten; nur fehlende Angaben werden ergänzt.";
 "wordpacks.count" = "%d Wörter";
 "wordpacks.importAll" = "Alle importieren";
 "wordpacks.result" = "%d hinzugefügt · %d aktualisiert · %d übersprungen";

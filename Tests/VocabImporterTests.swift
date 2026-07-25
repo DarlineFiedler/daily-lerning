@@ -63,13 +63,14 @@ final class VocabImporterTests: XCTestCase {
         XCTAssertEqual(all.first?.vocabs.count, 2)
     }
 
-    func testUpdatesDuplicateWordNormalized() throws {
+    func testKeepsExistingMeaningOnDuplicate() throws {
         let existing = VocabGroup(name: "Berufe")
         context.insert(existing)
         context.insert(Vocab(word: "선생님", meaning: "Lehrer", group: existing))
         try context.save()
 
-        // Gleiches Wort (mit Leerraum) andere Bedeutung → aktualisiert; „가수" ist neu.
+        // Gleiches Wort (mit Leerraum) andere Bedeutung → bestehende Bedeutung bleibt
+        // erhalten (keine Lücke zu füllen) → übersprungen; „가수" ist neu.
         let result = VocabImporter.importRows(
             rows([(" 선생님 ", "Teacher"), ("가수", "Sänger")]),
             intoGroupNamed: "Berufe", context: context, existingGroups: try groups()
@@ -77,11 +78,11 @@ final class VocabImporterTests: XCTestCase {
         try context.save()
 
         XCTAssertEqual(result.added, 1)
-        XCTAssertEqual(result.updated, 1)
-        XCTAssertEqual(result.skipped, 0)
+        XCTAssertEqual(result.updated, 0)
+        XCTAssertEqual(result.skipped, 1)
         XCTAssertEqual(try groups().first?.vocabs.count, 2) // keine zweite „선생님"
         let teacher = try groups().first?.vocabs.first { $0.word == "선생님" }
-        XCTAssertEqual(teacher?.meaning, "Teacher") // Bedeutung übernommen
+        XCTAssertEqual(teacher?.meaning, "Lehrer") // manuell gepflegte Bedeutung unberührt
     }
 
     func testSkipsIdenticalRowWithoutChange() throws {
@@ -144,7 +145,7 @@ final class VocabImporterTests: XCTestCase {
         XCTAssertEqual(teacher.topikLevel, .two)
     }
 
-    func testUpdatesDuplicatesWithinSameImport() throws {
+    func testKeepsFirstMeaningForDuplicatesWithinSameImport() throws {
         let result = VocabImporter.importRows(
             rows([("밥", "Reis"), ("밥", "Mahlzeit")]),
             intoGroupNamed: "Essen", context: context, existingGroups: try groups()
@@ -152,9 +153,10 @@ final class VocabImporterTests: XCTestCase {
         try context.save()
 
         XCTAssertEqual(result.added, 1)
-        XCTAssertEqual(result.updated, 1) // zweite Zeile aktualisiert die erste
+        XCTAssertEqual(result.updated, 0) // zweite Zeile überschreibt die erste nicht
+        XCTAssertEqual(result.skipped, 1)
         XCTAssertEqual(try groups().first?.vocabs.count, 1)
-        XCTAssertEqual(try groups().first?.vocabs.first?.meaning, "Mahlzeit")
+        XCTAssertEqual(try groups().first?.vocabs.first?.meaning, "Reis")
     }
 
     func testCarriesTopikLevelIntoVocab() throws {

@@ -240,7 +240,7 @@
 "topik.ii" = "TOPIK II";
 
 "wordpacks.section" = "Word packs";
-"wordpacks.hint" = "Load ready-made word lists into a group named after the pack. Words that already exist are skipped.";
+"wordpacks.hint" = "Load ready-made word lists into a group named after the pack. Existing words are kept; only missing details are filled in.";
 "wordpacks.count" = "%d words";
 "wordpacks.importAll" = "Import all";
 "wordpacks.result" = "%d added · %d updated · %d skipped";
