@@ -32,8 +32,46 @@ final class VocabCSVTests: XCTestCase {
         let apple = Vocab(word: "사과", meaning: "Apfel", example: "Ein Beispiel")
         let csv = VocabCSV.export([apple])
         let lines = csv.split(separator: "\n")
-        XCTAssertEqual(lines.first, "word;meaning;example;group;status") // Header
+        XCTAssertEqual(lines.first, "word;meaning;example;topik;group;status") // Header
         XCTAssertTrue(csv.contains("사과;Apfel;Ein Beispiel"))
+    }
+
+    // MARK: - TOPIK-Niveau (4. Spalte)
+
+    func testParsesTopikLevel() {
+        // Wort;Bedeutung;Beispiel(leer);TOPIK – römische Kurzform, groß-/kleinschreibungsegal.
+        XCTAssertEqual(VocabCSV.parse("가다;gehen;;I").first?.topik, .one)
+        XCTAssertEqual(VocabCSV.parse("가다;gehen;;ii").first?.topik, .two)
+        // Beispiel + Niveau nebeneinander bleiben getrennt.
+        let row = VocabCSV.parse("가다;gehen;Beispiel;II").first
+        XCTAssertEqual(row?.example, "Beispiel")
+        XCTAssertEqual(row?.topik, .two)
+    }
+
+    func testTopikMissingColumnIsNil() {
+        XCTAssertNil(VocabCSV.parse("가다;gehen").first?.topik)
+        XCTAssertNil(VocabCSV.parse("가다;gehen;Beispiel").first?.topik)
+    }
+
+    func testTopikInvalidValueIsNil() {
+        XCTAssertNil(VocabCSV.parse("가다;gehen;;X").first?.topik)
+        XCTAssertNil(VocabCSV.parse("가다;gehen;;7").first?.topik)
+        XCTAssertNil(VocabCSV.parse("가다;gehen;; ").first?.topik)
+    }
+
+    func testTopikNumericLevelsMapToBands() {
+        // Offizielle Level 1–2 ⇒ TOPIK I, 3–6 ⇒ TOPIK II.
+        XCTAssertEqual(VocabCSV.parse("가다;gehen;;1").first?.topik, .one)
+        XCTAssertEqual(VocabCSV.parse("가다;gehen;;2").first?.topik, .one)
+        XCTAssertEqual(VocabCSV.parse("가다;gehen;;3").first?.topik, .two)
+        XCTAssertEqual(VocabCSV.parse("가다;gehen;;6").first?.topik, .two)
+    }
+
+    func testExportIncludesTopikAndRoundTrips() {
+        let vocab = Vocab(word: "사과", meaning: "Apfel", topik: .two)
+        let csv = VocabCSV.export([vocab])
+        XCTAssertTrue(csv.contains("사과;Apfel;;II"))
+        XCTAssertEqual(VocabCSV.parse(csv).first?.topik, .two)
     }
 
     func testExportEscapesSemicolons() {

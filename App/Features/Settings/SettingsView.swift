@@ -252,7 +252,7 @@ struct SettingsView: View {
     /// Importiert die angegebenen Pakete jeweils in eine Gruppe mit dem Paketnamen
     /// (Dubletten werden übersprungen) und zeigt anschließend eine Ergebnis-Meldung.
     private func importPacks(_ packs: [WordPack]) {
-        var total = VocabImporter.Result(added: 0, skipped: 0)
+        var total = VocabImporter.Result(added: 0, updated: 0, skipped: 0)
         for pack in packs {
             // Result definiert nur '+', kein '+=' – daher kein Shorthand möglich.
             // swiftlint:disable:next shorthand_operator
@@ -262,7 +262,7 @@ struct SettingsView: View {
         }
         context.saveOrLog()
         WidgetSnapshotWriter.refresh(context: context)
-        packMessage = L("wordpacks.result", total.added, total.skipped)
+        packMessage = L("wordpacks.result", total.added, total.updated, total.skipped)
     }
 
     private func exportBackup() {

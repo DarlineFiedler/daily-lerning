@@ -16,6 +16,7 @@ struct VocabEditView: View {
     @State private var example: String
     @State private var emoji: String
     @State private var status: LearningStatus
+    @State private var topikLevel: TopikLevel?
     @State private var includeInWidget: Bool
     @State private var selectedGroup: VocabGroup?
     /// Sobald der Nutzer das Emoji-Feld selbst anfasst (tippen, Vorschlag übernehmen,
@@ -30,6 +31,7 @@ struct VocabEditView: View {
         _example = State(initialValue: vocab?.example ?? "")
         _emoji = State(initialValue: vocab?.emoji ?? "")
         _status = State(initialValue: vocab?.status ?? .new)
+        _topikLevel = State(initialValue: vocab?.topikLevel)
         _includeInWidget = State(initialValue: vocab?.includeInWidget ?? false)
         _selectedGroup = State(initialValue: group ?? vocab?.group)
         // Bestehende Vokabeln mit Emoji gelten als „vom Nutzer gesetzt", damit ein
@@ -75,6 +77,16 @@ struct VocabEditView: View {
                     Picker(L("vocab.status"), selection: $status) {
                         ForEach(LearningStatus.allCases) { s in
                             Label(L(s.titleKey), systemImage: s.systemImage).tag(s)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+
+                Section(L("topik.level")) {
+                    Picker(L("topik.level"), selection: $topikLevel) {
+                        Text(L("topik.none")).tag(TopikLevel?.none)
+                        ForEach(TopikLevel.allCases) { level in
+                            Text(L(level.titleKey)).tag(TopikLevel?.some(level))
                         }
                     }
                     .pickerStyle(.menu)
@@ -179,6 +191,7 @@ struct VocabEditView: View {
         target.example = trimmedExample.isEmpty ? nil : trimmedExample
         let trimmedEmoji = emoji.trimmingCharacters(in: .whitespacesAndNewlines)
         target.emoji = trimmedEmoji.isEmpty ? nil : trimmedEmoji
+        target.topikLevel = topikLevel
         target.includeInWidget = includeInWidget
         // Gruppe zuweisen/verschieben (auch aus der Suche heraus möglich).
         if let selectedGroup { target.group = selectedGroup }

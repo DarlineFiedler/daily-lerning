@@ -19,11 +19,24 @@ struct VocabImportView: View {
     @State private var newGroupName = ""
     @State private var showFileImporter = false
     @State private var importError = false
+    /// Aktiver Niveau-Filter (`nil` = alle Niveaus importieren). Nur relevant, wenn die
+    /// eingefügten Daten überhaupt eine TOPIK-Spalte enthalten (siehe `hasLevels`).
+    @State private var levelFilter: TopikLevel?
 
     private var parsedRows: [VocabCSV.Row] { VocabCSV.parse(text) }
 
+    /// Enthält der eingefügte Text mindestens eine eingestufte Zeile? Nur dann blenden
+    /// wir den Niveau-Filter ein (alte Pakete ohne Spalte bleiben unverändert).
+    private var hasLevels: Bool { parsedRows.contains { $0.topik != nil } }
+
+    /// Die tatsächlich zu importierenden Zeilen nach Anwenden des Niveau-Filters.
+    private var filteredRows: [VocabCSV.Row] {
+        guard let levelFilter else { return parsedRows }
+        return parsedRows.filter { $0.topik == levelFilter }
+    }
+
     private var canImport: Bool {
-        guard !parsedRows.isEmpty else { return false }
+        guard !filteredRows.isEmpty else { return false }
         switch target {
         case .existing: return true
         case .new: return !newGroupName.trimmingCharacters(in: .whitespaces).isEmpty
@@ -62,10 +75,24 @@ struct VocabImportView: View {
                     Text(L("import.formatHint"))
                 }
 
+                if hasLevels {
+                    Section {
+                        Picker(L("import.levelFilter"), selection: $levelFilter) {
+                            Text(L("import.levelAll")).tag(TopikLevel?.none)
+                            ForEach(TopikLevel.allCases) { level in
+                                Text(L(level.titleKey)).tag(TopikLevel?.some(level))
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    } header: {
+                        Text(L("import.levelSection"))
+                    }
+                }
+
                 if !text.isEmpty {
                     Section {
-                        Text(L("import.preview", parsedRows.count))
-                            .foregroundStyle(parsedRows.isEmpty ? .secondary : .primary)
+                        Text(L("import.preview", filteredRows.count))
+                            .foregroundStyle(filteredRows.isEmpty ? .secondary : .primary)
                     }
                 }
             }
@@ -109,7 +136,7 @@ struct VocabImportView: View {
     }
 
     private func performImport() {
-        let rows = parsedRows
+        let rows = filteredRows
         guard !rows.isEmpty else { return }
 
         let groupName: String

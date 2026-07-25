@@ -85,6 +85,7 @@
 "practice.config.title" = "Lernvorgang";
 "practice.config.groups" = "Gruppen";
 "practice.config.statuses" = "Welche Wörter?";
+"practice.config.topik" = "TOPIK-Niveau";
 "practice.config.direction" = "Richtung";
 "practice.config.modes" = "Lernmodi";
 "practice.config.modesHint" = "Mehrere wählbar (= Mix). Ohne Auswahl wird alles genutzt.";
@@ -225,16 +226,24 @@
 "import.newGroup" = "Neue Gruppe";
 "import.paste" = "Text einfügen";
 "import.fromFile" = "Aus Datei importieren";
-"import.formatHint" = "Eine Zeile pro Vokabel: Wort ; Bedeutung ; Beispiel (optional).";
+"import.formatHint" = "Eine Zeile pro Vokabel: Wort ; Bedeutung ; Beispiel (optional) ; TOPIK-Niveau (optional, I oder II).";
 "import.preview" = "%d Vokabeln erkannt";
 "import.action" = "Importieren";
 "import.error" = "Datei konnte nicht gelesen werden.";
+"import.levelSection" = "Niveau";
+"import.levelFilter" = "TOPIK-Niveau";
+"import.levelAll" = "Alle";
+
+"topik.level" = "TOPIK-Niveau";
+"topik.none" = "Kein Niveau";
+"topik.i" = "TOPIK I";
+"topik.ii" = "TOPIK II";
 
 "wordpacks.section" = "Wortpakete";
-"wordpacks.hint" = "Fertige Wörterlisten in eine Gruppe mit dem Paketnamen laden. Bereits vorhandene Wörter werden übersprungen.";
+"wordpacks.hint" = "Fertige Wörterlisten in eine Gruppe mit dem Paketnamen laden. Bereits vorhandene Wörter bleiben erhalten; nur fehlende Angaben werden ergänzt.";
 "wordpacks.count" = "%d Wörter";
 "wordpacks.importAll" = "Alle importieren";
-"wordpacks.result" = "%d hinzugefügt · %d übersprungen";
+"wordpacks.result" = "%d hinzugefügt · %d aktualisiert · %d übersprungen";
 
 /* Achievements / Badges */
 "ach.title" = "Erfolge";

@@ -21,6 +21,7 @@ final class PracticePresetTests: XCTestCase {
             name: name,
             groupIDs: [UUID(), UUID()],
             statuses: [LearningStatus.learning.rawValue, LearningStatus.new.rawValue],
+            topikLevels: [TopikLevel.one.rawValue],
             direction: PracticeDirection.meaningToWord.rawValue,
             modes: [PracticeMode.writing.rawValue, PracticeMode.listening.rawValue],
             wordLimit: 20
@@ -32,6 +33,17 @@ final class PracticePresetTests: XCTestCase {
         let data = try JSONEncoder().encode(preset)
         let decoded = try JSONDecoder().decode(PracticePreset.self, from: data)
         XCTAssertEqual(decoded, preset)
+    }
+
+    /// Presets, die vor dem TOPIK-Feld gespeichert wurden, haben keinen
+    /// `topikLevels`-Schlüssel – der Decode muss trotzdem gelingen (Feld = `nil`).
+    func testDecodesLegacyPresetWithoutTopikLevels() throws {
+        let json = """
+        {"id":"\(UUID().uuidString)","name":"Alt","groupIDs":[],\
+        "statuses":[0],"direction":"wordToMeaning","modes":[],"wordLimit":null}
+        """
+        let decoded = try JSONDecoder().decode(PracticePreset.self, from: Data(json.utf8))
+        XCTAssertNil(decoded.topikLevels)
     }
 
     func testSaveAndLoad() {

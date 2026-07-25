@@ -85,6 +85,7 @@
 "practice.config.title" = "Practice";
 "practice.config.groups" = "Groups";
 "practice.config.statuses" = "Which words?";
+"practice.config.topik" = "TOPIK level";
 "practice.config.direction" = "Direction";
 "practice.config.modes" = "Modes";
 "practice.config.modesHint" = "Pick several (= Mix). None selected uses all.";
@@ -225,16 +226,24 @@
 "import.newGroup" = "New group";
 "import.paste" = "Paste text";
 "import.fromFile" = "Import from file";
-"import.formatHint" = "One line per word: word ; meaning ; example (optional).";
+"import.formatHint" = "One line per word: word ; meaning ; example (optional) ; TOPIK level (optional, I or II).";
 "import.preview" = "%d words detected";
 "import.action" = "Import";
 "import.error" = "Could not read the file.";
+"import.levelSection" = "Level";
+"import.levelFilter" = "TOPIK level";
+"import.levelAll" = "All";
+
+"topik.level" = "TOPIK level";
+"topik.none" = "No level";
+"topik.i" = "TOPIK I";
+"topik.ii" = "TOPIK II";
 
 "wordpacks.section" = "Word packs";
-"wordpacks.hint" = "Load ready-made word lists into a group named after the pack. Words that already exist are skipped.";
+"wordpacks.hint" = "Load ready-made word lists into a group named after the pack. Existing words are kept; only missing details are filled in.";
 "wordpacks.count" = "%d words";
 "wordpacks.importAll" = "Import all";
-"wordpacks.result" = "%d added · %d skipped";
+"wordpacks.result" = "%d added · %d updated · %d skipped";
 
 /* Achievements / Badges */
 "ach.title" = "Achievements";
