@@ -1,11 +1,11 @@
-개;Stück
-병;Flasche
-잔;Tasse, Becher, Glas
-번;Mal
-명;Zählwort für Menschen
-마리;Zählwort für Tiere
-살;Zählwort für das Alter
-호선;U-Bahn-Linie
-대;Zählwort für große Sachen wie Auto, Kühlschrank, Computer
-씩;jeweils, pro (Verteilung oder Aufteilung)
-장;das Zählwort für Papier
+개;Stück;;I
+병;Flasche;;I
+잔;Tasse, Becher, Glas;;I
+번;Mal;;I
+명;Zählwort für Menschen;;I
+마리;Zählwort für Tiere;;I
+살;Zählwort für das Alter;;I
+호선;U-Bahn-Linie;;II
+대;Zählwort für große Sachen wie Auto, Kühlschrank, Computer;;I
+씩;jeweils, pro (Verteilung oder Aufteilung);;II
+장;das Zählwort für Papier;;I

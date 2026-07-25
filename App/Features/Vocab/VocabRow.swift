@@ -31,8 +31,11 @@ struct VocabRow: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(vocab.word)
-                    .font(.appHeadline)
+                HStack(spacing: 6) {
+                    Text(vocab.word)
+                        .font(.appHeadline)
+                    TopikBadge(level: vocab.topikLevel)
+                }
                 Text(vocab.meaning)
                     .font(.appSubheadline)
                     .foregroundStyle(.secondary)

@@ -40,6 +40,9 @@ struct VocabBackup: Codable {
         /// Optionale Emoji-Merkhilfe. Fehlt der Schlüssel in einer älteren Sicherung,
         /// decodiert das synthetisierte `Codable` ihn als `nil` (kein Versionssprung nötig).
         var emoji: String?
+        /// Optionale TOPIK-Einstufung (siehe [[TopikLevel]]). Fehlt der Schlüssel in einer
+        /// älteren Sicherung, decodiert das synthetisierte `Codable` ihn als `nil`.
+        var topikRaw: Int?
         var statusRaw: Int
         var successCounter: Int
         var includeInWidget: Bool
@@ -62,7 +65,7 @@ extension VocabBackup {
         }
         self.vocabs = vocabs.map {
             VocabDTO(id: $0.id, word: $0.word, meaning: $0.meaning, example: $0.example,
-                     emoji: $0.emoji,
+                     emoji: $0.emoji, topikRaw: $0.topikRaw,
                      statusRaw: $0.statusRaw, successCounter: $0.successCounter,
                      includeInWidget: $0.includeInWidget, timesPracticed: $0.timesPracticed,
                      lastPracticedAt: $0.lastPracticedAt, nextReviewAt: $0.nextReviewAt,
@@ -189,6 +192,7 @@ extension VocabBackup {
             vocab.meaning = dto.meaning
             vocab.example = dto.example
             vocab.emoji = dto.emoji
+            vocab.topikRaw = dto.topikRaw
             vocab.statusRaw = dto.statusRaw
             vocab.successCounter = dto.successCounter
             vocab.includeInWidget = dto.includeInWidget

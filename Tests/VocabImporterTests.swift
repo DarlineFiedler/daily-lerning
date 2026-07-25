@@ -63,13 +63,13 @@ final class VocabImporterTests: XCTestCase {
         XCTAssertEqual(all.first?.vocabs.count, 2)
     }
 
-    func testSkipsDuplicateWordNormalized() throws {
+    func testUpdatesDuplicateWordNormalized() throws {
         let existing = VocabGroup(name: "Berufe")
         context.insert(existing)
         context.insert(Vocab(word: "선생님", meaning: "Lehrer", group: existing))
         try context.save()
 
-        // Gleiches Wort (mit Leerraum) andere Bedeutung → übersprungen; „가수" ist neu.
+        // Gleiches Wort (mit Leerraum) andere Bedeutung → aktualisiert; „가수" ist neu.
         let result = VocabImporter.importRows(
             rows([(" 선생님 ", "Teacher"), ("가수", "Sänger")]),
             intoGroupNamed: "Berufe", context: context, existingGroups: try groups()
@@ -77,11 +77,74 @@ final class VocabImporterTests: XCTestCase {
         try context.save()
 
         XCTAssertEqual(result.added, 1)
-        XCTAssertEqual(result.skipped, 1)
-        XCTAssertEqual(try groups().first?.vocabs.count, 2)
+        XCTAssertEqual(result.updated, 1)
+        XCTAssertEqual(result.skipped, 0)
+        XCTAssertEqual(try groups().first?.vocabs.count, 2) // keine zweite „선생님"
+        let teacher = try groups().first?.vocabs.first { $0.word == "선생님" }
+        XCTAssertEqual(teacher?.meaning, "Teacher") // Bedeutung übernommen
     }
 
-    func testSkipsDuplicatesWithinSameImport() throws {
+    func testSkipsIdenticalRowWithoutChange() throws {
+        let existing = VocabGroup(name: "Berufe")
+        context.insert(existing)
+        context.insert(Vocab(word: "선생님", meaning: "Lehrer", group: existing))
+        try context.save()
+
+        let result = VocabImporter.importRows(
+            rows([("선생님", "Lehrer")]),
+            intoGroupNamed: "Berufe", context: context, existingGroups: try groups()
+        )
+        try context.save()
+
+        XCTAssertEqual(result.added, 0)
+        XCTAssertEqual(result.updated, 0)
+        XCTAssertEqual(result.skipped, 1) // nichts geändert → übersprungen
+    }
+
+    func testReimportAddsTopikAndPreservesProgress() throws {
+        let existing = VocabGroup(name: "Berufe")
+        context.insert(existing)
+        let teacher = Vocab(word: "선생님", meaning: "Lehrer", group: existing)
+        teacher.registerResult(correct: true) // Lernfortschritt aufbauen
+        let counterBefore = teacher.successCounter
+        context.insert(teacher)
+        try context.save()
+
+        // Erneuter Import mit TOPIK-Spalte reichert die bestehende Vokabel an.
+        let result = VocabImporter.importRows(
+            [VocabCSV.Row(word: "선생님", meaning: "Lehrer", example: nil, topik: .one)],
+            intoGroupNamed: "Berufe", context: context, existingGroups: try groups()
+        )
+        try context.save()
+
+        XCTAssertEqual(result.updated, 1)
+        XCTAssertEqual(teacher.topikLevel, .one)
+        XCTAssertEqual(teacher.successCounter, counterBefore) // Fortschritt unangetastet
+        XCTAssertGreaterThan(counterBefore, 0)
+    }
+
+    func testEmptyFieldsDoNotClearExistingValues() throws {
+        let existing = VocabGroup(name: "Berufe")
+        context.insert(existing)
+        let teacher = Vocab(word: "선생님", meaning: "Lehrer", example: "가르치다",
+                            topik: .two, group: existing)
+        context.insert(teacher)
+        try context.save()
+
+        // Zeile ohne Beispiel/TOPIK darf gepflegte Werte nicht löschen → keine Änderung.
+        let result = VocabImporter.importRows(
+            rows([("선생님", "Lehrer")]),
+            intoGroupNamed: "Berufe", context: context, existingGroups: try groups()
+        )
+        try context.save()
+
+        XCTAssertEqual(result.skipped, 1)
+        XCTAssertEqual(result.updated, 0)
+        XCTAssertEqual(teacher.example, "가르치다")
+        XCTAssertEqual(teacher.topikLevel, .two)
+    }
+
+    func testUpdatesDuplicatesWithinSameImport() throws {
         let result = VocabImporter.importRows(
             rows([("밥", "Reis"), ("밥", "Mahlzeit")]),
             intoGroupNamed: "Essen", context: context, existingGroups: try groups()
@@ -89,7 +152,25 @@ final class VocabImporterTests: XCTestCase {
         try context.save()
 
         XCTAssertEqual(result.added, 1)
-        XCTAssertEqual(result.skipped, 1)
+        XCTAssertEqual(result.updated, 1) // zweite Zeile aktualisiert die erste
+        XCTAssertEqual(try groups().first?.vocabs.count, 1)
+        XCTAssertEqual(try groups().first?.vocabs.first?.meaning, "Mahlzeit")
+    }
+
+    func testCarriesTopikLevelIntoVocab() throws {
+        let rows = [
+            VocabCSV.Row(word: "선생님", meaning: "Lehrer", example: nil, topik: .one),
+            VocabCSV.Row(word: "교수", meaning: "Professor", example: nil, topik: .two),
+            VocabCSV.Row(word: "가수", meaning: "Sänger", example: nil) // ohne Niveau
+        ]
+        VocabImporter.importRows(rows, intoGroupNamed: "Berufe", context: context, existingGroups: try groups())
+        try context.save()
+
+        let byWord = Dictionary(uniqueKeysWithValues:
+            (try groups().first?.vocabs ?? []).map { ($0.word, $0.topikLevel) })
+        XCTAssertEqual(byWord["선생님"], .one)
+        XCTAssertEqual(byWord["교수"], .two)
+        XCTAssertNil(byWord["가수"] ?? nil) // ungetaggt bleibt nil
     }
 
     /// Beim Import mehrerer Pakete in einem Rutsch (statische `existingGroups`-Liste)

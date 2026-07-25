@@ -2,13 +2,24 @@ import Foundation
 
 /// Import/Export von Vokabeln als einfaches Zeilenformat.
 /// Eine Zeile = eine Vokabel; Felder getrennt durch `;`, Tab oder `,` (in dieser
-/// Priorität automatisch erkannt). Reihenfolge: Wort, Bedeutung, Beispiel (optional).
+/// Priorität automatisch erkannt). Reihenfolge: Wort, Bedeutung, Beispiel (optional),
+/// TOPIK-Niveau (optional, 4. Spalte – siehe [[TopikLevel]] und Issue #38).
 enum VocabCSV {
 
     struct Row: Equatable {
         let word: String
         let meaning: String
         let example: String?
+        /// Optionale TOPIK-Einstufung aus der 4. Spalte. `nil`, wenn die Spalte fehlt
+        /// oder einen unbekannten Wert enthält (Default für alle bisherigen Dateien).
+        let topik: TopikLevel?
+
+        init(word: String, meaning: String, example: String?, topik: TopikLevel? = nil) {
+            self.word = word
+            self.meaning = meaning
+            self.example = example
+            self.topik = topik
+        }
     }
 
     /// Zerlegt eingefügten Text in Zeilen. Leere Zeilen, Zeilen ohne Bedeutung und
@@ -31,18 +42,20 @@ enum VocabCSV {
             // Kopfzeile des Exports überspringen (nicht als Vokabel importieren).
             guard !(word.lowercased() == "word" && meaning.lowercased() == "meaning") else { return nil }
             let example = fields.count >= 3 && !fields[2].isEmpty ? fields[2] : nil
-            return Row(word: word, meaning: meaning, example: example)
+            let topik = fields.count >= 4 ? TopikLevel(csv: fields[3]) : nil
+            return Row(word: word, meaning: meaning, example: example, topik: topik)
         }
     }
 
     /// Serialisiert Vokabeln als CSV (Semikolon-getrennt), inkl. Header.
     static func export(_ vocabs: [Vocab]) -> String {
-        var lines = ["word;meaning;example;group;status"]
+        var lines = ["word;meaning;example;topik;group;status"]
         for v in vocabs {
             let fields = [
                 v.word,
                 v.meaning,
                 v.example ?? "",
+                v.topikLevel?.abbreviation ?? "",
                 v.group?.name ?? "",
                 L(v.status.titleKey)
             ].map(escape)

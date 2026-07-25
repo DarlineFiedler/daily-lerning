@@ -13,6 +13,11 @@ final class Vocab {
     /// jederzeit manuell änderbar/entfernbar. Additiv eingeführt; SwiftData migriert
     /// bestehende Stores automatisch (Default `nil` = kein Emoji).
     var emoji: String?
+    /// Rohwert der optionalen TOPIK-Einstufung (siehe [[TopikLevel]]); `nil` = nicht
+    /// eingestuft. Wird beim Import aus der optionalen 4. CSV-Spalte gefüllt und ist im
+    /// Editor manuell änderbar. Additiv eingeführt; SwiftData migriert bestehende Stores
+    /// automatisch (Default `nil`).
+    var topikRaw: Int?
 
     var statusRaw: Int = LearningStatus.new.rawValue
     var successCounter: Int = 0 // Streak aufeinanderfolgender richtiger Antworten
@@ -34,11 +39,13 @@ final class Vocab {
     init(word: String,
          meaning: String,
          example: String? = nil,
+         topik: TopikLevel? = nil,
          group: VocabGroup? = nil) {
         self.id = UUID()
         self.word = word
         self.meaning = meaning
         self.example = example
+        self.topikRaw = topik?.rawValue
         self.group = group
         self.createdAt = .now
     }
@@ -48,6 +55,12 @@ final class Vocab {
     var status: LearningStatus {
         get { LearningStatus(rawValue: statusRaw) ?? .new }
         set { statusRaw = newValue.rawValue }
+    }
+
+    /// Getippte Sicht auf `topikRaw` (siehe [[TopikLevel]]). `nil` = nicht eingestuft.
+    var topikLevel: TopikLevel? {
+        get { topikRaw.flatMap(TopikLevel.init(rawValue:)) }
+        set { topikRaw = newValue?.rawValue }
     }
 
     var hasBeenPracticed: Bool { timesPracticed > 0 }
