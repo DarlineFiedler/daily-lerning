@@ -181,6 +181,10 @@ struct GroupDetailView: View {
         }
     }
 
+    /// Einmal pro Body-Auswertung ermittelt, statt das Prädikat inline im ViewBuilder
+    /// zu wiederholen (siehe [[Vocab]] `isProblemWord`).
+    private var hasProblemWords: Bool { group.vocabs.contains(where: \.isProblemWord) }
+
     @ViewBuilder
     private var bottomBar: some View {
         if isSelecting {
@@ -192,7 +196,7 @@ struct GroupDetailView: View {
                 }
                 .buttonStyle(.primary)
 
-                if group.vocabs.contains(where: \.isProblemWord) {
+                if hasProblemWords {
                     Button { showingProblemPractice = true } label: {
                         Label(L("practice.problems.start"), systemImage: "exclamationmark.triangle.fill")
                     }
