@@ -124,6 +124,9 @@ final class PracticeSession {
             groups: Set(items.compactMap { $0.vocab.group?.id.uuidString }),
             context: context
         )
+        // Üben ändert den Fälligkeitsstand (nextReviewAt/lastPracticedAt) → App-Icon-Badge
+        // aktualisieren. Anders als das Widget hängt das Badge an der offenen Wortzahl.
+        BadgeUpdater.refresh(context: context)
     }
 
     /// Startet denselben Satz Wörter erneut.

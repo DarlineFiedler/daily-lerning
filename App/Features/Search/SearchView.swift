@@ -86,6 +86,7 @@ struct SearchView: View {
         context.saveOrLog()
         pendingDelete = nil
         WidgetSnapshotWriter.refresh(context: context)
+        BadgeUpdater.refresh(context: context)
     }
 }
 

@@ -264,6 +264,7 @@ struct VocabEditView: View {
 
         context.saveOrLog()
         WidgetSnapshotWriter.refresh(context: context)
+        BadgeUpdater.refresh(context: context)
         dismiss()
     }
 }

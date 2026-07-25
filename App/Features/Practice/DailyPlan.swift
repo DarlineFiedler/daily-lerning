@@ -44,4 +44,21 @@ enum DailyPlan {
         }
         return Result(kind: .none, words: [])
     }
+
+    /// Anzahl der heute noch offenen Wörter (zu lernen + aufzufrischen) – für das App-Icon-Badge.
+    /// Tagesbasiert wie `today(...)`: neue, nie geübte Wörter (Status „Neu") sind ausgeschlossen.
+    static func openWordCount(from vocabs: [Vocab], now: Date = .now) -> Int {
+        let calendar = Calendar.current
+        func handledToday(_ vocab: Vocab) -> Bool {
+            guard let last = vocab.lastPracticedAt else { return false }
+            return calendar.isDate(last, inSameDayAs: now)
+        }
+
+        let inProgress = vocabs.filter { $0.status == .learning || $0.status == .almostLearned }
+        let learned = vocabs.filter { $0.status == .learned }
+
+        let toLearn = inProgress.filter { !handledToday($0) }
+        let toReview = learned.filter { !handledToday($0) }
+        return toLearn.count + toReview.count
+    }
 }

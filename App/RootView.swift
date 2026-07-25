@@ -43,6 +43,7 @@ struct RootView: View {
                 SeedData.removeLegacySeedIfNeeded(from: context)
             }
             WidgetSnapshotWriter.refresh(context: context)
+            BadgeUpdater.refresh(context: context)
         }
         .alert(L("store.error.title"), isPresented: $showStoreError) {
             Button(L("common.done"), role: .cancel) {}
@@ -52,6 +53,7 @@ struct RootView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 WidgetSnapshotWriter.refresh(context: context)
+                BadgeUpdater.refresh(context: context)
             }
         }
         .onOpenURL { url in

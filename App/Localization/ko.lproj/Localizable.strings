@@ -212,6 +212,8 @@
 "settings.reminder.enable" = "매일 알림";
 "settings.reminder.time" = "시간";
 "settings.reminder.hint" = "매일 학습 알림을 받아요.";
+"settings.badge.enable" = "앱 아이콘에 복습할 단어 수";
+"settings.badge.hint" = "오늘 학습할 단어 수를 앱 아이콘 배지로 표시해요.";
 "settings.goal.section" = "나의 목표";
 "settings.goal.metric" = "목표 유형";
 "settings.goal.metric.practiced" = "학습한 단어";
