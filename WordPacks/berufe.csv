@@ -4,18 +4,18 @@
 가수;Sänger;;I
 학생;Schüler;;I
 대학생;Student;;I
-요리사;Koch;;I
+요리사;Koch;;II
 사장;Chef;;I
-교수;Professor;;II
+교수;Professor;;I
 대통령;Präsident;;II
 매니저;Manager;;II
 의사;Arzt;;I
 손님;Gast,Kunde;;I
 배우;Schauspieler;;I
 간호사;Krankenpfleger;;I
-식당 직원;Restaurantmitarbeiter;;II
-은행원;Bankangestellte;;II
-택시 기사;Taxifahrer;;II
+식당 직원;Restaurantmitarbeiter;;I
+은행원;Bankangestellte;;I
+택시 기사;Taxifahrer;;I
 미용사;Friesuer;;II
 연구원;Forscher;;II
 프리랜서;Freelancer;;II

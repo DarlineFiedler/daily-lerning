@@ -47,14 +47,14 @@
 생각하다;denken;;I
 끄다;ausschalten;;I
 알다;wissen;;I
-낫다;heilen, besser;;I
-주무시다;schlafen (höflich);;II
-드시다;essen (höflich);;II
+낫다;heilen, besser;;II
+주무시다;schlafen (höflich);;I
+드시다;essen (höflich);;I
 자다;schlafen;;I
 모르다;nicht wissen;;I
 살다;leben, wohnen;;I
 놓다;hinlegen, hinstellen;;I
-드리다;geben (höflich);;II
+드리다;geben (höflich);;I
 계산하다;bezahlen, rechnen;;I
 주다;geben;;I
 사용하다, 쓰다;benutzen, verwenden;;I
@@ -76,7 +76,7 @@
 지내다;verbringen;;I
 놀다;spielen;;I
 수영하다;schwimmen;;I
-사귀다;sich befreunden, eine Beziehung haben;;I
+사귀다;sich befreunden, eine Beziehung haben;;II
 자전거를 타다;mit dem Fahrrad fahren;;I
 걷다;zu Fuß gehen;;I
 받다;bekommen;;I
@@ -91,7 +91,7 @@
 점심을 먹다;Mittag essen;;I
 저녁을 먹다;Abend essen;;I
 일어나다;aufstehen;;I
-구경하다;zuschauen, besichtigen;;II
+구경하다;zuschauen, besichtigen;;I
 켜다;einschalten;;I
 아니다;nicht sein;;I
 끝나다;fertig sein;;I
@@ -105,15 +105,15 @@
 길이 막히다;Es gibt Stau (wörtlich: Die Straße ist verstopft);;I
 유학하다;im Ausland studieren;;II
 노래를 부르다;singen;;I
-관심이 생기다;sein Interesse an etwas wecken (wörtlich: Interesse entsteht);;II
+관심이 생기다;sein Interesse an etwas wecken (wörtlich: Interesse entsteht);;I
 시작하다;beginnen;;I
 장을 보다;Lebensmittel einkaufen;;I
-N이라고/라고 하다;nennen;;II
-물어보다;fragen;;II
+N이라고/라고 하다;nennen;;I
+물어보다;fragen;;I
 돌아오다;zurückkommen;;I
 외식하다;auswärts essen, essen gehen, im Restaurant essen;;II
-시키다;bestellen;;II
-시간이 걸리다;es dauert;;II
+시키다;bestellen;;I
+시간이 걸리다;es dauert;;I
 출발하다;losgehen, abfahren, abfliegen, starten;;I
 도착하다;ankommen;;I
 올라가다;hinaufgehen;;I
@@ -126,11 +126,11 @@ N이라고/라고 하다;nennen;;II
 나오다;hinauskommen;;I
 돌아가다;zurückgehen;;I
 바뀌다;sich verändern;;I
-갈아타다;umsteigen;;II
+갈아타다;umsteigen;;I
 편하다;bequem, entspannt;;I
 편리하다;bequem;;I
 가깝다;nahe;;I
-요금을 내다;Gebühr, Tarif zahlen;;II
+요금을 내다;Gebühr, Tarif zahlen;;I
 내리다;aussteigen;;I
 서다;stehen;;I
 픽업하다;abholen;;II
@@ -143,32 +143,32 @@ N이라고/라고 하다;nennen;;II
 면도하다;rasieren;;I
 세수하다;Gesicht waschen;;I
 머리를 감다;Haare waschen;;I
-머리를 말리다;Haare trocknen;;I
+머리를 말리다;Haare trocknen;;II
 화장하다;schminken;;I
 식사하다;essen, speisen;;I
 갔다 오다;gehen und zurückkommen;;I
 출근하다;zur Arbeit gehen;;I
-심심하다;langweilig;;I
+심심하다;langweilig;;II
 퇴근하다;Feierabend machen;;I
-그만두다;kündigen, aufhören;;I
+그만두다;kündigen, aufhören;;II
 까먹다;vergessen;;I
 찾다;suchen, finden;;I
 렌트하다;mieten, ausleihen;;II
-물가가 오르다;Preise steigen;;II
-궁금하다;neugierig;;I
+물가가 오르다;Preise steigen;;I
+궁금하다;neugierig;;II
 라면이 붇다;Zustand der Nudeln, wenn sie zu lange gekocht wurden;;II
 짜다;salzig;;I
 가지고 가다;mitnehmen;;I
 넣다;hineingeben;;I
 끓이다;kochen (Flüßigkeit);;I
 들어있다;enthalten;;I
-말아 먹다;hinzufügen (von Reis oder Nudeln in die Suppe) und essen;;II
+말아 먹다;hinzufügen (von Reis oder Nudeln in die Suppe) und essen;;I
 맑다;klar, rein;;I
 흐리다;unklar, unrein;;I
-구름이 끼다;bewölkt;;II
-바람이 불다;windig;;II
+구름이 끼다;bewölkt;;I
+바람이 불다;windig;;I
 입다;anziehen (nur Kleidung - z.B. keine Schuhe oder Socken);;I
-아쉽다;schade;;I
+아쉽다;schade;;II
 슬프다;traurig;;I
 외롭다;einsam;;I
 배부르다;satt;;I
@@ -179,13 +179,13 @@ N이라고/라고 하다;nennen;;II
 건조하다;trocken;;II
 습하다;feucht;;II
 짜증나다;lästig, nervig, genervt, ärgerlich sein;;II
-넘다;überschreiten;;II
+넘다;überschreiten;;I
 불어오다;wehen (Wind);;II
 비가 오다;es regnet;;I
-감기에 걸리다;sich erkälten;;II
-꽃이 피다;Blumen blühen;;II
-햇빛이 나다;die Sonne scheint;;II
-단풍이 들다;Blätter wechseln ihre Farbe (Herbstlaub);;II
+감기에 걸리다;sich erkälten;;I
+꽃이 피다;Blumen blühen;;I
+햇빛이 나다;die Sonne scheint;;I
+단풍이 들다;Blätter wechseln ihre Farbe (Herbstlaub);;I
 장식하다;schmücken;;II
 상관없다;egal;;II
 당연하다;natürlich;;II
@@ -194,17 +194,17 @@ N이라고/라고 하다;nennen;;II
 한턱내다;jemanden großzügig einladen;;II
 쏘다;schießen;;II
 화가 나다;sich ärgern;;I
-도움이 되다;hilfreich;;II
-걸어 다니다;herumlaufen;;II
+도움이 되다;hilfreich;;I
+걸어 다니다;herumlaufen;;I
 단어를 외우다;Wörter auswendig lernen;;II
-부지런하다;fleißig;;II
+부지런하다;fleißig;;I
 게으르다;faul;;II
 중요하다;wichtig;;I
 친하다;eng befreundet;;I
 상관있다;in Zusammenhang stehen, in Verbindung stehen;;II
 뱃살이 찌다;Bauchfett zunehmen;;II
 안경을 쓰다;eine Brille tragen/aufsetzen;;I
-남다;übrig bleiben;;I
+남다;übrig bleiben;;II
 부족하다;nicht genug;;I
 필요하다;brauchen;;I
 신다;Schuhe/Socken anziehen (nicht andere Kleidung);;I
@@ -227,34 +227,34 @@ N이라고/라고 하다;nennen;;II
 퇴직하다;in Rente gehen;;II
 뵈다;sehen;;II
 편찮으시다;krank;;II
-생각이 나다;sich erinnern, etwas fällt einem ein, etwas kommt in den Sinn;;II
-전하다;mitteilen, ausrichten;;II
-부탁하다;bitten;;II
+생각이 나다;sich erinnern, etwas fällt einem ein, etwas kommt in den Sinn;;I
+전하다;mitteilen, ausrichten;;I
+부탁하다;bitten;;I
 묻다;fragen;;I
-잊어버리다;vergessen;;II
+잊어버리다;vergessen;;I
 빌려주다;jmd. etwas leihen;;II
-부치다;schicken (Paket, Brief, Postkarte);;II
-차이가 나다;abweichen, sich unterscheiden;;II
-한테 잘 하다;sei nett zu jmd.;;II
+부치다;schicken (Paket, Brief, Postkarte);;I
+차이가 나다;abweichen, sich unterscheiden;;I
+한테 잘 하다;sei nett zu jmd.;;I
 가져가다;mitnehmen;;I
 돌려주다;zurückgeben;;II
-다녀오다;gehen und kommen;;II
-약속을 지키다;ein Versprechen halten;;II
-걱정하다;sich sorgen;;II
-조심하다;vorsichtig;;II
+다녀오다;gehen und kommen;;I
+약속을 지키다;ein Versprechen halten;;I
+걱정하다;sich sorgen;;I
+조심하다;vorsichtig;;I
 벗다;ausziehen (Kleidung, Schuhe);;I
-어울리다;passen, zusammenpassen;;II
-다치다;sich verletzen;;II
-잃어버리다;verlieren;;II
+어울리다;passen, zusammenpassen;;I
+다치다;sich verletzen;;I
+잃어버리다;verlieren;;I
 웃다;lachen;;I
-꿈을 꾸다;träumen;;II
+꿈을 꾸다;träumen;;I
 잊다;vergessen;;I
-사고가 나다;einen Unfall haben;;II
+사고가 나다;einen Unfall haben;;I
 생활하다;leben, den Alltag verbringen;;II
 한바퀴 돌다;eine Runde drehen, einen Kreis machen;;II
 울다;weinen;;I
-집중이 되다;sich konzentrieren, Konzentriert werden;;II
-비를 맞다;Regen abbekommen, im Regen stehen;;II
+집중이 되다;sich konzentrieren, Konzentriert werden;;I
+비를 맞다;Regen abbekommen, im Regen stehen;;I
 새롭다;neu;;II
 기대되다;etwas erwarten, sich auf etwas freuen;;II
 잘되다;gut laufen, gut funktionieren;;II
@@ -263,38 +263,38 @@ N이라고/라고 하다;nennen;;II
 빨갛다;rot;;I
 정확하다;genau, präzise, exakt;;II
 귀찮다;lästig, nervig sein, wenn man keine Lust hat, etwas zu tun;;II
-입맛이 없다;keinen Appetit haben;;II
-마르다;dünn, mager;;II
-생기다;entstehen, erschaffen;;II
+입맛이 없다;keinen Appetit haben;;I
+마르다;dünn, mager;;I
+생기다;entstehen, erschaffen;;I
 연기하다;schauspielern;;II
 활발하다;lebhaft, aktiv, energetisch;;II
 어리다/젊다;jung;;I
-잘 생기다;gutaussehend;;II
+잘 생기다;gutaussehend;;I
 둘러보다;sich umschauen;;II
 환불하다;rückerstatten;;II
-선택하다;wählen;;II
-마음에 들다;gefallen;;II
+선택하다;wählen;;I
+마음에 들다;gefallen;;I
 늙다;altern;;II
-나이가 들다;alt werden;;II
+나이가 들다;alt werden;;I
 신기하다;erstaunlich, wunderbar, faszinierend;;II
-간단하다;einfach, schlicht;;II
+간단하다;einfach, schlicht;;I
 더럽다;schmutzig;;I
-누르다;drücken;;II
-실력이 늘다;Fähigkeiten verbessern, sich seine Fähigkeiten verbessern;;II
+누르다;drücken;;I
+실력이 늘다;Fähigkeiten verbessern, sich seine Fähigkeiten verbessern;;I
 신나다;aufgeregt, begeistert;;II
 쉽다;einfach, leicht;;I
 사이다;Sprite;;I
 예매하다;Ticket reservieren;;II
 가져오다;bringen;;I
-넥타이를 매다;eine Krawatte binden;;II
-가방을 메다;eine Tasche tragen, einen Rucksack auf dem Rücken haben;;II
-실감이 나다;etwas spüren, etwas realisieren;;II
+넥타이를 매다;eine Krawatte binden;;I
+가방을 메다;eine Tasche tragen, einen Rucksack auf dem Rücken haben;;I
+실감이 나다;etwas spüren, etwas realisieren;;I
 갈아입다;Kleidung umziehen;;II
 까맣다;schwarz;;I
 다양하다;vielfältig;;II
 경험하다;erfahren, erleben;;II
-모으다;sammeln;;II
-눕다;sich hinlegen;;II
+모으다;sammeln;;I
+눕다;sich hinlegen;;I
 답장하다;antworten (schriftlich);;II
 답하다;antworten;;I
 갖다주다;bringen;;II

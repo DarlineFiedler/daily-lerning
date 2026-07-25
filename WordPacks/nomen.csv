@@ -36,7 +36,7 @@
 모차르트 하우스;Mozarthaus;;II
 거기;dort;;I
 날씨;Wetter;;I
-팬;Fan;;I
+팬;Fan;;II
 김밥;Reisröllchen;;I
 케이크;Torte;;I
 영화관;Kino;;I
@@ -79,7 +79,7 @@
 센트;Cent;;I
 여러분;ihr;;I
 중국집;chinesisches Restaurant;;I
-소스;Sauce;;I
+소스;Sauce;;II
 짬뽕;scharfe Nudelsuppe;;I
 자장면/짜장면;Nudelgericht;;I
 계절;Jahreszeiten;;I
@@ -88,18 +88,18 @@
 여름;Sommer;;I
 가을;Herbst;;I
 겨울;Winter;;I
-단풍;buntes Herbstlaub;;I
+단풍;buntes Herbstlaub;;II
 시간;Zeit;;I
 이어폰;Kopfhörer (in-ear);;II
 아이스크림;Eis;;I
-기본;die Basis, die Grundlage;;I
+기본;die Basis, die Grundlage;;II
 뜻;die Bedeutung;;I
 가지;die Art, die Sorte;;I
 맛;der Geschmack;;I
 상추;Salat (für 삼겹살);;I
 소갈비, 쇠갈비;Rippchen (Rind);;I
 국;Suppe;;I
-밥상;koreanischer Esstisch;;I
+밥상;koreanischer Esstisch;;II
 냅킨;Servietten;;I
 숟가락;Löffel;;I
 젓가락;Essstäbchen;;I
@@ -119,11 +119,11 @@
 권;Zählwort für Bücher;;I
 물건;Sache, Ding, Produkt;;I
 세일;Schnäppchen;;II
-패션;Fashion, Mode;;II
+패션;Fashion, Mode;;I
 브랜드;Brand, Marke;;II
-서비스;Service;;II
+서비스;Service;;I
 도시, 시;Stadt;;I
-공짜;gratis;;II
+공짜;gratis;;I
 다른;andere;;I
 자치;Autonomie;;II
 특별;Besonderheit;;II
@@ -133,7 +133,7 @@
 클럽;Club;;I
 수영장;Schwimmbad;;I
 등산;Bergsteigen;;I
-휴가;Urlaub;;II
+휴가;Urlaub;;I
 이태리;Italien;;I
 부산;Busan;;I
 제주도;Jeju Insel;;I
@@ -146,22 +146,22 @@
 베니스;Venedig;;II
 밀라노;Milan;;II
 극장;Theater, Kino;;I
-호수;See;;I
+호수;See;;II
 비;Regen;;I
-다이어트;Diät;;II
+다이어트;Diät;;I
 수업;Kurs;;I
 한라산;Halla Berg;;II
-올레 길;Olle-Wanderweg (Jeju);;II
+올레 길;Olle-Wanderweg (Jeju);;I
 풍경;Landschaft;;II
-국내;Inland;;II
-해외;Ausland;;II
+국내;Inland;;I
+해외;Ausland;;I
 국내외;In- und Ausland;;II
 남편;Ehemann;;I
 아이;Kind;;I
 딸;Tochter;;I
 아들;Sohn;;I
 용돈;Taschengeld;;II
-봉투;Kuvert;;II
+봉투;Kuvert;;I
 크리스마스 트리;Weihnachtsbaum;;I
 가운데;Mitte;;I
 사실;tatsächlich, eigentlich;;II
@@ -169,10 +169,10 @@
 스키장;Skigebiet;;I
 파이팅(화이팅);toitoitoi;;I
 눈;Schnee;;I
-동료;Kollege;;I
+동료;Kollege;;II
 이메일;E-Mail;;I
-차이;der Unterschied;;II
-독서;das Lesen;;II
+차이;der Unterschied;;I
+독서;das Lesen;;I
 쿠키;Keks;;I
 북쪽;der Norden;;I
 동쪽;der Osten;;I
@@ -181,36 +181,36 @@
 북한;Nordkorea;;II
 동해;Ostsee;;II
 남해;Südsee;;II
-서해;Westsee;;II
+서해;Westsee;;I
 울릉도;Ulleung Insel;;II
 독도;Dok Insel;;II
 계곡;Tal, Schlucht;;II
 해산물;Meeresfrüchte;;II
-자연;Natur;;II
+자연;Natur;;I
 물놀이;das Spielen im Wasser, das Planschen;;II
 프로젝트;Projekt;;II
 잠;der Schlaf (wird zum Beispiel in 잠을 자다 als Objekt verwendet);;I
-콘서트;Konzert;;I
-티켓;Ticket;;I
-스트레스;Stress;;II
-의미;Bedeutung;;II
+콘서트;Konzert;;II
+티켓;Ticket;;II
+스트레스;Stress;;I
+의미;Bedeutung;;I
 할머니;Großmutter;;I
 할아버지;Großvater;;I
 부자;Reiche;;II
-고향;Heimat;;II
-친척;Verwandte;;II
+고향;Heimat;;I
+친척;Verwandte;;I
 국경;Grenze;;II
 충청북도;Chungcheongbuk-do (Bundesland siehe Seite 94);;II
 일찍;früh;;I
 공항;Flughafen;;I
 채식주의자;Vegetarier;;II
-방학;Schulferien;;II
-기분;Laune;;II
-공휴일;Feiertag (offizieller Ruhetag);;II
-약속;Verabredung;;II
-문화;Kultur;;II
-생활;Das Leben;;II
-유학생;der (die) im Auslands Studierende;;II
+방학;Schulferien;;I
+기분;Laune;;I
+공휴일;Feiertag (offizieller Ruhetag);;I
+약속;Verabredung;;I
+문화;Kultur;;I
+생활;Das Leben;;I
+유학생;der (die) im Auslands Studierende;;I
 잘츠부르크;Salzburg;;II
 시;Uhr;;I
 분;Minute;;I
@@ -222,7 +222,7 @@
 밤;Nacht;;I
 새벽;früher Morgen, Dämmerung (ca. 1-6 Uhr nachts);;I
 요일;Wochentag;;I
-평일;Werktag;;II
+평일;Werktag;;I
 월요일;Montag;;I
 화요일;Dienstag;;I
 수요일;Mittwoch;;I
@@ -235,13 +235,13 @@
 지난주;letzte Woche;;I
 이번 주;diese Woche;;I
 다음 주;nächste Woche;;I
-쇼핑몰;Shopping Mall;;I
+쇼핑몰;Shopping Mall;;II
 과일차;Früchte Tee;;I
 허브차;Kräuter Tee;;I
 포도;Weintrauben;;I
 수박;Wassermelone;;I
 딸기;Erdbeeren;;I
-클래식;klassische Musik;;I
+클래식;klassische Musik;;II
 팝송;Pop-Song;;I
 록;Rock;;I
 헤비 메탈;Heavy Metal;;I
@@ -249,7 +249,7 @@
 로맨스;Liebesfilm;;I
 공포영화;Horrorfilm;;I
 액션영화;Actionfilm;;I
-코미디;Komödie;;I
+코미디;Komödie;;II
 판타지;Phantasie;;I
 탁구;Tischtennis;;I
 배구;Volleyball;;I
@@ -261,18 +261,18 @@
 하얀색, 흰색;weiß;;I
 파란색;blau;;I
 초록색, 녹색;grün;;I
-분홍색, 핑크(색);pink;;I
+분홍색, 핑크(색);pink;;II
 보라색;lila;;I
 주황색;orange;;I
 갈색;braun;;I
 까만색, 검은색, 검정;schwarz;;I
 한반도;die koreanische Halbinsel;;II
 한민족;das koreanische Volk;;II
-대한민국, 한국;Die Republik Korea;;II
-한자;das chinesische Zeichen;;II
+대한민국, 한국;Die Republik Korea;;I
+한자;das chinesische Zeichen;;I
 언어;Sprache;;II
-조선;Joseon Dynastie;;II
-조선어;Joseon Sprache;;II
+조선;Joseon Dynastie;;I
+조선어;Joseon Sprache;;I
 남조선;Südjoseon;;II
 북조선;Nordjoseon;;II
 조선민주주의인민공화국;Demokratische Volksrepublik Korea;;II
@@ -280,15 +280,15 @@
 년, 년도;Jahr;;I
 월;Monat;;I
 일;Tag;;I
-년대;Jahrzehnt, Jahrhundert, Jahrtausend;;I
+년대;Jahrzehnt, Jahrhundert, Jahrtausend;;II
 며칠;welches Datum;;I
-세계;Welt;;II
+세계;Welt;;I
 스케줄;Zeitplan;;I
 인사;Grüße;;I
 모레;übermorgen;;I
 올해;dieses Jahr;;I
 작년;letztes Jahr;;I
-재작년;vorletztes Jahr;;I
+재작년;vorletztes Jahr;;II
 내년;nächstes Jahr;;I
 내후년;übernächstes Jahr;;I
 지지난주;vorletzte Woche;;I
@@ -300,16 +300,16 @@
 다다음 달;übernächster Monat;;I
 별거;nichts besonders (wird nur bei Verneinung verwendet);;I
 플라스틱;Plastik;;II
-노래방;Karaoke;;II
+노래방;Karaoke;;I
 팁;Tip, Trinkgeld;;I
-무료;gratis;;II
+무료;gratis;;I
 미팅;Meeting, Besprechung;;II
-서울역;Bahnhof Seoul;;II
+서울역;Bahnhof Seoul;;I
 개월;Monate (Dauer);;I
 주일(주);Woche (Dauer);;I
-홈페이지;Homepage;;II
-텐트;Zelt;;I
-몽골;Mongolei;;II
+홈페이지;Homepage;;I
+텐트;Zelt;;II
+몽골;Mongolei;;I
 고비 사막;Gobi Wüste;;II
 아저씨;älterer, normalerweise verheirateter Mann;;I
 새해;Neujahr;;II
@@ -329,14 +329,14 @@
 외곽;außerhalb, Stadtrand, Vorort;;I
 옛날;die vergangene Zeit, früher;;I
 (자동)차;Auto;;I
-오토바이;Motorrad;;I
+오토바이;Motorrad;;II
 지하철;U-Bahn;;I
 기차;Zug;;I
 배;Schiff;;I
 비행기;Flugzeug;;I
 현금;Bargeld;;I
 (신용)카드;Kreditkarte;;I
-문자;Textnachricht;;I
+문자;Textnachricht;;II
 메신저;Messenger;;II
 영상통화;Videoanruf;;II
 온라인;online;;II
@@ -345,21 +345,21 @@
 소포;Paket;;I
 태블릿;Tablet;;II
 어젯밤;Gesternabend;;I
-배추;Kohl;;I
+배추;Kohl;;II
 파리;Paris;;I
 산티아고;Santiago;;II
-기차역;Bahnhof;;I
-교통;Verkehr;;II
+기차역;Bahnhof;;II
+교통;Verkehr;;I
 교통체증;Verkehrsstau;;II
 도로;Straße, Fahrbahn;;I
 버스전용차로;Busspur;;II
-값;Preis;;II
+값;Preis;;I
 시스템;System;;II
 에어컨;Klimaanlage;;I
 치맥 (치킨하고 맥주);Chicken & Beer;;I
 모든;alle, jeder;;I
 호텔;Hotel;;I
-연락;Kontakt;;I
+연락;Kontakt;;II
 해남;Haenam (Ort in Korea);;II
 임진각;Imjingak (Ort in Korea);;II
 땅끝마을;Ttangkkeut Village (Ort in Korea, wörtlich: Dorf am Ende Koreas);;II
@@ -370,14 +370,14 @@
 와이프;Ehefrau;;I
 킬로(미터);Kilometer;;I
 다리;Beine;;I
-자동;Automatik;;I
+자동;Automatik;;II
 수동;Manuell;;I
 껌;Kaugummi;;I
 봉지;Tüte, Sackerl;;I
 편의점;Convenience Store;;II
 컵;Tasse, Glas, Becher;;I
 냄비;Topf;;I
-스프;Ramyunpulver für Suppe;;I
+스프;Ramyunpulver für Suppe;;II
 인스턴트;Instant;;II
 라멘;japanische Ramen;;I
 국물;Brühe;;II
@@ -385,23 +385,23 @@
 찬밥;kalter Reis;;II
 고추;Chili;;I
 고춧가루;Chilipulver;;II
-가격;Preis;;II
-종류;Art, Sorte, Klasse;;II
+가격;Preis;;I
+종류;Art, Sorte, Klasse;;I
 냄새;Geruch;;I
 하늘;Himmel;;I
 인스부르크;Innsbruck;;II
-창;Fenster;;I
+창;Fenster;;II
 초;Anfang (Zeitspanne);;I
 말;Ende (Zeitspanne);;I
-모래;Sand;;I
+모래;Sand;;II
 황사;gelber Sand;;II
 미세먼지;Feinstaub;;II
-벚꽃;Kirschblüte;;II
+벚꽃;Kirschblüte;;I
 온도;Temperatur;;II
-영하;Unter Null (Minusgrade);;II
-태풍;Taifun;;II
-장마;Monsunregen;;II
-장마철;Regenzeit;;II
+영하;Unter Null (Minusgrade);;I
+태풍;Taifun;;I
+장마;Monsunregen;;I
+장마철;Regenzeit;;I
 미용실;Friseursalon;;I
 건물;Gebäude;;I
 냠냠 쩝쩝;Geräusch des Schmatzens oder Genießens von etwas Leckerem;;I
@@ -414,40 +414,40 @@
 얼굴;Gesicht;;I
 턱;Kinn;;I
 마음;Gemüt, Seele, Geist;;I
-발음;Aussprache;;II
-연습;Übung;;II
+발음;Aussprache;;I
+연습;Übung;;I
 문법;Grammatik;;II
 기초;Grundlagen;;II
-문장;Satz;;II
-방법;Methode;;II
+문장;Satz;;I
+방법;Methode;;I
 언어교환;Sprachaustausch;;II
 관광객;Tourist;;II
 시리얼;Müsli;;I
 양;Menge;;I
 보름달;Vollmond;;II
-원룸;Einzimmerwohnung;;I
-월세;monatliche Miete;;II
+원룸;Einzimmerwohnung;;II
+월세;monatliche Miete;;I
 이사;Umzug;;I
 주인;Eigentümer;;I
 전세;koreanisches Mietmodell (siehe Leseverständnis);;II
 전셋돈;Mietvorauszahlung;;II
 나머지;der Rest;;II
-서양;der Westen;;II
-코스 요리;Gänge-Menü;;II
+서양;der Westen;;I
+코스 요리;Gänge-Menü;;I
 전식 (애피타이저);Vorspeise;;II
 본식 (메인음식);Hauptgericht;;II
 후식 (디저트);Nachspeise;;II
 닭갈비;Hähnchenrippchen;;II
 단것;Süßigkeiten;;II
-액세서리;Schmuck;;II
-귀걸이;Ohrringe;;I
+액세서리;Schmuck;;I
+귀걸이;Ohrringe;;II
 운동화;Turnschuhe;;I
 사이즈;Größe;;I
 이렇다 (이런);so, solch;;I
 알바;Nebenjob;;I
-비자;Visum;;I
+비자;Visum;;II
 취향;Geschmack;;II
-비밀;Geheimnis;;II
+비밀;Geheimnis;;I
 푹;ausreichend, tief, gründlich;;I
 농담;Scherz, Witz;;II
 박물관;Museum;;I
@@ -455,11 +455,11 @@
 금연;Rauchverbot;;I
 사인;Zeichen, Schild;;I
 버스 정류장;Bushaltestelle;;I
-성함;Name;;II
-댁;Haus;;II
-생신;Geburtstag;;II
-말씀;Wort;;II
-연세;Alter;;II
+성함;Name;;I
+댁;Haus;;I
+생신;Geburtstag;;I
+말씀;Wort;;I
+연세;Alter;;I
 신문;Zeitung;;I
 스마트폰;Smartphone;;II
 첫째;erstes Kind / Ältester;;I
@@ -470,7 +470,7 @@
 아이 (애);Kind;;I
 삼촌;Onkel;;I
 자식;Nachkommen, Kind (eigene Kinder unabhängig vom Alter);;II
-전화통화 중;während eines Telefongesprächs;;II
+전화통화 중;während eines Telefongesprächs;;I
 안부;Grüße;;II
 시차;Zeitunterschied;;II
 띵동띵동;Geräusch des Türklingelns (Ding-Dong Ding-Dong);;I
@@ -485,20 +485,20 @@
 몸;Körper;;I
 마지막;das Letzte, das Ende, der Schluss;;I
 어른;Erwachsene;;I
-월급;Monatsgehalt;;II
+월급;Monatsgehalt;;I
 해물탕;Meeresfrüchtesuppe;;II
-보이스 메시지;Sprachnachricht;;II
+보이스 메시지;Sprachnachricht;;I
 (생선)회;roher Fisch;;I
 패러글라이딩;Gleitschirmfliegen;;II
 스쿠버다이빙;Scuba Tauchen;;II
 번지점프;Bungee-Springen;;II
 마라톤;Marathon;;II
 한옥;Hanok;;II
-한복;Hanbok;;II
+한복;Hanbok;;I
 온돌;Ondol;;II
 거울;Spiegel;;I
-분위기;Stimmung;;II
-유행;Trend;;II
+분위기;Stimmung;;I
+유행;Trend;;I
 회색;Grau;;I
 경상북도;Gyeongsangbuk-do (Bundesland Koreas);;II
 안동;Andong (Stadt in Gyeongsangbuk-do);;II
@@ -507,48 +507,48 @@
 하회탈;Hahoe-Maske (traditionelle Maske aus Hahoe);;II
 전라북도;Jeollabuk-do (Bundesland Koreas);;II
 전주;Jeonju (Stadt in Jeollabuk-do);;II
-바닥;Boden;;I
+바닥;Boden;;II
 해안가;Küste;;I
-지갑;Geldbörse;;II
+지갑;Geldbörse;;I
 그렇다 (그런);so, solch;;I
 모니터;Monitor;;I
 멀티 플레이어;Multitasker;;II
 자리;Sitz, Platz;;I
-모델;Modell;;I
+모델;Modell;;II
 남녀;Mann und Frau;;I
 농구선수;Basketball-Spieler;;II
 화가;Maler;;I
 호랑이;Tiger;;I
 인형;Puppe;;I
-땅;Erde;;I
+땅;Erde;;II
 시베리아;Sibirien;;II
-숙소;Unterkunft;;I
+숙소;Unterkunft;;II
 중심가;Zentrum;;I
 맛집;leckeres Restaurant;;I
 지하철역;U-Bahnstation;;I
-고추장;Chilipaste;;II
-식;Stil, Art;;I
+고추장;Chilipaste;;I
+식;Stil, Art;;II
 달;Mond;;I
 별;Stern;;I
 불;Feuer, Licht;;I
 색/색깔;Farbe;;I
 원피스;Kleid;;I
 블라우스;Bluse;;I
-성격;Persönlichkeit;;II
+성격;Persönlichkeit;;I
 어린이;Kind;;I
-표현;Ausdruck;;II
-슬리퍼;Pantoffeln;;I
+표현;Ausdruck;;I
+슬리퍼;Pantoffeln;;II
 결혼식;Hochzeit;;I
 고깃집;Fleischrestaurant, Grillrestaurant;;I
 프라이드 치킨;frittiertes Huhn;;II
-회의;Besprechung;;II
-서랍;Schublade;;I
-벨;Glocke;;I
+회의;Besprechung;;I
+서랍;Schublade;;II
+벨;Glocke;;II
 PC방/피시방;PC-Café;;II
 찜질방;Koreanische Sauna;;II
-사우나;Sauna;;I
+사우나;Sauna;;II
 해;Jahr;;I
-화장지;Toilettenpapier;;I
+화장지;Toilettenpapier;;II
 짐;Gepäck;;I
 코트;Mantel;;I
 재킷;Jacke;;I
@@ -565,7 +565,7 @@ PC방/피시방;PC-Café;;II
 사투리;Dialekt;;II
 산속;in den Bergen;;I
 화산;Vulkan;;II
-돌;Stein;;I
+돌;Stein;;II
 정상;Gipfel;;II
 돌하르방;Steinfiguren auf Jeju;;II
 관광지;Touristenort;;II
@@ -575,5 +575,5 @@ PC방/피시방;PC-Café;;II
 떡볶이;Tteokbokki, Reiskuchen in Chilipaste-Soße;;I
 빌딩;Gebäude;;I
 주소;Adresse;;I
-한강;Han-Fluss;;II
+한강;Han-Fluss;;I
 양념치킨;fritiertes Hähnchen mit scharfer Sauce;;II
