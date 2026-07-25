@@ -109,6 +109,7 @@ struct AchievementMetrics: Equatable {
     var languageChanged = false
     var widgetUsed = false
     var groupCreated = false
+    var weeklyGoalReached = false
     // Vokabel-/Gruppen-abhängige Flags.
     var schnapszahl = false
     var groupMastered = false
@@ -164,6 +165,7 @@ struct AchievementMetrics: Equatable {
             languageChanged: progress.languageChanged,
             widgetUsed: progress.widgetUsed,
             groupCreated: progress.groupCreated,
+            weeklyGoalReached: progress.weeklyGoalReached,
             // „Schnapszahl": exakt 111 oder 222 gelernte Wörter (Easter Egg).
             schnapszahl: learnedWords == 111 || learnedWords == 222,
             groupMastered: groupMastered,
@@ -252,6 +254,7 @@ struct AchievementProgress: Equatable, Codable {
     var languageChanged = false // Sprache in den Einstellungen gewechselt
     var widgetUsed = false // über das Lock-Screen-Widget geöffnet
     var groupCreated = false // eine eigene Vokabelgruppe angelegt
+    var weeklyGoalReached = false // selbst gesetztes Wochenziel erstmals erreicht
 
     // Meteorologische Jahreszeiten (0=Winter,1=Frühling,2=Sommer,3=Herbst).
     var seasons: Set<Int> = []
@@ -512,6 +515,7 @@ enum AchievementCatalog {
         Achievement(id: "alleGruppen", category: .learned, emoji: "🗂️👑", requirement: .flag(\.allGroupsMastered)),
         Achievement(id: "comebackKoenig", category: .streak, emoji: "🔂", requirement: .count(\.comebackCount, 3)),
         Achievement(id: "retter", category: .streak, emoji: "🧊", requirement: .flag(\.everUsedJoker)),
+        Achievement(id: "weeklyGoal", category: .streak, emoji: "🏁", requirement: .flag(\.weeklyGoalReached)),
         Achievement(id: "sprachmix", category: .variety, emoji: "🌍", requirement: .flag(\.sprachmix)),
         Achievement(id: "firstSearch", category: .fun, emoji: "🔍", requirement: .flag(\.searchUsed)),
         Achievement(id: "settingsExplorer", category: .fun, emoji: "⚙️", requirement: .flag(\.languageChanged)),

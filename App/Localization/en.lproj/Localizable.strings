@@ -187,6 +187,11 @@
 "home.weekly.streak" = "day streak";
 "home.weekly.delta.up" = "+%d %% more than last week";
 "home.weekly.delta.down" = "%d %% less than last week";
+"home.goal.title" = "Your goal";
+"home.goal.today" = "Today";
+"home.goal.week" = "This week";
+"home.goal.progress" = "%d / %d";
+"home.goal.reached" = "Goal reached 🏁";
 "streak.detail.title" = "Streak & Freezes";
 "streak.detail.current" = "Current";
 "streak.detail.longest" = "Best";
@@ -207,6 +212,14 @@
 "settings.reminder.enable" = "Daily reminder";
 "settings.reminder.time" = "Time";
 "settings.reminder.hint" = "Get a daily nudge to practice.";
+"settings.goal.section" = "Your goal";
+"settings.goal.metric" = "Goal type";
+"settings.goal.metric.practiced" = "Words practiced";
+"settings.goal.metric.learned" = "Newly learned";
+"settings.goal.weekly" = "Weekly goal";
+"settings.goal.daily" = "Daily goal";
+"settings.goal.off" = "Off";
+"settings.goal.footer" = "Track your progress on the home screen. Set a value to 0 to turn that goal off.";
 "notification.title" = "Time to learn 🇰🇷";
 "notification.body" = "Your words are waiting — a few minutes is enough.";
 
@@ -365,6 +378,8 @@
 "ach.settingsExplorer.detail" = "Switched language in settings";
 "ach.widgetActive.title" = "Widget Fan";
 "ach.widgetActive.detail" = "Used the lock-screen widget once";
+"ach.weeklyGoal.title" = "Goal Getter";
+"ach.weeklyGoal.detail" = "Reached your weekly goal";
 "ach.hangulDay.title" = "Hangul Day";
 "ach.hangulDay.detail" = "Practiced on October 9 (한글날)";
 "ach.mondSchein.title" = "Moonlight";

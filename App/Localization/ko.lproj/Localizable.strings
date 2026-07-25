@@ -187,6 +187,11 @@
 "home.weekly.streak" = "일 연속";
 "home.weekly.delta.up" = "지난주보다 %d %% 증가";
 "home.weekly.delta.down" = "지난주보다 %d %% 감소";
+"home.goal.title" = "나의 목표";
+"home.goal.today" = "오늘";
+"home.goal.week" = "이번 주";
+"home.goal.progress" = "%d / %d";
+"home.goal.reached" = "목표 달성 🏁";
 "streak.detail.title" = "연속 학습 & 프리즈";
 "streak.detail.current" = "현재";
 "streak.detail.longest" = "최고 기록";
@@ -207,6 +212,14 @@
 "settings.reminder.enable" = "매일 알림";
 "settings.reminder.time" = "시간";
 "settings.reminder.hint" = "매일 학습 알림을 받아요.";
+"settings.goal.section" = "나의 목표";
+"settings.goal.metric" = "목표 유형";
+"settings.goal.metric.practiced" = "학습한 단어";
+"settings.goal.metric.learned" = "새로 익힌 단어";
+"settings.goal.weekly" = "주간 목표";
+"settings.goal.daily" = "일일 목표";
+"settings.goal.off" = "끄기";
+"settings.goal.footer" = "홈 화면에서 진행 상황을 확인하세요. 값을 0으로 설정하면 해당 목표가 꺼집니다.";
 "notification.title" = "학습할 시간이에요 🇰🇷";
 "notification.body" = "단어들이 기다려요 — 몇 분이면 충분해요.";
 
@@ -365,6 +378,8 @@
 "ach.settingsExplorer.detail" = "설정에서 언어 변경";
 "ach.widgetActive.title" = "위젯 팬";
 "ach.widgetActive.detail" = "잠금 화면 위젯을 한 번 사용";
+"ach.weeklyGoal.title" = "목표 달성가";
+"ach.weeklyGoal.detail" = "주간 목표를 달성했어요";
 "ach.hangulDay.title" = "한글날";
 "ach.hangulDay.detail" = "10월 9일(한글날)에 연습";
 "ach.mondSchein.title" = "달빛";

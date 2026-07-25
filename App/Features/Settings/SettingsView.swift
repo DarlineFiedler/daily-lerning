@@ -37,6 +37,13 @@ struct SettingsView: View {
     @AppStorage(ReminderKeys.minute, store: AppGroup.defaults)
     private var reminderMinute = 0
 
+    @AppStorage(GoalKeys.metric, store: AppGroup.defaults)
+    private var goalMetricRaw = GoalMetric.practiced.rawValue
+    @AppStorage(GoalKeys.weekly, store: AppGroup.defaults)
+    private var weeklyGoal = 20
+    @AppStorage(GoalKeys.daily, store: AppGroup.defaults)
+    private var dailyGoal = 5
+
     var body: some View {
         @Bindable var localization = localization
 
@@ -86,6 +93,35 @@ struct SettingsView: View {
                     Text(L("settings.reminder.section"))
                 } footer: {
                     Text(L("settings.reminder.hint"))
+                }
+
+                // MARK: Ziel
+                Section {
+                    Picker(selection: $goalMetricRaw) {
+                        ForEach(GoalMetric.allCases) { metric in
+                            Text(L(metric.labelKey)).tag(metric.rawValue)
+                        }
+                    } label: {
+                        Label(L("settings.goal.metric"), systemImage: "target")
+                    }
+                    Picker(selection: $weeklyGoal) {
+                        ForEach(GoalOptions.weekly, id: \.self) { value in
+                            Text(goalValueLabel(value)).tag(value)
+                        }
+                    } label: {
+                        Label(L("settings.goal.weekly"), systemImage: "calendar")
+                    }
+                    Picker(selection: $dailyGoal) {
+                        ForEach(GoalOptions.daily, id: \.self) { value in
+                            Text(goalValueLabel(value)).tag(value)
+                        }
+                    } label: {
+                        Label(L("settings.goal.daily"), systemImage: "sun.max")
+                    }
+                } header: {
+                    Text(L("settings.goal.section"))
+                } footer: {
+                    Text(L("settings.goal.footer"))
                 }
 
                 // MARK: Wortpakete
@@ -223,6 +259,11 @@ struct SettingsView: View {
 
     private func intervalLabel(_ minutes: Int) -> String {
         minutes < 60 ? L("interval.min", minutes) : L("interval.hour", minutes / 60)
+    }
+
+    /// Label für die Ziel-Picker: `0` bedeutet „deaktiviert".
+    private func goalValueLabel(_ value: Int) -> String {
+        value == 0 ? L("settings.goal.off") : "\(value)"
     }
 
     private var appVersion: String {

@@ -100,6 +100,62 @@ final class WeeklyReviewTests: XCTestCase {
         XCTAssertEqual(review(log).deltaPercent, -75) // (1-4)/4 = -75 %
     }
 
+    // MARK: - Laufende Woche (Wochenziel)
+
+    private func currentWeek(_ log: WeeklyActivity) -> (practiced: Int, learned: Int) {
+        log.currentWeekTotals(asOf: cal.date(from: today)!, calendar: cal)
+    }
+
+    func testCurrentWeekCountsInProgressWeekDistinct() {
+        let a = UUID(), b = UUID()
+        var log = WeeklyActivity()
+        log = record(log, a, on: day(2026, 7, 20)) // Mo (laufende Woche)
+        log = record(log, a, on: day(2026, 7, 21)) // dasselbe Wort → kein Doppel
+        log = record(log, b, on: day(2026, 7, 21)) // zweites Wort
+        XCTAssertEqual(currentWeek(log).practiced, 2)
+    }
+
+    func testCurrentWeekSumsNewlyLearned() {
+        var log = WeeklyActivity()
+        log = record(log, UUID(), learned: true, on: day(2026, 7, 20))
+        log = record(log, UUID(), learned: true, on: day(2026, 7, 23))
+        log = record(log, UUID(), learned: false, on: day(2026, 7, 23))
+        XCTAssertEqual(currentWeek(log).learned, 2)
+    }
+
+    func testCurrentWeekExcludesPreviousWeek() {
+        // Eintrag der letzten abgeschlossenen Woche zählt NICHT zur laufenden Woche.
+        var log = WeeklyActivity()
+        log = record(log, UUID(), on: day(2026, 7, 14))
+        XCTAssertEqual(currentWeek(log).practiced, 0)
+    }
+
+    func testEmptyLogHasNoCurrentWeekProgress() {
+        let totals = currentWeek(WeeklyActivity())
+        XCTAssertEqual(totals.practiced, 0)
+        XCTAssertEqual(totals.learned, 0)
+    }
+
+    // MARK: - Heutiger Tag (Tagesziel)
+
+    func testDayTotalsCountsOnlyThatDay() {
+        let a = UUID(), b = UUID()
+        let todayDate = cal.date(from: today)! // Do 23.7.
+        var log = WeeklyActivity()
+        log = record(log, a, on: todayDate)
+        log = record(log, b, on: day(2026, 7, 21)) // anderer Tag derselben Woche
+        let totals = log.dayTotals(on: todayDate, calendar: cal)
+        XCTAssertEqual(totals.practiced, 1)
+    }
+
+    func testDayTotalsIsZeroForDayWithoutEntry() {
+        var log = WeeklyActivity()
+        log = record(log, UUID(), on: day(2026, 7, 21))
+        let totals = log.dayTotals(on: cal.date(from: today)!, calendar: cal)
+        XCTAssertEqual(totals.practiced, 0)
+        XCTAssertEqual(totals.learned, 0)
+    }
+
     // MARK: - Aufbewahrung
 
     func testOldEntriesArePrunedOnRecord() {

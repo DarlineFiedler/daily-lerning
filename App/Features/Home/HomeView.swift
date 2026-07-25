@@ -4,6 +4,7 @@ import SwiftUI
 /// Tab 1: Einladendes Dashboard – Begrüßung, Wort des Tages, Fortschritt,
 /// schneller Einstieg ins Üben und die eigenen Gruppen auf einen Blick.
 struct HomeView: View {
+    @Environment(\.modelContext) private var context
     @Query(sort: \Vocab.createdAt) private var vocabs: [Vocab]
     @Query(sort: \VocabGroup.sortOrder) private var groups: [VocabGroup]
 
@@ -12,6 +13,16 @@ struct HomeView: View {
     @State private var showingNewGroup = false
     @State private var showReview = false
     @State private var showStreakDetail = false
+    /// Beim Erreichen des Wochenziels neu freigeschaltete Badges (fürs Banner).
+    @State private var goalUnlocked: [Achievement] = []
+
+    // MARK: Persönliches Ziel
+    @AppStorage(GoalKeys.metric, store: AppGroup.defaults)
+    private var goalMetricRaw = GoalMetric.practiced.rawValue
+    @AppStorage(GoalKeys.weekly, store: AppGroup.defaults)
+    private var weeklyGoal = 20
+    @AppStorage(GoalKeys.daily, store: AppGroup.defaults)
+    private var dailyGoal = 5
 
     // MARK: Abgeleitete Werte
 
@@ -24,6 +35,13 @@ struct HomeView: View {
     private var weeklyReview: WeeklyReview { WeeklyReviewStore.currentReview() }
     /// Verfügbare Streak-Freeze-Joker.
     private var jokers: Int { StreakStore.availableJokers() }
+    /// Gewählte Zielart (geübte vs. neu gelernte Wörter).
+    private var goalMetric: GoalMetric { GoalMetric(rawValue: goalMetricRaw) ?? .practiced }
+    /// Fortschritt der laufenden Woche bzw. des heutigen Tages gegen das Ziel.
+    private var weekDone: Int { WeeklyReviewStore.weekProgress(for: goalMetric) }
+    private var dayDone: Int { WeeklyReviewStore.dayProgress(for: goalMetric) }
+    /// Ist überhaupt ein Ziel gesetzt (Tages- oder Wochenziel)?
+    private var hasGoal: Bool { weeklyGoal > 0 || dailyGoal > 0 }
     private var rate: Int {
         guard !vocabs.isEmpty else { return 0 }
         return Int(round(Double(learnedCount) / Double(vocabs.count) * 100))
@@ -54,6 +72,7 @@ struct HomeView: View {
                     } else {
                         todayCard
                         if weeklyReview.hasActivity { weeklyReviewCard }
+                        if hasGoal { goalCard }
                         if let word = wordOfDay { wordOfDayCard(word) }
                         progressSection
                         startPracticeButton
@@ -65,7 +84,13 @@ struct HomeView: View {
             }
             .background(Theme.background.ignoresSafeArea())
             .navigationBarHidden(true)
-            .onAppear { StreakStore.settle() }
+            .overlay(alignment: .top) {
+                AchievementUnlockBanner(achievements: goalUnlocked)
+            }
+            .onAppear {
+                StreakStore.settle()
+                checkWeeklyGoal()
+            }
             .sheet(item: $revealWord) { WordRevealSheet(wordID: $0.id) }
             .sheet(item: $practiceGroup) { _ in PracticeConfigView() }
             .sheet(isPresented: $showingNewGroup) { GroupEditView(group: nil) }
@@ -294,6 +319,61 @@ struct HomeView: View {
         delta >= 0 ? "arrow.up.right" : "arrow.down.right"
     }
 
+    // MARK: - Persönliches Ziel
+
+    /// Karte mit dem Fortschritt gegen das selbst gesetzte Tages-/Wochenziel für die
+    /// laufende Woche bzw. den heutigen Tag. Zeigt nur die aktiven Ziel-Ebenen (Wert > 0).
+    private var goalCard: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            Label(L("home.goal.title"), systemImage: "target")
+                .font(.appCaption.weight(.semibold))
+                .foregroundStyle(Theme.brandStart)
+            if dailyGoal > 0 {
+                goalRow(labelKey: "home.goal.today", done: dayDone, target: dailyGoal)
+            }
+            if weeklyGoal > 0 {
+                goalRow(labelKey: "home.goal.week", done: weekDone, target: weeklyGoal)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardStyle(padding: Theme.Spacing.l)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Eine Ziel-Ebene (Tag oder Woche): Label, Zähler „6 / 10" bzw. „erreicht"-Häkchen
+    /// und ein Fortschrittsbalken.
+    @ViewBuilder
+    private func goalRow(labelKey: String, done: Int, target: Int) -> some View {
+        let fraction = target > 0 ? min(1, Double(done) / Double(target)) : 0
+        let reached = done >= target
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            HStack {
+                Text(L(labelKey))
+                    .font(.appCaption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                if reached {
+                    Label(L("home.goal.reached"), systemImage: "checkmark.circle.fill")
+                        .font(.appCaption.weight(.semibold))
+                        .foregroundStyle(LearningStatus.learned.color)
+                } else {
+                    Text(L("home.goal.progress", done, target))
+                        .font(.appCaption.weight(.semibold))
+                        .monospacedDigit()
+                }
+            }
+            GoalProgressBar(fraction: fraction, reached: reached)
+        }
+    }
+
+    /// Schaltet beim Erreichen des Wochenziels einmalig das „Zielstrebig"-Badge frei.
+    /// Idempotent (Flag im Fortschritt); bei Neu-Freischaltung erscheint das Banner.
+    private func checkWeeklyGoal() {
+        guard weeklyGoal > 0, weekDone >= weeklyGoal else { return }
+        let unlocked = AchievementService.recordEvent(\.weeklyGoalReached, context: context)
+        if !unlocked.isEmpty { goalUnlocked = unlocked }
+    }
+
     // MARK: - Fortschritt
 
     private var progressSection: some View {
@@ -380,6 +460,25 @@ struct HomeView: View {
             .padding(.horizontal, Theme.Spacing.xl)
         }
         .padding(.top, Theme.Spacing.xl)
+    }
+}
+
+/// Schlanker Fortschrittsbalken für die Ziel-Karte (helle `.cardStyle`-Fläche).
+/// Bei Zielerreichung wechselt die Füllung auf die „Gelernt"-Farbe.
+private struct GoalProgressBar: View {
+    let fraction: Double
+    let reached: Bool
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Theme.surfaceMuted)
+                Capsule()
+                    .fill(reached ? LearningStatus.learned.color : Theme.brandStart)
+                    .frame(width: geo.size.width * max(0, min(fraction, 1)))
+            }
+        }
+        .frame(height: 10)
     }
 }
 

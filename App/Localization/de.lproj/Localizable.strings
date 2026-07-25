@@ -187,6 +187,11 @@
 "home.weekly.streak" = "Tage-Streak";
 "home.weekly.delta.up" = "+%d %% mehr als in der Vorwoche";
 "home.weekly.delta.down" = "%d %% weniger als in der Vorwoche";
+"home.goal.title" = "Dein Ziel";
+"home.goal.today" = "Heute";
+"home.goal.week" = "Diese Woche";
+"home.goal.progress" = "%d / %d";
+"home.goal.reached" = "Ziel erreicht 🏁";
 "streak.detail.title" = "Streak & Joker";
 "streak.detail.current" = "Aktuell";
 "streak.detail.longest" = "Rekord";
@@ -207,6 +212,14 @@
 "settings.reminder.enable" = "Tägliche Erinnerung";
 "settings.reminder.time" = "Uhrzeit";
 "settings.reminder.hint" = "Erhalte täglich eine Erinnerung zum Üben.";
+"settings.goal.section" = "Dein Ziel";
+"settings.goal.metric" = "Zielart";
+"settings.goal.metric.practiced" = "Geübte Wörter";
+"settings.goal.metric.learned" = "Neu gelernte";
+"settings.goal.weekly" = "Wochenziel";
+"settings.goal.daily" = "Tagesziel";
+"settings.goal.off" = "Aus";
+"settings.goal.footer" = "Verfolge deinen Fortschritt auf dem Home-Screen. Setze einen Wert auf 0, um dieses Ziel abzuschalten.";
 "notification.title" = "Zeit zum Lernen 🇰🇷";
 "notification.body" = "Deine Vokabeln warten – ein paar Minuten reichen.";
 
@@ -365,6 +378,8 @@
 "ach.settingsExplorer.detail" = "Sprache in den Einstellungen gewechselt";
 "ach.widgetActive.title" = "Widget-Fan";
 "ach.widgetActive.detail" = "Lock-Screen-Widget einmal benutzt";
+"ach.weeklyGoal.title" = "Zielstrebig";
+"ach.weeklyGoal.detail" = "Wochenziel erreicht";
 "ach.hangulDay.title" = "Hangeul-Tag";
 "ach.hangulDay.detail" = "Am 9. Oktober (한글날) geübt";
 "ach.mondSchein.title" = "Mondschein";
