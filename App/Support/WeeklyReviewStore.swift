@@ -4,6 +4,34 @@ enum WeeklyReviewKeys {
     static let log = "weeklyReview.log" // JSON-kodiertes WeeklyActivity
 }
 
+/// Persistenz-Keys für das selbst gesetzte Tages-/Wochenziel (in `AppGroup.defaults`).
+enum GoalKeys {
+    static let metric = "goal.metric" // GoalMetric.rawValue
+    static let weekly = "goal.weekly" // Zielwert pro Woche (0 = aus)
+    static let daily = "goal.daily" // Zielwert pro Tag (0 = aus)
+}
+
+/// Zielart des persönlichen Lernziels: entweder *geübte* oder *neu gelernte* Wörter.
+/// Wird gemeinsam für Tages- und Wochenziel verwendet.
+enum GoalMetric: String, CaseIterable, Identifiable {
+    case practiced
+    case learned
+
+    var id: String { rawValue }
+    /// Localization-Key für das Label im Einstellungs-Picker.
+    var labelKey: String { "settings.goal.metric.\(rawValue)" }
+}
+
+/// Vordefinierte Zielwert-Optionen für die Einstellungs-Picker (jeweils inkl. `0` = aus).
+enum GoalOptions {
+    static let weekly = [0, 5, 10, 15, 20, 30, 50, 75, 100]
+    static let daily = [0, 1, 2, 3, 5, 8, 10, 15, 20]
+    /// Standard: kein Ziel gesetzt – die Ziel-Karte erscheint erst, wenn der Nutzer
+    /// bewusst einen Wert wählt (verhindert ungefragte Karten/Badges nach Update).
+    static let defaultWeekly = 0
+    static let defaultDaily = 0
+}
+
 /// Zusammenfassung einer abgeschlossenen Kalenderwoche – rein abgeleitet, für die
 /// Home-Karte. `deltaPercent` vergleicht die geübten Wörter mit der Vorwoche
 /// (`nil`, wenn es keine Vorwochen-Daten gibt, z.B. nach Neuinstallation).
@@ -78,6 +106,20 @@ struct WeeklyActivity: Codable, Equatable {
                             deltaPercent: delta)
     }
 
+    /// Zwischenstand der LAUFENDEN Kalenderwoche (die Woche, die `date` enthält) –
+    /// Basis für das Wochenziel. Nutzt dieselbe Aggregation wie der Rückblick.
+    func currentWeekTotals(asOf date: Date, calendar: Calendar) -> (practiced: Int, learned: Int) {
+        totals(forWeekStarting: calendar.startOfWeek(for: date), calendar: calendar)
+    }
+
+    /// Zwischenstand des HEUTIGEN Tages – Basis für das Tagesziel. `0/0`, wenn für den
+    /// Tag noch kein Eintrag existiert.
+    func dayTotals(on date: Date, calendar: Calendar) -> (practiced: Int, learned: Int) {
+        let day = calendar.startOfDay(for: date)
+        guard let entry = days.first(where: { $0.day == day }) else { return (0, 0) }
+        return (entry.practicedIDs.count, entry.newlyLearned)
+    }
+
     // MARK: - Intern
 
     /// Aggregiert die Kalenderwoche `[weekStart, weekStart+7)`.
@@ -120,6 +162,23 @@ enum WeeklyReviewStore {
             calendar: calendar,
             streak: StreakStore.displayStreak(asOf: date, calendar: calendar)
         )
+    }
+
+    /// Fortschritt der laufenden Woche gegen das Wochenziel (Anzahl gemäß `metric`).
+    static func weekProgress(for metric: GoalMetric, asOf date: Date = .now, calendar: Calendar = .current) -> Int {
+        value(of: metric, in: load().currentWeekTotals(asOf: date, calendar: calendar))
+    }
+
+    /// Fortschritt des heutigen Tages gegen das Tagesziel (Anzahl gemäß `metric`).
+    static func dayProgress(for metric: GoalMetric, asOf date: Date = .now, calendar: Calendar = .current) -> Int {
+        value(of: metric, in: load().dayTotals(on: date, calendar: calendar))
+    }
+
+    private static func value(of metric: GoalMetric, in totals: (practiced: Int, learned: Int)) -> Int {
+        switch metric {
+        case .practiced: return totals.practiced
+        case .learned: return totals.learned
+        }
     }
 
     // MARK: - Laden / Speichern
