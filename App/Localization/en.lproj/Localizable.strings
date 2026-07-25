@@ -86,6 +86,9 @@
 "practice.config.groups" = "Groups";
 "practice.config.statuses" = "Which words?";
 "practice.config.topik" = "TOPIK level";
+"practice.config.focus" = "Focus";
+"practice.problems.title" = "Problem words";
+"practice.problems.start" = "Practice problem words";
 "practice.config.direction" = "Direction";
 "practice.config.modes" = "Modes";
 "practice.config.modesHint" = "Pick several (= Mix). None selected uses all.";

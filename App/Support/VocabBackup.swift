@@ -47,6 +47,9 @@ struct VocabBackup: Codable {
         var successCounter: Int
         var includeInWidget: Bool
         var timesPracticed: Int
+        /// Lebenszeit-Fehleranzahl (siehe [[Vocab]] `totalWrongCount`). Fehlt der Schlüssel
+        /// in einer älteren Sicherung, greift der Inline-Default 0 – kein Versionssprung nötig.
+        var totalWrongCount: Int = 0
         var lastPracticedAt: Date?
         var nextReviewAt: Date?
         var lastCountedAt: Date?
@@ -68,6 +71,7 @@ extension VocabBackup {
                      emoji: $0.emoji, topikRaw: $0.topikRaw,
                      statusRaw: $0.statusRaw, successCounter: $0.successCounter,
                      includeInWidget: $0.includeInWidget, timesPracticed: $0.timesPracticed,
+                     totalWrongCount: $0.totalWrongCount,
                      lastPracticedAt: $0.lastPracticedAt, nextReviewAt: $0.nextReviewAt,
                      lastCountedAt: $0.lastCountedAt,
                      createdAt: $0.createdAt, groupID: $0.group?.id)
@@ -197,6 +201,7 @@ extension VocabBackup {
             vocab.successCounter = dto.successCounter
             vocab.includeInWidget = dto.includeInWidget
             vocab.timesPracticed = dto.timesPracticed
+            vocab.totalWrongCount = dto.totalWrongCount
             vocab.lastPracticedAt = dto.lastPracticedAt
             vocab.nextReviewAt = dto.nextReviewAt
             vocab.lastCountedAt = dto.lastCountedAt

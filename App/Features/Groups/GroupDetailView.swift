@@ -13,6 +13,7 @@ struct GroupDetailView: View {
     @State private var showingNew = false
     @State private var editingVocab: Vocab?
     @State private var showingPractice = false
+    @State private var showingProblemPractice = false
     @State private var pendingDelete: Vocab?
 
     @State private var isSelecting = false
@@ -58,6 +59,9 @@ struct GroupDetailView: View {
         .sheet(isPresented: $showingNew) { VocabEditView(vocab: nil, group: group) }
         .sheet(item: $editingVocab) { vocab in VocabEditView(vocab: vocab, group: group) }
         .sheet(isPresented: $showingPractice) { PracticeConfigView() }
+        .sheet(isPresented: $showingProblemPractice) {
+            PracticeConfigView(preselected: [group], problemsOnly: true)
+        }
         .confirmationDialog(
             L("vocab.deleteConfirm"),
             isPresented: Binding(
@@ -177,15 +181,28 @@ struct GroupDetailView: View {
         }
     }
 
+    /// Einmal pro Body-Auswertung ermittelt, statt das Prädikat inline im ViewBuilder
+    /// zu wiederholen (siehe [[Vocab]] `isProblemWord`).
+    private var hasProblemWords: Bool { group.vocabs.contains(where: \.isProblemWord) }
+
     @ViewBuilder
     private var bottomBar: some View {
         if isSelecting {
             selectionBar
         } else if !group.vocabs.isEmpty {
-            Button { showingPractice = true } label: {
-                Label(L("practice.start"), systemImage: "play.fill")
+            VStack(spacing: Theme.Spacing.s) {
+                Button { showingPractice = true } label: {
+                    Label(L("practice.start"), systemImage: "play.fill")
+                }
+                .buttonStyle(.primary)
+
+                if hasProblemWords {
+                    Button { showingProblemPractice = true } label: {
+                        Label(L("practice.problems.start"), systemImage: "exclamationmark.triangle.fill")
+                    }
+                    .buttonStyle(.secondary(tint: Theme.wrong))
+                }
             }
-            .buttonStyle(.primary)
             .padding(Theme.Spacing.m)
             .background(.ultraThinMaterial)
         }

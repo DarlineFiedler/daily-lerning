@@ -23,6 +23,11 @@ final class Vocab {
     var successCounter: Int = 0 // Streak aufeinanderfolgender richtiger Antworten
     var includeInWidget: Bool = false
     var timesPracticed: Int = 0
+    /// Gesamtzahl aller falschen Antworten über die Lebenszeit des Worts (additiv zu
+    /// `timesPracticed`). Anders als `successCounter` (der bei jedem Fehler auf 0 fällt)
+    /// akkumuliert dieser Wert und erlaubt eine Fehlerquote (siehe `isProblemWord`).
+    /// Additiv eingeführt; SwiftData migriert bestehende Stores automatisch (Default 0).
+    var totalWrongCount: Int = 0
     var lastPracticedAt: Date?
     /// Nächster Fälligkeitszeitpunkt fürs Wiederholen (SRS-lite). `nil` = noch nie
     /// geplant ⇒ sofort fällig (siehe `isDue`). Additiv eingeführt; SwiftData
@@ -65,6 +70,21 @@ final class Vocab {
 
     var hasBeenPracticed: Bool { timesPracticed > 0 }
 
+    /// Mindestanzahl an Versuchen, ab der ein Wort als „Problemwort" gelten kann –
+    /// verhindert Ausreißer bei 1–2 Fehlversuchen.
+    static let problemMinAttempts = 3
+    /// Fehlerquote, ab der (streng größer) ein Wort auffällig ist.
+    static let problemWrongRateThreshold = 0.4
+
+    /// Oft falsch beantwortet **und** aktuell schwächelnd. Die Mindestversuche verhindern
+    /// Ausreißer bei wenigen Fehlversuchen; `successCounter == 0` macht die Auswahl
+    /// selbstheilend – verbessert sich das Wort wieder, verlässt es die Problemwörter.
+    var isProblemWord: Bool {
+        timesPracticed >= Self.problemMinAttempts &&
+            successCounter == 0 &&
+            Double(totalWrongCount) / Double(timesPracticed) > Self.problemWrongRateThreshold
+    }
+
     /// Ist das Wort zum Wiederholen fällig? Neue/ungeplante Wörter (`nextReviewAt == nil`)
     /// gelten sofort als fällig.
     func isDue(asOf date: Date = .now) -> Bool {
@@ -88,6 +108,7 @@ final class Vocab {
             }
         } else {
             successCounter = 0
+            totalWrongCount += 1
         }
         statusRaw = LearningStatus.computed(counter: successCounter, practiced: true).rawValue
         nextReviewAt = ReviewSchedule.nextReviewDate(for: successCounter, from: now)
@@ -101,6 +122,7 @@ final class Vocab {
         case .new:
             successCounter = 0
             timesPracticed = 0
+            totalWrongCount = 0
             lastPracticedAt = nil
             lastCountedAt = nil
             nextReviewAt = nil // zurück auf „sofort fällig"

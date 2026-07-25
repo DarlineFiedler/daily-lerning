@@ -22,6 +22,7 @@ final class PracticePresetTests: XCTestCase {
             groupIDs: [UUID(), UUID()],
             statuses: [LearningStatus.learning.rawValue, LearningStatus.new.rawValue],
             topikLevels: [TopikLevel.one.rawValue],
+            problemsOnly: true,
             direction: PracticeDirection.meaningToWord.rawValue,
             modes: [PracticeMode.writing.rawValue, PracticeMode.listening.rawValue],
             wordLimit: 20
@@ -44,6 +45,17 @@ final class PracticePresetTests: XCTestCase {
         """
         let decoded = try JSONDecoder().decode(PracticePreset.self, from: Data(json.utf8))
         XCTAssertNil(decoded.topikLevels)
+    }
+
+    /// Presets ohne `problemsOnly`-Schlüssel (vor dem Feld gespeichert) müssen weiterhin
+    /// dekodieren – Feld = `nil` (⇒ Filter aus).
+    func testDecodesLegacyPresetWithoutProblemsOnly() throws {
+        let json = """
+        {"id":"\(UUID().uuidString)","name":"Alt","groupIDs":[],\
+        "statuses":[0],"direction":"wordToMeaning","modes":[],"wordLimit":null}
+        """
+        let decoded = try JSONDecoder().decode(PracticePreset.self, from: Data(json.utf8))
+        XCTAssertNil(decoded.problemsOnly)
     }
 
     func testSaveAndLoad() {

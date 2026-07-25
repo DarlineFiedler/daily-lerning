@@ -71,6 +71,26 @@ final class PracticeSessionTests: XCTestCase {
         XCTAssertTrue(session.isFinished)
     }
 
+    /// Falsche Antworten erhöhen `totalWrongCount` (Lebenszeit-Fehlerzähler); richtige
+    /// Antworten lassen ihn unberührt – Grundlage für die Problemwort-Erkennung.
+    func testWrongAnswersAccumulateTotalWrongCount() {
+        let wrong = makeVocabs(3, prefix: "F")
+        let correct = makeVocabs(2, prefix: "R")
+        let wrongSession = PracticeSession(
+            vocabs: wrong, distractorPool: wrong,
+            config: PracticeConfig(modes: [.review]), context: context
+        )
+        for _ in 0 ..< 3 { wrongSession.submit(correct: false) }
+        XCTAssertEqual(wrong.reduce(0) { $0 + $1.totalWrongCount }, 3)
+
+        let correctSession = PracticeSession(
+            vocabs: correct, distractorPool: correct,
+            config: PracticeConfig(modes: [.review]), context: context
+        )
+        for _ in 0 ..< 2 { correctSession.submit(correct: true) }
+        XCTAssertEqual(correct.reduce(0) { $0 + $1.totalWrongCount }, 0)
+    }
+
     func testRetryWrongRebuildsFromMissedOnly() {
         let vocabs = makeVocabs(3)
         let session = PracticeSession(
