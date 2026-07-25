@@ -10,6 +10,7 @@ struct PracticeConfigView: View {
     @State private var selectedGroupIDs: Set<UUID>
     @State private var selectedStatuses: Set<LearningStatus> = []
     @State private var selectedTopikLevels: Set<TopikLevel> = []
+    @State private var problemsOnly: Bool
     @State private var direction: PracticeDirection = .wordToMeaning
     @State private var selectedModes: Set<PracticeMode> = []
     @State private var wordLimit: Int?
@@ -21,8 +22,11 @@ struct PracticeConfigView: View {
 
     /// `preselected` sind die beim Öffnen bereits gewählten Gruppen. Standardmäßig
     /// leer – leere Auswahl bedeutet „alle Gruppen" (siehe `resolvedGroups`).
-    init(preselected: [VocabGroup] = []) {
+    /// `problemsOnly` legt den Fokus-Filter vorab an (z.B. vom „Problemwörter"-Button
+    /// in der Gruppen-Detailansicht aus).
+    init(preselected: [VocabGroup] = [], problemsOnly: Bool = false) {
         _selectedGroupIDs = State(initialValue: Set(preselected.map(\.id)))
+        _problemsOnly = State(initialValue: problemsOnly)
     }
 
     /// Tatsächlich verwendete Gruppen: leere Auswahl = alle Gruppen.
@@ -32,10 +36,13 @@ struct PracticeConfigView: View {
 
     /// Wörter, die zur aktuellen Auswahl passen. Leere Status- bzw. TOPIK-Menge = alle.
     /// Bei aktivem TOPIK-Filter fallen nicht eingestufte Wörter (`topikLevel == nil`) weg.
+    /// Ist der Fokus „Problemwörter" aktiv, bleiben nur auffällige Wörter (siehe
+    /// `Vocab.isProblemWord`).
     private var pool: [Vocab] {
         resolvedGroups.flatMap(\.vocabs).filter {
             (selectedStatuses.isEmpty || selectedStatuses.contains($0.status)) &&
-                (selectedTopikLevels.isEmpty || $0.topikLevel.map(selectedTopikLevels.contains) ?? false)
+                (selectedTopikLevels.isEmpty || $0.topikLevel.map(selectedTopikLevels.contains) ?? false) &&
+                (!problemsOnly || $0.isProblemWord)
         }
     }
 
@@ -57,6 +64,7 @@ struct PracticeConfigView: View {
                     if allGroups.count > 1 { groupSection }
                     statusSection
                     topikSection
+                    focusSection
                     DirectionModeSelection(direction: $direction, modes: $selectedModes)
                     WordLimitSelection(wordLimit: $wordLimit)
                 }
@@ -187,6 +195,20 @@ struct PracticeConfigView: View {
         }
     }
 
+    private var focusSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(L("practice.config.focus"))
+            FlowChips {
+                SelectableChip(
+                    title: L("practice.problems.title"),
+                    systemImage: "exclamationmark.triangle.fill",
+                    tint: Theme.wrong,
+                    isSelected: problemsOnly
+                ) { problemsOnly.toggle() }
+            }
+        }
+    }
+
     private var startBar: some View {
         VStack(spacing: 6) {
             Button { startSession = true } label: {
@@ -221,6 +243,7 @@ struct PracticeConfigView: View {
             groupIDs: Array(selectedGroupIDs),
             statuses: selectedStatuses.map(\.rawValue),
             topikLevels: selectedTopikLevels.map(\.rawValue),
+            problemsOnly: problemsOnly,
             direction: direction.rawValue,
             modes: selectedModes.map(\.rawValue),
             wordLimit: wordLimit
@@ -237,6 +260,7 @@ struct PracticeConfigView: View {
         selectedGroupIDs = Set(preset.groupIDs).intersection(existing)
         selectedStatuses = Set(preset.statuses.compactMap(LearningStatus.init(rawValue:)))
         selectedTopikLevels = Set((preset.topikLevels ?? []).compactMap(TopikLevel.init(rawValue:)))
+        problemsOnly = preset.problemsOnly ?? false
         direction = PracticeDirection(rawValue: preset.direction) ?? .wordToMeaning
         selectedModes = Set(preset.modes.compactMap(PracticeMode.init(rawValue:)))
             .intersection(PracticeMode.available)

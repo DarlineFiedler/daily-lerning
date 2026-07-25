@@ -13,6 +13,11 @@ struct PracticePreset: Codable, Identifiable, Equatable {
     /// fehlender Schlüssel würde bei einem nicht-optionalen Feld den Decode werfen und
     /// alle gespeicherten Presets verwerfen (siehe [[TopikLevel]]).
     var topikLevels: [Int]?
+    /// Nur Problemwörter üben (siehe [[Vocab]] `isProblemWord`); `nil`/false = alle.
+    /// Optional, damit vor diesem Feld gespeicherte Presets weiterhin dekodiert werden –
+    /// ein fehlender Schlüssel würde bei einem nicht-optionalen Feld den Decode werfen und
+    /// alle gespeicherten Presets verwerfen (gleiches Argument wie `topikLevels`).
+    var problemsOnly: Bool?
     var direction: String // PracticeDirection.rawValue
     var modes: [String] // PracticeMode.rawValue
     var wordLimit: Int? // nil = alle

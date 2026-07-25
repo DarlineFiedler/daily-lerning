@@ -90,6 +90,9 @@
 "practice.config.groups" = "Gruppen";
 "practice.config.statuses" = "Welche Wörter?";
 "practice.config.topik" = "TOPIK-Niveau";
+"practice.config.focus" = "Fokus";
+"practice.problems.title" = "Problemwörter";
+"practice.problems.start" = "Problemwörter üben";
 "practice.config.direction" = "Richtung";
 "practice.config.modes" = "Lernmodi";
 "practice.config.modesHint" = "Mehrere wählbar (= Mix). Ohne Auswahl wird alles genutzt.";
