@@ -55,8 +55,12 @@ struct GroupDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }
         .safeAreaInset(edge: .bottom) { bottomBar }
-        .sheet(isPresented: $showingNew) { VocabEditView(vocab: nil, group: group) }
-        .sheet(item: $editingVocab) { vocab in VocabEditView(vocab: vocab, group: group) }
+        .sheet(isPresented: $showingNew) {
+            VocabEditView(vocab: nil, group: group, onSelectExisting: openExisting)
+        }
+        .sheet(item: $editingVocab) { vocab in
+            VocabEditView(vocab: vocab, group: group, onSelectExisting: openExisting)
+        }
         .sheet(isPresented: $showingPractice) { PracticeConfigView() }
         .confirmationDialog(
             L("vocab.deleteConfirm"),
@@ -307,5 +311,13 @@ struct GroupDetailView: View {
         context.saveOrLog()
         pendingDelete = nil
         WidgetSnapshotWriter.refresh(context: context)
+    }
+
+    /// Öffnet aus dem Duplikat-Dialog heraus die bestehende Vokabel. Der aufrufende Editor
+    /// schließt sich selbst (`dismiss`); wir ziehen das Bearbeiten-Sheet nach, sobald das
+    /// „Neu"-Sheet zu ist, damit der Sheet-Wechsel nicht verschluckt wird.
+    private func openExisting(_ vocab: Vocab) {
+        showingNew = false
+        DispatchQueue.main.async { editingVocab = vocab }
     }
 }

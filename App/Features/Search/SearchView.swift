@@ -58,7 +58,7 @@ struct SearchView: View {
                 }
             }
             .sheet(item: $editingVocab) { vocab in
-                VocabEditView(vocab: vocab, group: vocab.group)
+                VocabEditView(vocab: vocab, group: vocab.group) { editingVocab = $0 }
             }
             .confirmationDialog(
                 L("vocab.deleteConfirm"),

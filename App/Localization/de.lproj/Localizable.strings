@@ -72,6 +72,10 @@
 "vocab.emojiHint" = "Ein optionales Emoji als visuelle Eselsbrücke. Wird passend zur Bedeutung vorgeschlagen und kann geändert oder entfernt werden.";
 "vocab.emojiSuggestion" = "Vorschlag übernehmen: %@";
 "vocab.emojiRemove" = "Emoji entfernen";
+"vocab.duplicateSameGroupTitle" = "„%@“ existiert in dieser Gruppe bereits";
+"vocab.duplicateOtherGroupHint" = "„%@“ gibt es bereits in der Gruppe „%@“.";
+"vocab.saveAnyway" = "Trotzdem speichern";
+"vocab.goToExisting" = "Zur bestehenden Vokabel";
 "vocab.empty" = "Noch keine Vokabeln.\nTippe auf +, um eine hinzuzufügen.";
 "vocab.counterInfo" = "Geschafft: %d/%d";
 "vocab.deleteConfirm" = "Diese Vokabel löschen?";

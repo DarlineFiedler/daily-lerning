@@ -8,6 +8,10 @@ struct VocabEditView: View {
 
     let vocab: Vocab? // nil = neue Vokabel
     let group: VocabGroup? // Zielgruppe (für neue Vokabel erforderlich)
+    /// Optionaler Callback, um statt einer Dublette zur bereits bestehenden Vokabel zu
+    /// springen (siehe Duplikat-Dialog). Wenn `nil`, entfällt die „Zur bestehenden
+    /// Vokabel"-Aktion.
+    let onSelectExisting: ((Vocab) -> Void)?
 
     @Query(sort: \VocabGroup.sortOrder) private var allGroups: [VocabGroup]
 
@@ -22,10 +26,14 @@ struct VocabEditView: View {
     /// Sobald der Nutzer das Emoji-Feld selbst anfasst (tippen, Vorschlag übernehmen,
     /// entfernen), überschreibt die automatische Vorschlagslogik es nicht mehr.
     @State private var emojiTouchedManually: Bool
+    /// Bestehende Vokabel, deren Wort mit der Eingabe in derselben Gruppe kollidiert – löst
+    /// beim Speichern den Warn-Dialog aus (statt still eine Dublette anzulegen).
+    @State private var pendingDuplicate: Vocab?
 
-    init(vocab: Vocab?, group: VocabGroup?) {
+    init(vocab: Vocab?, group: VocabGroup?, onSelectExisting: ((Vocab) -> Void)? = nil) {
         self.vocab = vocab
         self.group = group ?? vocab?.group
+        self.onSelectExisting = onSelectExisting
         _word = State(initialValue: vocab?.word ?? "")
         _meaning = State(initialValue: vocab?.meaning ?? "")
         _example = State(initialValue: vocab?.example ?? "")
@@ -49,15 +57,39 @@ struct VocabEditView: View {
         !meaning.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
+    /// Aktuelles Wort-Duplikat (falls vorhanden) gegen alle Vokabeln, die eigene Vokabel
+    /// ausgenommen. Zielgruppe ist die aktuell gewählte Gruppe.
+    private var duplicateMatch: DuplicateChecker.Match? {
+        DuplicateChecker.firstDuplicate(of: word,
+                                        in: selectedGroup ?? group,
+                                        among: allGroups.flatMap(\.vocabs),
+                                        excluding: vocab)
+    }
+
+    /// Dezenter Hinweis, wenn dasselbe Wort bereits in einer **anderen** Gruppe existiert –
+    /// reine Info, kein Speicher-Stopp (gleiches Wort in mehreren Gruppen kann gewollt sein).
+    private var otherGroupDuplicateHint: String? {
+        guard case let .otherGroup(existing) = duplicateMatch else { return nil }
+        let groupName = existing.group?.name ?? ""
+        return L("vocab.duplicateOtherGroupHint", existing.word, groupName)
+    }
+
     var body: some View {
         NavigationStack {
             Form {
-                Section(L("vocab.details")) {
+                Section {
                     TextField(L("vocab.wordPlaceholder"), text: $word)
                         .font(.title3)
                     TextField(L("vocab.meaningPlaceholder"), text: $meaning)
                     TextField(L("vocab.examplePlaceholder"), text: $example, axis: .vertical)
                         .lineLimit(2 ... 5)
+                } header: {
+                    Text(L("vocab.details"))
+                } footer: {
+                    if let otherGroupDuplicateHint {
+                        Label(otherGroupDuplicateHint, systemImage: "info.circle")
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 emojiSection
@@ -113,8 +145,26 @@ struct VocabEditView: View {
                     Button(L("common.cancel")) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(L("common.save"), action: save).disabled(!canSave)
+                    Button(L("common.save"), action: attemptSave).disabled(!canSave)
                 }
+            }
+            .confirmationDialog(
+                L("vocab.duplicateSameGroupTitle", word.trimmingCharacters(in: .whitespacesAndNewlines)),
+                isPresented: Binding(
+                    get: { pendingDuplicate != nil },
+                    set: { if !$0 { pendingDuplicate = nil } }
+                ),
+                titleVisibility: .visible
+            ) {
+                Button(L("vocab.saveAnyway")) { performSave() }
+                if let existing = pendingDuplicate, let onSelectExisting {
+                    Button(L("vocab.goToExisting")) {
+                        pendingDuplicate = nil
+                        onSelectExisting(existing)
+                        dismiss()
+                    }
+                }
+                Button(L("common.cancel"), role: .cancel) { pendingDuplicate = nil }
             }
         }
     }
@@ -174,7 +224,18 @@ struct VocabEditView: View {
         )
     }
 
-    private func save() {
+    /// Speichern-Button: bei einer Dublette in derselben Gruppe erst warnen (Dialog), sonst
+    /// direkt speichern. Ein Treffer in einer anderen Gruppe ist erlaubt (nur Inline-Hinweis).
+    private func attemptSave() {
+        if case let .sameGroup(existing) = duplicateMatch {
+            pendingDuplicate = existing
+        } else {
+            performSave()
+        }
+    }
+
+    private func performSave() {
+        pendingDuplicate = nil
         let trimmedWord = word.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedMeaning = meaning.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedExample = example.trimmingCharacters(in: .whitespacesAndNewlines)
