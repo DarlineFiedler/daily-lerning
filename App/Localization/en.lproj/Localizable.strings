@@ -72,6 +72,10 @@
 "vocab.emojiHint" = "An optional emoji as a visual mnemonic. Suggested from the meaning; you can change or remove it.";
 "vocab.emojiSuggestion" = "Use suggestion: %@";
 "vocab.emojiRemove" = "Remove emoji";
+"vocab.duplicateSameGroupTitle" = "“%@” already exists in this group";
+"vocab.duplicateOtherGroupHint" = "“%@” already exists in the group “%@”.";
+"vocab.saveAnyway" = "Save anyway";
+"vocab.goToExisting" = "Go to existing word";
 "vocab.empty" = "No words yet.\nTap + to add one.";
 "vocab.counterInfo" = "Streak: %d/%d";
 "vocab.deleteConfirm" = "Delete this word?";

@@ -58,7 +58,12 @@ struct SearchView: View {
                 }
             }
             .sheet(item: $editingVocab) { vocab in
-                VocabEditView(vocab: vocab, group: vocab.group)
+                VocabEditView(vocab: vocab, group: vocab.group) { existing in
+                    // Der Editor schließt sich selbst (`dismiss`), was die item-Bindung auf
+                    // nil zurücksetzt. Den Sprung zur bestehenden Vokabel daher nachziehen,
+                    // sobald das aktuelle Sheet zu ist – sonst wird der Wechsel verschluckt.
+                    DispatchQueue.main.async { editingVocab = existing }
+                }
             }
             .confirmationDialog(
                 L("vocab.deleteConfirm"),
