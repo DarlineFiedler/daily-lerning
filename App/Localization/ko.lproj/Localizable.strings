@@ -136,6 +136,16 @@
 "stats.overall" = "전체";
 "stats.byGroup" = "그룹별";
 "stats.empty" = "아직 데이터가 없습니다.";
+"stats.trend.title" = "학습 곡선";
+"stats.trend.week" = "주";
+"stats.trend.practiced" = "연습함";
+"stats.trend.learned" = "새로 익힘";
+"stats.trend.accuracy" = "정답률";
+"stats.trend.empty" = "아직 기록이 없습니다 – 며칠 연습하면 학습 곡선이 여기에 표시됩니다.";
+"stats.heatmap.title" = "활동";
+"stats.heatmap.less" = "적음";
+"stats.heatmap.more" = "많음";
+"stats.heatmap.cell" = "%1$@: 단어 %2$d개 연습";
 
 /* Search */
 "search.title" = "검색";

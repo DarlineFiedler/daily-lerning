@@ -22,8 +22,9 @@ final class WeeklyReviewTests: XCTestCase {
         log.lastCompletedWeekReview(asOf: cal.date(from: today)!, calendar: cal, streak: streak)
     }
 
-    private func record(_ log: WeeklyActivity, _ id: UUID, learned: Bool = false, on date: Date) -> WeeklyActivity {
-        log.recording(wordID: id, becameLearned: learned, on: date, calendar: cal)
+    private func record(_ log: WeeklyActivity, _ id: UUID, learned: Bool = false,
+                        correct: Bool = true, on date: Date) -> WeeklyActivity {
+        log.recording(wordID: id, becameLearned: learned, correct: correct, on: date, calendar: cal)
     }
 
     // MARK: - Leerer Log / Neuinstallation
@@ -167,5 +168,121 @@ final class WeeklyReviewTests: XCTestCase {
         log = record(log, UUID(), on: recent)
         XCTAssertFalse(log.days.contains { cal.isDate($0.day, inSameDayAs: old) },
                        "Einträge älter als retentionDays werden entfernt")
+    }
+
+    func testEntriesWithinRetentionAreKept() {
+        let base = cal.date(from: today)!
+        var log = WeeklyActivity()
+        // Eintrag knapp innerhalb des (jetzt 91-tägigen) Fensters bleibt erhalten.
+        let within = cal.date(byAdding: .day, value: -(WeeklyActivity.retentionDays - 1), to: base)!
+        log = record(log, UUID(), on: within)
+        log = record(log, UUID(), on: base) // prunt relativ zu heute
+        XCTAssertTrue(log.days.contains { cal.isDate($0.day, inSameDayAs: within) },
+                      "Einträge innerhalb retentionDays bleiben erhalten")
+        XCTAssertEqual(WeeklyActivity.retentionDays, 91)
+    }
+
+    // MARK: - Wochenserie (Lernkurve #40)
+
+    private func series(_ log: WeeklyActivity, weeks: Int) -> [WeekBucket] {
+        log.weeklySeries(weeks: weeks, asOf: cal.date(from: today)!, calendar: cal)
+    }
+
+    func testWeeklySeriesReturnsRequestedNumberOfWeeksOldestFirst() {
+        let buckets = series(WeeklyActivity(), weeks: 12)
+        XCTAssertEqual(buckets.count, 12)
+        // Aufsteigend sortiert (älteste zuerst), lückenlos im 7-Tage-Raster.
+        for pair in zip(buckets, buckets.dropFirst()) {
+            XCTAssertEqual(cal.date(byAdding: .day, value: 7, to: pair.0.weekStart), pair.1.weekStart)
+        }
+        // Letzter Bucket ist die laufende Woche (Mo 20.7.).
+        XCTAssertEqual(buckets.last?.weekStart, cal.startOfWeek(for: cal.date(from: today)!))
+    }
+
+    func testWeeklySeriesFillsWeeksWithoutActivityAsZero() {
+        var log = WeeklyActivity()
+        log = record(log, UUID(), on: day(2026, 7, 21)) // nur laufende Woche
+        let buckets = series(log, weeks: 4)
+        XCTAssertEqual(buckets.last?.practiced, 1)
+        // Die drei Wochen davor ohne Aktivität → 0, keine Auslassung.
+        XCTAssertEqual(buckets.dropLast().map(\.practiced), [0, 0, 0])
+        XCTAssertFalse(buckets.dropLast().contains { $0.hasActivity })
+    }
+
+    func testWeeklySeriesCountsDistinctPractisedPerWeek() {
+        let a = UUID(), b = UUID()
+        var log = WeeklyActivity()
+        log = record(log, a, on: day(2026, 7, 14))
+        log = record(log, a, on: day(2026, 7, 15)) // dasselbe Wort → kein Doppel
+        log = record(log, b, on: day(2026, 7, 15))
+        // Woche 13.–19.7. enthält 2 distinct Wörter.
+        let week = series(log, weeks: 12).first { cal.isDate($0.weekStart, inSameDayAs: day(2026, 7, 13)) }
+        XCTAssertEqual(week?.practiced, 2)
+    }
+
+    // MARK: - Trefferquote (Lernkurve #40)
+
+    func testWeeklyAccuracyAggregatesCorrectAndWrong() {
+        var log = WeeklyActivity()
+        log = record(log, UUID(), correct: true, on: day(2026, 7, 14))
+        log = record(log, UUID(), correct: true, on: day(2026, 7, 15))
+        log = record(log, UUID(), correct: false, on: day(2026, 7, 16))
+        let week = series(log, weeks: 12).first { cal.isDate($0.weekStart, inSameDayAs: day(2026, 7, 13)) }
+        XCTAssertEqual(week?.correct, 2)
+        XCTAssertEqual(week?.wrong, 1)
+        XCTAssertEqual(week?.accuracy, 67) // 2/3 gerundet
+    }
+
+    func testWeeklyAccuracyIsNilWithoutAnswers() {
+        let buckets = series(WeeklyActivity(), weeks: 4)
+        XCTAssertTrue(buckets.allSatisfy { $0.accuracy == nil })
+    }
+
+    // MARK: - Tagesmengen (Heatmap #54)
+
+    private func daily(_ log: WeeklyActivity, days: Int) -> [Date: Int] {
+        log.dailyPracticed(days: days, asOf: cal.date(from: today)!, calendar: cal)
+    }
+
+    func testDailyPractisedReturnsCountsPerDay() {
+        let a = UUID(), b = UUID()
+        var log = WeeklyActivity()
+        log = record(log, a, on: day(2026, 7, 21))
+        log = record(log, b, on: day(2026, 7, 21))
+        log = record(log, a, on: day(2026, 7, 22))
+        let counts = daily(log, days: 91)
+        XCTAssertEqual(counts[cal.startOfDay(for: day(2026, 7, 21))], 2)
+        XCTAssertEqual(counts[cal.startOfDay(for: day(2026, 7, 22))], 1)
+    }
+
+    func testDailyPractisedOmitsDaysWithoutActivity() {
+        var log = WeeklyActivity()
+        log = record(log, UUID(), on: day(2026, 7, 21))
+        let counts = daily(log, days: 91)
+        XCTAssertNil(counts[cal.startOfDay(for: day(2026, 7, 20))]) // Aufrufer wertet als 0
+        XCTAssertEqual(counts.count, 1)
+    }
+
+    func testDailyPractisedExcludesEntriesOutsideWindow() {
+        var log = WeeklyActivity()
+        // 40 Tage zurück liegt außerhalb eines 30-Tage-Fensters.
+        let outside = cal.date(byAdding: .day, value: -40, to: cal.date(from: today)!)!
+        log = record(log, UUID(), on: outside)
+        log = record(log, UUID(), on: day(2026, 7, 21))
+        XCTAssertEqual(daily(log, days: 30).count, 1)
+    }
+
+    // MARK: - Migration alter Logs (ohne Trefferquote-Felder)
+
+    func testDecodingLegacyDayEntryDefaultsAccuracyToZero() throws {
+        // Alt-JSON ohne correctCount/wrongCount (vor der Trefferquote-Erweiterung).
+        let json = """
+        {"days":[{"day":774316800,"practicedIDs":[],"newlyLearned":3}]}
+        """
+        let decoded = try JSONDecoder().decode(WeeklyActivity.self, from: Data(json.utf8))
+        XCTAssertEqual(decoded.days.count, 1)
+        XCTAssertEqual(decoded.days[0].newlyLearned, 3)
+        XCTAssertEqual(decoded.days[0].correctCount, 0)
+        XCTAssertEqual(decoded.days[0].wrongCount, 0)
     }
 }

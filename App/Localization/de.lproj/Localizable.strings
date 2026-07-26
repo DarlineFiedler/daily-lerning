@@ -136,6 +136,16 @@
 "stats.overall" = "Gesamt";
 "stats.byGroup" = "Nach Gruppe";
 "stats.empty" = "Noch keine Daten.";
+"stats.trend.title" = "Lernkurve";
+"stats.trend.week" = "Woche";
+"stats.trend.practiced" = "Geübt";
+"stats.trend.learned" = "Neu gelernt";
+"stats.trend.accuracy" = "Trefferquote";
+"stats.trend.empty" = "Noch kein Verlauf – übe ein paar Tage, dann erscheint hier deine Lernkurve.";
+"stats.heatmap.title" = "Aktivität";
+"stats.heatmap.less" = "weniger";
+"stats.heatmap.more" = "mehr";
+"stats.heatmap.cell" = "%1$@: %2$d Wörter geübt";
 
 /* Suche */
 "search.title" = "Suche";

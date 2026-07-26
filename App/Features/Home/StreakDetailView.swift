@@ -22,6 +22,7 @@ struct StreakDetailView: View {
                     stats
                     jokerCard
                     calendarSection
+                    heatmapSection
                     if !history.isEmpty { historySection }
                 }
                 .padding(Theme.Spacing.m)
@@ -79,6 +80,15 @@ struct StreakDetailView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             SectionHeader(L("streak.calendar.title"))
             StreakCalendarView(activeDays: activeDays, jokerUses: jokerUses)
+        }
+    }
+
+    // MARK: - Aktivitäts-Heatmap
+
+    private var heatmapSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(L("stats.heatmap.title"))
+            ActivityHeatmapView()
         }
     }
 
