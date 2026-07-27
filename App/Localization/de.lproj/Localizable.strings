@@ -145,7 +145,7 @@
 "stats.heatmap.title" = "Aktivität";
 "stats.heatmap.less" = "weniger";
 "stats.heatmap.more" = "mehr";
-"stats.heatmap.cell" = "%1$@: %2$d Wörter geübt";
+/* stats.heatmap.cell → Pluralformen in Localizable.stringsdict */
 
 /* Suche */
 "search.title" = "Suche";

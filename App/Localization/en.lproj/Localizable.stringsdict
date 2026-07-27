@@ -34,5 +34,21 @@
 			<string>%d words to review</string>
 		</dict>
 	</dict>
+	<key>stats.heatmap.cell</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%1$@: %2$#@words@</string>
+		<key>words</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>1 word practiced</string>
+			<key>other</key>
+			<string>%d words practiced</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

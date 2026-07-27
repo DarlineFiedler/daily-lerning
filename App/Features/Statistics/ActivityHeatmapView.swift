@@ -76,6 +76,7 @@ struct ActivityHeatmapView: View {
                     .frame(height: cellSize)
             }
         }
+        .padding(.vertical, 1) // deckungsgleich mit dem Raster-Padding
     }
 
     // MARK: - Legende
@@ -109,6 +110,7 @@ struct ActivityHeatmapView: View {
     /// mit 7 Zeilen füllt spaltenweise von oben – da wir bei einem Wochenanfang
     /// starten, landet jeder Tag automatisch in der richtigen Wochentagszeile.
     private func makeCells() -> [DayCell] {
+        let counts = counts // Log einmal laden/decodieren, nicht pro Zelle.
         let end = calendar.startOfDay(for: asOf)
         guard let windowStart = calendar.date(byAdding: .day, value: -(days - 1), to: end) else { return [] }
         let gridStart = calendar.startOfWeek(for: windowStart)

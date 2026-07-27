@@ -30,5 +30,19 @@
 			<string>복습할 단어 %d개</string>
 		</dict>
 	</dict>
+	<key>stats.heatmap.cell</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%1$@: %2$#@words@</string>
+		<key>words</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>other</key>
+			<string>단어 %d개 연습</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

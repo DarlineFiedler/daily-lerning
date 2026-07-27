@@ -145,7 +145,7 @@
 "stats.heatmap.title" = "활동";
 "stats.heatmap.less" = "적음";
 "stats.heatmap.more" = "많음";
-"stats.heatmap.cell" = "%1$@: 단어 %2$d개 연습";
+/* stats.heatmap.cell → plural forms in Localizable.stringsdict */
 
 /* Search */
 "search.title" = "검색";

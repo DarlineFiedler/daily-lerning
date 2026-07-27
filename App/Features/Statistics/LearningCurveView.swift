@@ -14,22 +14,16 @@ struct LearningCurveView: View {
         WeeklyReviewStore.weeklySeries(weeks: weeks, asOf: asOf)
     }
 
-    /// Wochen mit beantworteten Antworten – Basis für den Trefferquoten-Chart.
-    private var accuracyPoints: [WeekBucket] {
-        buckets.filter { $0.accuracy != nil }
-    }
-
-    private var hasAnyActivity: Bool {
-        buckets.contains { $0.hasActivity }
-    }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            if hasAnyActivity {
+        // Serie einmal laden/decodieren und an die Teil-Views durchreichen.
+        let buckets = buckets
+        let accuracyPoints = buckets.filter { $0.accuracy != nil }
+        return VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+            if buckets.contains(where: { $0.hasActivity }) {
                 legend
-                volumeChart
+                volumeChart(buckets)
                 if !accuracyPoints.isEmpty {
-                    accuracySection
+                    accuracySection(accuracyPoints)
                 }
             } else {
                 emptyHint
@@ -40,7 +34,7 @@ struct LearningCurveView: View {
 
     // MARK: - Geübte / neu gelernte Wörter
 
-    private var volumeChart: some View {
+    private func volumeChart(_ buckets: [WeekBucket]) -> some View {
         Chart(buckets, id: \.weekStart) { bucket in
             BarMark(
                 x: .value(L("stats.trend.week"), bucket.weekStart, unit: .weekOfYear),
@@ -68,7 +62,7 @@ struct LearningCurveView: View {
 
     // MARK: - Trefferquote
 
-    private var accuracySection: some View {
+    private func accuracySection(_ accuracyPoints: [WeekBucket]) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             Text(L("stats.trend.accuracy"))
                 .font(.appCaption.weight(.semibold))
