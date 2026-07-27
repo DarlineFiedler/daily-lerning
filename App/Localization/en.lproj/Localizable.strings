@@ -81,6 +81,7 @@
 "vocab.deleteConfirm" = "Delete this word?";
 "vocab.changeStatus" = "Change status";
 "vocab.setStatus" = "Set status";
+"vocab.moveToGroup" = "Move to group";
 "vocab.selectedCount" = "%d selected";
 "vocab.resetConfirm" = "Reset this word to “New”?";
 

@@ -81,6 +81,7 @@
 "vocab.deleteConfirm" = "이 단어를 삭제할까요?";
 "vocab.changeStatus" = "상태 변경";
 "vocab.setStatus" = "상태 설정";
+"vocab.moveToGroup" = "그룹으로 이동";
 "vocab.selectedCount" = "%d개 선택됨";
 "vocab.resetConfirm" = "이 단어를 '새 단어'로 초기화할까요?";
 

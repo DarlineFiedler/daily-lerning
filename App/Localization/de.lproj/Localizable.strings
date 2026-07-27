@@ -81,6 +81,7 @@
 "vocab.deleteConfirm" = "Diese Vokabel löschen?";
 "vocab.changeStatus" = "Status ändern";
 "vocab.setStatus" = "Status setzen";
+"vocab.moveToGroup" = "In Gruppe verschieben";
 "vocab.selectedCount" = "%d ausgewählt";
 "vocab.resetConfirm" = "Diese Vokabel auf „Neu“ zurücksetzen?";
 
