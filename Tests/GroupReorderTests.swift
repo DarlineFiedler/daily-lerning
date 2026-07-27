@@ -50,4 +50,30 @@ final class GroupReorderTests: XCTestCase {
         XCTAssertEqual(result.first, items[4])
         XCTAssertEqual(result, [items[4], items[0], items[1], items[2], items[3]])
     }
+
+    // MARK: - renumberedOrder (Reaktivieren)
+
+    /// Nach dem Drag & Drop stehen aktive Gruppen auf 0…n; eine archivierte Gruppe
+    /// behält ihren alten `sortOrder` (hier 1) und würde beim Reaktivieren mit einem
+    /// aktiven Wert kollidieren. `renumberedOrder` verteilt neue, eindeutige Indizes
+    /// und schiebt die reaktivierte Gruppe ans Ende.
+    func testReactivationRenumbersWithoutCollision() {
+        let a = UUID(), b = UUID(), reactivated = UUID(), c = UUID()
+        // Aktive: 0,1,2 (a,b,c); reaktivierte Gruppe kommt mit altem, kollidierendem sortOrder 1.
+        let pairs: [(id: UUID, sortOrder: Int)] = [
+            (a, 0), (b, 1), (c, 2), (reactivated, 1),
+        ]
+        let order = GroupListView.renumberedOrder(pairs, bringingToEnd: reactivated)
+
+        XCTAssertEqual(order, [a, b, c, reactivated])
+        // Die Index-Positionen (= neue sortOrder) sind lückenlos und eindeutig.
+        XCTAssertEqual(Array(order.indices), [0, 1, 2, 3])
+    }
+
+    /// Ohne `bringingToEnd` bleibt die reine Reihenfolge nach `sortOrder` erhalten.
+    func testRenumberedOrderSortsByExistingOrder() {
+        let a = UUID(), b = UUID(), c = UUID()
+        let pairs: [(id: UUID, sortOrder: Int)] = [(c, 5), (a, 0), (b, 2)]
+        XCTAssertEqual(GroupListView.renumberedOrder(pairs, bringingToEnd: nil), [a, b, c])
+    }
 }

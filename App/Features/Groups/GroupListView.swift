@@ -165,11 +165,40 @@ struct GroupListView: View {
 
     /// Archiviert bzw. reaktiviert eine Gruppe. Da sich damit die aktiven Wörter
     /// (Übung/Widget/Badge) ändern, werden Snapshot und Badge aufgefrischt.
+    /// Beim Reaktivieren wird die aktive Reihenfolge neu (0…n) durchnummeriert und
+    /// die Gruppe ans Ende gesetzt – sonst könnte ihr eingefrorener `sortOrder` mit
+    /// einem der (durch Drag & Drop) neu vergebenen aktiven Werte kollidieren.
     private func setArchived(_ group: VocabGroup, _ archived: Bool) {
         group.isArchived = archived
+        if !archived { renumberActiveOrder(bringingToEnd: group) }
         context.saveOrLog()
         WidgetSnapshotWriter.refresh(context: context)
         BadgeUpdater.refresh(context: context)
+    }
+
+    /// Vergibt lückenlose `sortOrder`-Werte (0…n) an alle aktiven Gruppen in ihrer
+    /// aktuellen Reihenfolge. `bringingToEnd` schiebt eine Gruppe ans Ende (z.B. die
+    /// gerade reaktivierte). Hält `sortOrder` eindeutig, auch nachdem archivierte
+    /// Gruppen ihre alten Werte behalten haben.
+    private func renumberActiveOrder(bringingToEnd last: VocabGroup? = nil) {
+        let active = groups.filter { !$0.isArchived }
+        let order = Self.renumberedOrder(active.map { ($0.id, $0.sortOrder) }, bringingToEnd: last?.id)
+        let byID = Dictionary(uniqueKeysWithValues: active.map { ($0.id, $0) })
+        for (index, id) in order.enumerated() where byID[id]?.sortOrder != index {
+            byID[id]?.sortOrder = index
+        }
+    }
+
+    /// Reine Reihenfolge-Logik hinter `renumberActiveOrder`: sortiert die
+    /// (id, sortOrder)-Paare, schiebt optional eine id ans Ende und liefert die neue
+    /// id-Folge – die Index-Position ist der neue, garantiert eindeutige `sortOrder`.
+    /// Ausgelagert & `static`, damit die Logik testbar ist.
+    static func renumberedOrder(_ groups: [(id: UUID, sortOrder: Int)], bringingToEnd last: UUID?) -> [UUID] {
+        var ordered = groups.sorted { $0.sortOrder < $1.sortOrder }.map(\.id)
+        if let last, let idx = ordered.firstIndex(of: last) {
+            ordered.append(ordered.remove(at: idx))
+        }
+        return ordered
     }
 
     /// Verschiebt eine aktive Gruppe um `offset` Positionen (tauscht `sortOrder` mit
