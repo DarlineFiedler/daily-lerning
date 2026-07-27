@@ -97,7 +97,7 @@ final class PracticeSession {
         StreakStore.registerActivity() // idempotent pro Kalendertag
         // Wochenrückblick füttern: distinct geübtes Wort + evtl. Erstaufstieg auf „Gelernt".
         let becameLearned = before != .learned && item.vocab.status == .learned
-        WeeklyReviewStore.record(wordID: item.vocab.id, becameLearned: becameLearned)
+        WeeklyReviewStore.record(wordID: item.vocab.id, becameLearned: becameLearned, correct: correct)
         context.saveOrLog()
         index += 1
         if isFinished { finalizeRound() }

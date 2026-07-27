@@ -29,6 +29,8 @@ struct StatisticsView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: Theme.Spacing.l) {
                             overallSection
+                            trendSection
+                            heatmapSection
                             if !groups.isEmpty { byGroupSection }
                         }
                         .padding(Theme.Spacing.m)
@@ -78,6 +80,24 @@ struct StatisticsView: View {
                 }
             }
             .cardStyle()
+        }
+    }
+
+    // MARK: - Lernkurve (Zeitverlauf)
+
+    private var trendSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(L("stats.trend.title"))
+            LearningCurveView()
+        }
+    }
+
+    // MARK: - Aktivitäts-Heatmap
+
+    private var heatmapSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(L("stats.heatmap.title"))
+            ActivityHeatmapView()
         }
     }
 

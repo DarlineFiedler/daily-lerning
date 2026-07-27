@@ -136,6 +136,16 @@
 "stats.overall" = "Overall";
 "stats.byGroup" = "By group";
 "stats.empty" = "No data yet.";
+"stats.trend.title" = "Learning curve";
+"stats.trend.week" = "Week";
+"stats.trend.practiced" = "Practiced";
+"stats.trend.learned" = "Newly learned";
+"stats.trend.accuracy" = "Accuracy";
+"stats.trend.empty" = "No history yet – practice for a few days and your learning curve will appear here.";
+"stats.heatmap.title" = "Activity";
+"stats.heatmap.less" = "less";
+"stats.heatmap.more" = "more";
+/* stats.heatmap.cell → plural forms in Localizable.stringsdict */
 
 /* Search */
 "search.title" = "Search";
