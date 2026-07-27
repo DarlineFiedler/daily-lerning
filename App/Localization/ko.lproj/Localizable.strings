@@ -242,6 +242,9 @@
 "vocab.group" = "그룹";
 "group.moveUp" = "위로 이동";
 "group.moveDown" = "아래로 이동";
+"group.archive" = "보관";
+"group.reactivate" = "보관 해제";
+"group.archivedSection" = "보관됨 (%d)";
 "settings.data.section" = "데이터";
 "settings.data.import" = "단어 가져오기";
 "settings.data.export" = "단어 내보내기";

@@ -242,6 +242,9 @@
 "vocab.group" = "Gruppe";
 "group.moveUp" = "Nach oben";
 "group.moveDown" = "Nach unten";
+"group.archive" = "Archivieren";
+"group.reactivate" = "Reaktivieren";
+"group.archivedSection" = "Archiviert (%d)";
 "settings.data.section" = "Daten";
 "settings.data.import" = "Vokabeln importieren";
 "settings.data.export" = "Vokabeln exportieren";
