@@ -61,7 +61,7 @@ final class GroupReorderTests: XCTestCase {
         let a = UUID(), b = UUID(), reactivated = UUID(), c = UUID()
         // Aktive: 0,1,2 (a,b,c); reaktivierte Gruppe kommt mit altem, kollidierendem sortOrder 1.
         let pairs: [(id: UUID, sortOrder: Int)] = [
-            (a, 0), (b, 1), (c, 2), (reactivated, 1),
+            (a, 0), (b, 1), (c, 2), (reactivated, 1)
         ]
         let order = GroupListView.renumberedOrder(pairs, bringingToEnd: reactivated)
 
