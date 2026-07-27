@@ -30,6 +30,9 @@ struct VocabBackup: Codable {
         var colorHex: String
         var sortOrder: Int
         var createdAt: Date
+        /// Archiviert-Zustand der Gruppe. Fehlt der Schlüssel in einer älteren Sicherung,
+        /// greift der Inline-Default `false` – kein Versionssprung nötig (analog `totalWrongCount`).
+        var isArchived: Bool = false
     }
 
     struct VocabDTO: Codable {
@@ -64,7 +67,8 @@ extension VocabBackup {
     init(from groups: [VocabGroup], vocabs: [Vocab]) {
         self.groups = groups.map {
             GroupDTO(id: $0.id, name: $0.name, colorHex: $0.colorHex,
-                     sortOrder: $0.sortOrder, createdAt: $0.createdAt)
+                     sortOrder: $0.sortOrder, createdAt: $0.createdAt,
+                     isArchived: $0.isArchived)
         }
         self.vocabs = vocabs.map {
             VocabDTO(id: $0.id, word: $0.word, meaning: $0.meaning, example: $0.example,
@@ -180,6 +184,7 @@ extension VocabBackup {
             group.colorHex = dto.colorHex
             group.sortOrder = dto.sortOrder
             group.createdAt = dto.createdAt
+            group.isArchived = dto.isArchived
         }
 
         for dto in vocabs {

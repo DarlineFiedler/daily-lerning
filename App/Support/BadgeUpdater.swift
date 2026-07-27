@@ -20,8 +20,11 @@ enum BadgeUpdater {
             setBadge(0)
             return
         }
+        // Wörter aus archivierten Gruppen zählen nicht als „offen" – die Gruppe ist
+        // pausiert und taucht auch sonst nicht mehr in den aktiven Flächen auf.
         let all = (try? context.fetch(FetchDescriptor<Vocab>())) ?? []
-        setBadge(DailyPlan.openWordCount(from: all))
+        let active = all.filter { $0.group?.isArchived != true }
+        setBadge(DailyPlan.openWordCount(from: active))
     }
 
     /// Setzt das App-Icon-Badge. Fehlt die Berechtigung, schlägt der Aufruf still

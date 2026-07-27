@@ -28,11 +28,16 @@ enum WidgetSnapshotWriter {
             predicate: #Predicate { $0.includeInWidget == true },
             sortBy: [SortDescriptor(\.createdAt)]
         )
-        var vocabs = (try? context.fetch(starred)) ?? []
+        // Wörter aus archivierten Gruppen gehören nicht aufs Widget. Die Traversierung
+        // der optionalen `group`-Beziehung ist im #Predicate heikel, daher nach dem
+        // Fetch in Swift filtern.
+        var vocabs = ((try? context.fetch(starred)) ?? [])
+            .filter { $0.group?.isArchived != true }
 
         if vocabs.isEmpty {
             let all = FetchDescriptor<Vocab>(sortBy: [SortDescriptor(\.createdAt)])
-            vocabs = (try? context.fetch(all)) ?? []
+            vocabs = ((try? context.fetch(all)) ?? [])
+                .filter { $0.group?.isArchived != true }
         }
 
         return vocabs.map { WidgetWord(id: $0.id, word: $0.word, meaning: $0.meaning) }

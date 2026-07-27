@@ -8,6 +8,7 @@ import SwiftUI
 struct GroupDetailView: View {
     @Bindable var group: VocabGroup
     @Environment(\.modelContext) private var context
+    @Query(sort: \VocabGroup.sortOrder) private var allGroups: [VocabGroup]
 
     @State private var selectedStatuses: Set<LearningStatus> = []
     @State private var showingNew = false
@@ -29,6 +30,12 @@ struct GroupDetailView: View {
 
     private var selectedVocabs: [Vocab] {
         group.vocabs.filter { selection.contains($0.id) }
+    }
+
+    /// Gruppen, in die die aktuelle Auswahl verschoben werden kann: alle aktiven
+    /// Gruppen außer der aktuellen (archivierte sind pausiert und scheiden aus).
+    private var moveTargets: [VocabGroup] {
+        allGroups.filter { !$0.isArchived && $0.id != group.id }
     }
 
     private var learned: Int { group.count(of: .learned) }
@@ -226,6 +233,17 @@ struct GroupDetailView: View {
             } label: {
                 Label(L("vocab.setStatus"), systemImage: "circle.lefthalf.filled")
             }
+            if !moveTargets.isEmpty {
+                Menu {
+                    ForEach(moveTargets) { target in
+                        Button { move(selectedVocabs, to: target) } label: {
+                            Label(target.name, systemImage: "rectangle.stack.fill")
+                        }
+                    }
+                } label: {
+                    Label(L("vocab.moveToGroup"), systemImage: "folder")
+                }
+            }
             Button { apply(.new, to: selectedVocabs) } label: {
                 Label(L("common.reset"), systemImage: "arrow.counterclockwise")
             }
@@ -330,6 +348,18 @@ struct GroupDetailView: View {
         pendingDelete = nil
         WidgetSnapshotWriter.refresh(context: context)
         BadgeUpdater.refresh(context: context)
+    }
+
+    /// Verschiebt die übergebenen Wörter in eine andere Gruppe. Lernstand/Fortschritt/
+    /// Widget-Flag bleiben unverändert – nur die Gruppenzugehörigkeit ändert sich.
+    /// Verschobene Wörter verschwinden automatisch aus der aktuellen Ansicht
+    /// (SwiftData-Beziehung aktualisiert sich).
+    private func move(_ vocabs: [Vocab], to target: VocabGroup) {
+        for vocab in vocabs { vocab.group = target }
+        context.saveOrLog()
+        WidgetSnapshotWriter.refresh(context: context)
+        BadgeUpdater.refresh(context: context)
+        exitSelection()
     }
 
     /// Öffnet aus dem Duplikat-Dialog heraus die bestehende Vokabel. Der aufrufende Editor

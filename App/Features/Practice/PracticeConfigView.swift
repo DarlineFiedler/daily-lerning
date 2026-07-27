@@ -29,9 +29,15 @@ struct PracticeConfigView: View {
         _problemsOnly = State(initialValue: problemsOnly)
     }
 
-    /// Tatsächlich verwendete Gruppen: leere Auswahl = alle Gruppen.
+    /// Nur nicht-archivierte Gruppen stehen zum Üben zur Auswahl – archivierte
+    /// Gruppen sind pausiert (siehe [[VocabGroup]] `isArchived`).
+    private var activeGroups: [VocabGroup] {
+        allGroups.filter { !$0.isArchived }
+    }
+
+    /// Tatsächlich verwendete Gruppen: leere Auswahl = alle (aktiven) Gruppen.
     private var resolvedGroups: [VocabGroup] {
-        selectedGroupIDs.isEmpty ? allGroups : allGroups.filter { selectedGroupIDs.contains($0.id) }
+        selectedGroupIDs.isEmpty ? activeGroups : activeGroups.filter { selectedGroupIDs.contains($0.id) }
     }
 
     /// Wörter, die zur aktuellen Auswahl passen. Leere Status- bzw. TOPIK-Menge = alle.
@@ -61,7 +67,7 @@ struct PracticeConfigView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Spacing.l) {
                     if !presets.isEmpty { presetSection }
-                    if allGroups.count > 1 { groupSection }
+                    if activeGroups.count > 1 { groupSection }
                     statusSection
                     topikSection
                     focusSection
@@ -122,7 +128,7 @@ struct PracticeConfigView: View {
                     tint: Theme.brandStart,
                     isSelected: selectedGroupIDs.isEmpty
                 ) { selectedGroupIDs = [] }
-                ForEach(allGroups) { group in
+                ForEach(activeGroups) { group in
                     SelectableChip(
                         title: group.name,
                         systemImage: "rectangle.stack.fill",
@@ -256,7 +262,7 @@ struct PracticeConfigView: View {
     /// nicht mehr gibt, und Modi, die auf diesem Gerät nicht verfügbar sind (z.B.
     /// Hören ohne installierte koreanische Stimme), werden ausgefiltert.
     private func apply(_ preset: PracticePreset) {
-        let existing = Set(allGroups.map(\.id))
+        let existing = Set(activeGroups.map(\.id))
         selectedGroupIDs = Set(preset.groupIDs).intersection(existing)
         selectedStatuses = Set(preset.statuses.compactMap(LearningStatus.init(rawValue:)))
         selectedTopikLevels = Set((preset.topikLevels ?? []).compactMap(TopikLevel.init(rawValue:)))

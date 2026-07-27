@@ -81,6 +81,7 @@
 "vocab.deleteConfirm" = "Delete this word?";
 "vocab.changeStatus" = "Change status";
 "vocab.setStatus" = "Set status";
+"vocab.moveToGroup" = "Move to group";
 "vocab.selectedCount" = "%d selected";
 "vocab.resetConfirm" = "Reset this word to “New”?";
 
@@ -242,6 +243,9 @@
 "vocab.group" = "Group";
 "group.moveUp" = "Move up";
 "group.moveDown" = "Move down";
+"group.archive" = "Archive";
+"group.reactivate" = "Reactivate";
+"group.archivedSection" = "Archived (%d)";
 "settings.data.section" = "Data";
 "settings.data.import" = "Import words";
 "settings.data.export" = "Export words";

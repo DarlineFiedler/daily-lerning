@@ -26,9 +26,15 @@ struct HomeView: View {
 
     // MARK: Abgeleitete Werte
 
-    private var learnedCount: Int { vocabs.filter { $0.status == .learned }.count }
-    /// Heutiger Tagesplan (lernen / wiederholen / erledigt) über alle Gruppen.
-    private var plan: DailyPlan.Result { DailyPlan.today(from: vocabs) }
+    /// Nur nicht-archivierte Wörter/Gruppen fließen ins Dashboard, den Tagesplan,
+    /// die Fortschrittszahlen und die Übungsempfehlung ein – archivierte Gruppen
+    /// sind „pausiert" und tauchen hier nicht mehr auf (siehe [[VocabGroup]] `isArchived`).
+    private var activeVocabs: [Vocab] { vocabs.filter { $0.group?.isArchived != true } }
+    private var activeGroups: [VocabGroup] { groups.filter { !$0.isArchived } }
+
+    private var learnedCount: Int { activeVocabs.filter { $0.status == .learned }.count }
+    /// Heutiger Tagesplan (lernen / wiederholen / erledigt) über alle aktiven Gruppen.
+    private var plan: DailyPlan.Result { DailyPlan.today(from: activeVocabs) }
     /// Aktueller Tages-Streak (0, wenn abgelaufen).
     private var streak: Int { StreakStore.displayStreak() }
     /// Rückblick auf die letzte abgeschlossene Kalenderwoche (für die Wochen-Karte).
@@ -43,21 +49,21 @@ struct HomeView: View {
     /// Ist überhaupt ein Ziel gesetzt (Tages- oder Wochenziel)?
     private var hasGoal: Bool { weeklyGoal > 0 || dailyGoal > 0 }
     private var rate: Int {
-        guard !vocabs.isEmpty else { return 0 }
-        return Int(round(Double(learnedCount) / Double(vocabs.count) * 100))
+        guard !activeVocabs.isEmpty else { return 0 }
+        return Int(round(Double(learnedCount) / Double(activeVocabs.count) * 100))
     }
     private var overallCounts: [LearningStatus: Int] {
         Dictionary(uniqueKeysWithValues: LearningStatus.allCases.map { status in
-            (status, vocabs.filter { $0.status == status }.count)
+            (status, activeVocabs.filter { $0.status == status }.count)
         })
     }
 
     /// Wort des Tages – stabil pro Kalendertag, bevorzugt Wörter im Lernprozess.
-    private var wordOfDay: Vocab? { WordOfDay.pick(from: vocabs) }
+    private var wordOfDay: Vocab? { WordOfDay.pick(from: activeVocabs) }
 
     /// Empfohlene Gruppe zum Üben: die mit den meisten noch nicht gelernten Wörtern.
     private var recommendedGroup: VocabGroup? {
-        groups.max { a, b in
+        activeGroups.max { a, b in
             (a.vocabCount - a.count(of: .learned)) < (b.vocabCount - b.count(of: .learned))
         }
     }
@@ -67,7 +73,7 @@ struct HomeView: View {
             ScrollView {
                 VStack(spacing: Theme.Spacing.l) {
                     header
-                    if vocabs.isEmpty {
+                    if activeVocabs.isEmpty {
                         emptyState
                     } else {
                         todayCard
@@ -380,7 +386,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             SectionHeader(L("home.progress"))
             HStack(spacing: Theme.Spacing.s) {
-                StatTile(value: "\(vocabs.count)", label: L("home.stat.total"),
+                StatTile(value: "\(activeVocabs.count)", label: L("home.stat.total"),
                          systemImage: "text.book.closed.fill", tint: Theme.brandStart)
                 StatTile(value: "\(learnedCount)", label: L("home.stat.learned"),
                          systemImage: "checkmark.seal.fill", tint: LearningStatus.learned.color)
@@ -408,12 +414,12 @@ struct HomeView: View {
 
     @ViewBuilder
     private var groupsSection: some View {
-        if !groups.isEmpty {
+        if !activeGroups.isEmpty {
             VStack(alignment: .leading, spacing: Theme.Spacing.s) {
                 SectionHeader(L("home.groups"))
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: Theme.Spacing.m) {
-                        ForEach(groups) { group in
+                        ForEach(activeGroups) { group in
                             NavigationLink { GroupDetailView(group: group) } label: {
                                 groupChip(group)
                             }

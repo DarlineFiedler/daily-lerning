@@ -90,6 +90,24 @@ final class VocabBackupTests: XCTestCase {
         XCTAssertEqual(v.group?.id, group.id)
     }
 
+    /// Der Archiviert-Zustand einer Gruppe übersteht den Sicherungs-Round-Trip.
+    func testRoundTripPreservesArchivedFlag() throws {
+        let active = VocabGroup(name: "Aktiv", isArchived: false)
+        let archived = VocabGroup(name: "Archiv", isArchived: true)
+        context.insert(active)
+        context.insert(archived)
+        try context.save()
+
+        let backup = VocabBackup(from: [active, archived], vocabs: [])
+        let freshContainer = PersistenceController.makeContainer(inMemory: true)
+        let freshContext = freshContainer.mainContext
+        backup.apply(into: freshContext)
+
+        let restored = try freshContext.fetch(FetchDescriptor<VocabGroup>())
+        XCTAssertEqual(restored.first { $0.name == "Aktiv" }?.isArchived, false)
+        XCTAssertEqual(restored.first { $0.name == "Archiv" }?.isArchived, true)
+    }
+
     /// Zweimaliges Anwenden derselben Sicherung erzeugt keine Duplikate (Upsert).
     func testApplyIsIdempotent() throws {
         let (group, vocab) = try makeSampleData()

@@ -81,6 +81,7 @@
 "vocab.deleteConfirm" = "Diese Vokabel löschen?";
 "vocab.changeStatus" = "Status ändern";
 "vocab.setStatus" = "Status setzen";
+"vocab.moveToGroup" = "In Gruppe verschieben";
 "vocab.selectedCount" = "%d ausgewählt";
 "vocab.resetConfirm" = "Diese Vokabel auf „Neu“ zurücksetzen?";
 
@@ -242,6 +243,9 @@
 "vocab.group" = "Gruppe";
 "group.moveUp" = "Nach oben";
 "group.moveDown" = "Nach unten";
+"group.archive" = "Archivieren";
+"group.reactivate" = "Reaktivieren";
+"group.archivedSection" = "Archiviert (%d)";
 "settings.data.section" = "Daten";
 "settings.data.import" = "Vokabeln importieren";
 "settings.data.export" = "Vokabeln exportieren";

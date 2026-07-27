@@ -81,6 +81,7 @@
 "vocab.deleteConfirm" = "이 단어를 삭제할까요?";
 "vocab.changeStatus" = "상태 변경";
 "vocab.setStatus" = "상태 설정";
+"vocab.moveToGroup" = "그룹으로 이동";
 "vocab.selectedCount" = "%d개 선택됨";
 "vocab.resetConfirm" = "이 단어를 '새 단어'로 초기화할까요?";
 
@@ -242,6 +243,9 @@
 "vocab.group" = "그룹";
 "group.moveUp" = "위로 이동";
 "group.moveDown" = "아래로 이동";
+"group.archive" = "보관";
+"group.reactivate" = "보관 해제";
+"group.archivedSection" = "보관됨 (%d)";
 "settings.data.section" = "데이터";
 "settings.data.import" = "단어 가져오기";
 "settings.data.export" = "단어 내보내기";

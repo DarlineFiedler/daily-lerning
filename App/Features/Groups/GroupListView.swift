@@ -9,6 +9,11 @@ struct GroupListView: View {
     @State private var showingNew = false
     @State private var editingGroup: VocabGroup?
     @State private var pendingDelete: VocabGroup?
+    @State private var showArchived = false
+
+    /// Aktive Gruppen (Standardansicht) vs. archivierte (eigener, eingeklappter Bereich).
+    private var activeGroups: [VocabGroup] { groups.filter { !$0.isArchived } }
+    private var archivedGroups: [VocabGroup] { groups.filter { $0.isArchived } }
 
     var body: some View {
         NavigationStack {
@@ -18,29 +23,11 @@ struct GroupListView: View {
                 } else {
                     ScrollView {
                         LazyVStack(spacing: Theme.Spacing.m) {
-                            ForEach(groups) { group in
-                                NavigationLink { GroupDetailView(group: group) } label: {
-                                    GroupCard(group: group)
-                                }
-                                .buttonStyle(.plain)
-                                .contextMenu {
-                                    Button { editingGroup = group } label: {
-                                        Label(L("common.edit"), systemImage: "pencil")
-                                    }
-                                    if group.id != groups.first?.id {
-                                        Button { move(group, by: -1) } label: {
-                                            Label(L("group.moveUp"), systemImage: "arrow.up")
-                                        }
-                                    }
-                                    if group.id != groups.last?.id {
-                                        Button { move(group, by: 1) } label: {
-                                            Label(L("group.moveDown"), systemImage: "arrow.down")
-                                        }
-                                    }
-                                    Button(role: .destructive) { pendingDelete = group } label: {
-                                        Label(L("common.delete"), systemImage: "trash")
-                                    }
-                                }
+                            ForEach(activeGroups) { group in
+                                groupRow(group)
+                            }
+                            if !archivedGroups.isEmpty {
+                                archivedSection
                             }
                         }
                         .padding(Theme.Spacing.m)
@@ -76,6 +63,80 @@ struct GroupListView: View {
         }
     }
 
+    /// Eine Gruppenkarte mit Navigation und Kontextmenü. Archivierte Karten werden
+    /// abgedunkelt dargestellt; aktive Karten lassen sich per Drag & Drop umsortieren.
+    @ViewBuilder
+    private func groupRow(_ group: VocabGroup) -> some View {
+        let card = NavigationLink { GroupDetailView(group: group) } label: {
+            GroupCard(group: group)
+                .opacity(group.isArchived ? 0.55 : 1)
+        }
+        .buttonStyle(.plain)
+        .contextMenu { contextMenu(for: group) }
+
+        if group.isArchived {
+            card
+        } else {
+            card
+                .draggable(group.id.uuidString) {
+                    GroupCard(group: group).frame(width: 260).opacity(0.9)
+                }
+                .dropDestination(for: String.self) { items, _ in
+                    guard let first = items.first, let dragged = UUID(uuidString: first) else {
+                        return false
+                    }
+                    applyReorder(moving: dragged, toPositionOf: group.id)
+                    return true
+                }
+        }
+    }
+
+    @ViewBuilder
+    private func contextMenu(for group: VocabGroup) -> some View {
+        Button { editingGroup = group } label: {
+            Label(L("common.edit"), systemImage: "pencil")
+        }
+        if group.isArchived {
+            Button { setArchived(group, false) } label: {
+                Label(L("group.reactivate"), systemImage: "arrow.uturn.up")
+            }
+        } else {
+            if group.id != activeGroups.first?.id {
+                Button { move(group, by: -1) } label: {
+                    Label(L("group.moveUp"), systemImage: "arrow.up")
+                }
+            }
+            if group.id != activeGroups.last?.id {
+                Button { move(group, by: 1) } label: {
+                    Label(L("group.moveDown"), systemImage: "arrow.down")
+                }
+            }
+            Button { setArchived(group, true) } label: {
+                Label(L("group.archive"), systemImage: "archivebox")
+            }
+        }
+        Button(role: .destructive) { pendingDelete = group } label: {
+            Label(L("common.delete"), systemImage: "trash")
+        }
+    }
+
+    /// Eingeklappter Bereich mit den archivierten Gruppen.
+    private var archivedSection: some View {
+        DisclosureGroup(isExpanded: $showArchived) {
+            LazyVStack(spacing: Theme.Spacing.m) {
+                ForEach(archivedGroups) { group in
+                    groupRow(group)
+                }
+            }
+            .padding(.top, Theme.Spacing.s)
+        } label: {
+            Label(L("group.archivedSection", archivedGroups.count), systemImage: "archivebox.fill")
+                .font(.appHeadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.top, Theme.Spacing.m)
+    }
+
     private var emptyState: some View {
         VStack(spacing: Theme.Spacing.m) {
             Image(systemName: "rectangle.stack.badge.plus")
@@ -102,16 +163,81 @@ struct GroupListView: View {
         BadgeUpdater.refresh(context: context)
     }
 
-    /// Verschiebt eine Gruppe um `offset` Positionen (tauscht `sortOrder` mit dem Nachbarn).
+    /// Archiviert bzw. reaktiviert eine Gruppe. Da sich damit die aktiven Wörter
+    /// (Übung/Widget/Badge) ändern, werden Snapshot und Badge aufgefrischt.
+    /// Beim Reaktivieren wird die aktive Reihenfolge neu (0…n) durchnummeriert und
+    /// die Gruppe ans Ende gesetzt – sonst könnte ihr eingefrorener `sortOrder` mit
+    /// einem der (durch Drag & Drop) neu vergebenen aktiven Werte kollidieren.
+    private func setArchived(_ group: VocabGroup, _ archived: Bool) {
+        group.isArchived = archived
+        if !archived { renumberActiveOrder(bringingToEnd: group) }
+        context.saveOrLog()
+        WidgetSnapshotWriter.refresh(context: context)
+        BadgeUpdater.refresh(context: context)
+    }
+
+    /// Vergibt lückenlose `sortOrder`-Werte (0…n) an alle aktiven Gruppen in ihrer
+    /// aktuellen Reihenfolge. `bringingToEnd` schiebt eine Gruppe ans Ende (z.B. die
+    /// gerade reaktivierte). Hält `sortOrder` eindeutig, auch nachdem archivierte
+    /// Gruppen ihre alten Werte behalten haben.
+    private func renumberActiveOrder(bringingToEnd last: VocabGroup? = nil) {
+        let active = groups.filter { !$0.isArchived }
+        let order = Self.renumberedOrder(active.map { ($0.id, $0.sortOrder) }, bringingToEnd: last?.id)
+        let byID = Dictionary(uniqueKeysWithValues: active.map { ($0.id, $0) })
+        for (index, id) in order.enumerated() where byID[id]?.sortOrder != index {
+            byID[id]?.sortOrder = index
+        }
+    }
+
+    /// Reine Reihenfolge-Logik hinter `renumberActiveOrder`: sortiert die
+    /// (id, sortOrder)-Paare, schiebt optional eine id ans Ende und liefert die neue
+    /// id-Folge – die Index-Position ist der neue, garantiert eindeutige `sortOrder`.
+    /// Ausgelagert & `static`, damit die Logik testbar ist.
+    static func renumberedOrder(_ groups: [(id: UUID, sortOrder: Int)], bringingToEnd last: UUID?) -> [UUID] {
+        var ordered = groups.sorted { $0.sortOrder < $1.sortOrder }.map(\.id)
+        if let last, let idx = ordered.firstIndex(of: last) {
+            ordered.append(ordered.remove(at: idx))
+        }
+        return ordered
+    }
+
+    /// Verschiebt eine aktive Gruppe um `offset` Positionen (tauscht `sortOrder` mit
+    /// dem Nachbarn innerhalb der aktiven Liste). Accessibility-Fallback zum Drag & Drop
+    /// (VoiceOver), wo Ziehen umständlich ist.
     private func move(_ group: VocabGroup, by offset: Int) {
-        guard let idx = groups.firstIndex(where: { $0.id == group.id }) else { return }
+        let list = activeGroups
+        guard let idx = list.firstIndex(where: { $0.id == group.id }) else { return }
         let target = idx + offset
-        guard groups.indices.contains(target) else { return }
-        let other = groups[target]
+        guard list.indices.contains(target) else { return }
+        let other = list[target]
         let tmp = group.sortOrder
         group.sortOrder = other.sortOrder
         other.sortOrder = tmp
         context.saveOrLog()
+    }
+
+    /// Wendet eine Drag-&-Drop-Neuordnung an: Das gezogene Element rückt an die
+    /// Position des Ziel-Elements, danach werden ALLE aktiven Gruppen neu (0…n)
+    /// durchnummeriert – so bleibt `sortOrder` konsistent statt nur zwei zu tauschen.
+    private func applyReorder(moving draggedID: UUID, toPositionOf targetID: UUID) {
+        let newOrder = Self.reordered(activeGroups.map(\.id), moving: draggedID, toPositionOf: targetID)
+        let byID = Dictionary(uniqueKeysWithValues: activeGroups.map { ($0.id, $0) })
+        for (index, id) in newOrder.enumerated() where byID[id]?.sortOrder != index {
+            byID[id]?.sortOrder = index
+        }
+        context.saveOrLog()
+    }
+
+    /// Pure Neuordnung einer id-Liste: das gezogene Element wird an die Position des
+    /// Ziel-Elements gesetzt. Ausgelagert & `static`, damit die Logik testbar ist.
+    static func reordered(_ ids: [UUID], moving draggedID: UUID, toPositionOf targetID: UUID) -> [UUID] {
+        guard draggedID != targetID else { return ids }
+        var order = ids
+        guard let from = order.firstIndex(of: draggedID) else { return ids }
+        let moved = order.remove(at: from)
+        guard let to = order.firstIndex(of: targetID) else { return ids }
+        order.insert(moved, at: to)
+        return order
     }
 }
 

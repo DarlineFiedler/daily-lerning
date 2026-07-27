@@ -23,8 +23,9 @@ final class WidgetSnapshotWriterTests: XCTestCase {
     }
 
     @discardableResult
-    private func insert(_ word: String, meaning: String, includeInWidget: Bool) -> Vocab {
-        let vocab = Vocab(word: word, meaning: meaning)
+    private func insert(_ word: String, meaning: String, includeInWidget: Bool,
+                        group: VocabGroup? = nil) -> Vocab {
+        let vocab = Vocab(word: word, meaning: meaning, group: group)
         vocab.includeInWidget = includeInWidget
         context.insert(vocab)
         return vocab
@@ -57,5 +58,34 @@ final class WidgetSnapshotWriterTests: XCTestCase {
     func testEmptyWhenNoVocabExists() {
         let words = WidgetSnapshotWriter.widgetWords(context: context)
         XCTAssertTrue(words.isEmpty)
+    }
+
+    /// Markierte Wörter aus einer archivierten Gruppe gehören NICHT aufs Widget –
+    /// die Gruppe ist pausiert.
+    func testExcludesStarredWordsFromArchivedGroups() throws {
+        let active = VocabGroup(name: "Aktiv")
+        let archived = VocabGroup(name: "Archiv", isArchived: true)
+        context.insert(active)
+        context.insert(archived)
+        insert("가다", meaning: "gehen", includeInWidget: true, group: active)
+        insert("오다", meaning: "kommen", includeInWidget: true, group: archived)
+        try context.save()
+
+        let words = WidgetSnapshotWriter.widgetWords(context: context)
+        XCTAssertEqual(words.map(\.word), ["가다"])
+    }
+
+    /// Auch im Fallback (kein Wort markiert) bleiben archivierte Gruppen außen vor.
+    func testFallbackExcludesArchivedGroups() throws {
+        let active = VocabGroup(name: "Aktiv")
+        let archived = VocabGroup(name: "Archiv", isArchived: true)
+        context.insert(active)
+        context.insert(archived)
+        insert("가다", meaning: "gehen", includeInWidget: false, group: active)
+        insert("오다", meaning: "kommen", includeInWidget: false, group: archived)
+        try context.save()
+
+        let words = WidgetSnapshotWriter.widgetWords(context: context)
+        XCTAssertEqual(words.map(\.word), ["가다"])
     }
 }
