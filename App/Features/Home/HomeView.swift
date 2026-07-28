@@ -13,6 +13,8 @@ struct HomeView: View {
     @State private var showingNewGroup = false
     @State private var showReview = false
     @State private var showStreakDetail = false
+    /// Blendet den Ziel-Einstellungs-Screen ein (Tippen auf die Ziel-Karte).
+    @State private var showGoalSettings = false
     /// Beim Erreichen des Wochenziels neu freigeschaltete Badges (fürs Banner).
     @State private var goalUnlocked: [Achievement] = []
 
@@ -101,6 +103,16 @@ struct HomeView: View {
             .sheet(item: $practiceGroup) { _ in PracticeConfigView() }
             .sheet(isPresented: $showingNewGroup) { GroupEditView(group: nil) }
             .sheet(isPresented: $showReview) { ReviewSessionView() }
+            .sheet(isPresented: $showGoalSettings) {
+                NavigationStack {
+                    GoalSettingsView()
+                        .toolbar {
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button(L("common.done")) { showGoalSettings = false }
+                            }
+                        }
+                }
+            }
             .sheet(isPresented: $showStreakDetail) {
                 StreakDetailView(streak: streak, longest: StreakStore.longest,
                                  jokers: jokers, maxJokers: StreakStore.maxJokers,
@@ -330,20 +342,33 @@ struct HomeView: View {
     /// Karte mit dem Fortschritt gegen das selbst gesetzte Tages-/Wochenziel für die
     /// laufende Woche bzw. den heutigen Tag. Zeigt nur die aktiven Ziel-Ebenen (Wert > 0).
     private var goalCard: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-            Label(L("home.goal.title"), systemImage: "target")
-                .font(.appCaption.weight(.semibold))
-                .foregroundStyle(Theme.brandStart)
-            if dailyGoal > 0 {
-                goalRow(labelKey: "home.goal.today", done: dayDone, target: dailyGoal)
+        Button {
+            showGoalSettings = true
+        } label: {
+            VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                HStack {
+                    Label(L("home.goal.title"), systemImage: "target")
+                        .font(.appCaption.weight(.semibold))
+                        .foregroundStyle(Theme.brandStart)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.appCaption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+                if dailyGoal > 0 {
+                    goalRow(labelKey: "home.goal.today", done: dayDone, target: dailyGoal)
+                }
+                if weeklyGoal > 0 {
+                    goalRow(labelKey: "home.goal.week", done: weekDone, target: weeklyGoal)
+                }
             }
-            if weeklyGoal > 0 {
-                goalRow(labelKey: "home.goal.week", done: weekDone, target: weeklyGoal)
-            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .cardStyle(padding: Theme.Spacing.l)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .cardStyle(padding: Theme.Spacing.l)
+        .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint(L("home.goal.edit.hint"))
     }
 
     /// Eine Ziel-Ebene (Tag oder Woche): Label, Zähler „6 / 10" bzw. „erreicht"-Häkchen

@@ -40,13 +40,6 @@ struct SettingsView: View {
     @AppStorage(BadgeKeys.enabled, store: AppGroup.defaults)
     private var badgeEnabled = false
 
-    @AppStorage(GoalKeys.metric, store: AppGroup.defaults)
-    private var goalMetricRaw = GoalMetric.practiced.rawValue
-    @AppStorage(GoalKeys.weekly, store: AppGroup.defaults)
-    private var weeklyGoal = GoalOptions.defaultWeekly
-    @AppStorage(GoalKeys.daily, store: AppGroup.defaults)
-    private var dailyGoal = GoalOptions.defaultDaily
-
     var body: some View {
         @Bindable var localization = localization
 
@@ -103,29 +96,11 @@ struct SettingsView: View {
 
                 // MARK: Ziel
                 Section {
-                    Picker(selection: $goalMetricRaw) {
-                        ForEach(GoalMetric.allCases) { metric in
-                            Text(L(metric.labelKey)).tag(metric.rawValue)
-                        }
+                    NavigationLink {
+                        GoalSettingsView()
                     } label: {
-                        Label(L("settings.goal.metric"), systemImage: "target")
+                        Label(L("settings.goal.section"), systemImage: "target")
                     }
-                    Picker(selection: $weeklyGoal) {
-                        ForEach(GoalOptions.weekly, id: \.self) { value in
-                            Text(goalValueLabel(value)).tag(value)
-                        }
-                    } label: {
-                        Label(L("settings.goal.weekly"), systemImage: "calendar")
-                    }
-                    Picker(selection: $dailyGoal) {
-                        ForEach(GoalOptions.daily, id: \.self) { value in
-                            Text(goalValueLabel(value)).tag(value)
-                        }
-                    } label: {
-                        Label(L("settings.goal.daily"), systemImage: "sun.max")
-                    }
-                } header: {
-                    Text(L("settings.goal.section"))
                 } footer: {
                     Text(L("settings.goal.footer"))
                 }
@@ -278,11 +253,6 @@ struct SettingsView: View {
 
     private func intervalLabel(_ minutes: Int) -> String {
         minutes < 60 ? L("interval.min", minutes) : L("interval.hour", minutes / 60)
-    }
-
-    /// Label für die Ziel-Picker: `0` bedeutet „deaktiviert".
-    private func goalValueLabel(_ value: Int) -> String {
-        value == 0 ? L("settings.goal.off") : "\(value)"
     }
 
     private var appVersion: String {

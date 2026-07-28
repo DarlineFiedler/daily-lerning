@@ -203,6 +203,7 @@
 "home.goal.week" = "This week";
 "home.goal.progress" = "%d / %d";
 "home.goal.reached" = "Goal reached 🏁";
+"home.goal.edit.hint" = "Tap to adjust your goal";
 "streak.detail.title" = "Streak & Freezes";
 "streak.detail.current" = "Current";
 "streak.detail.longest" = "Best";
