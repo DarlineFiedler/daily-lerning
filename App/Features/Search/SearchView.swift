@@ -131,11 +131,17 @@ struct SearchView: View {
                         .font(.appCaption.weight(.bold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 6)
-                        .padding(.vertical, 1)
+                        .padding(.vertical, Theme.Spacing.xs / 2)
                         .background(Capsule().fill(Theme.brandStart))
                 }
             }
             .foregroundStyle(.secondary)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(
+                selectedCount > 0
+                    ? "\(title), \(selectedCount) \(L("search.filter.selectedSuffix"))"
+                    : title
+            )
             .padding(.horizontal, Theme.Spacing.m)
 
             ScrollView(.horizontal, showsIndicators: false) {

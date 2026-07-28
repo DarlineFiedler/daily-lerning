@@ -155,6 +155,7 @@
 "search.prompt" = "Suche über alle Gruppen hinweg.";
 "search.filter.status" = "Status";
 "search.filter.groups" = "Gruppen";
+"search.filter.selectedSuffix" = "ausgewählt";
 
 /* Einstellungen */
 "settings.title" = "Einstellungen";
