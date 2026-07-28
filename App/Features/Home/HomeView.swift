@@ -79,6 +79,7 @@ struct HomeView: View {
                         emptyState
                     } else {
                         todayCard
+                        dailyChallengeCard
                         if weeklyReview.hasActivity { weeklyReviewCard }
                         if hasGoal { goalCard }
                         if let word = wordOfDay { wordOfDayCard(word) }
@@ -495,6 +496,62 @@ extension HomeView {
         guard weeklyGoal > 0, weekDone >= weeklyGoal else { return }
         let unlocked = AchievementService.recordEvent(\.weeklyGoalReached, context: context)
         if !unlocked.isEmpty { goalUnlocked = unlocked }
+    }
+}
+
+// MARK: - Tages-Challenge
+
+/// Ansicht der tagesaktuellen Mini-Challenge. Wie die Ziel-Karte als Extension
+/// ausgelagert, damit der primäre `HomeView`-Body kompakt bleibt.
+extension HomeView {
+    /// Heutige Challenge inkl. Fortschritt (aus dem Achievement-Tagespuffer).
+    private var challenge: DailyChallengeSnapshot { DailyChallengeStore.snapshot() }
+
+    /// Mini-Streak „X Tage in Folge erfüllt" (0 = nicht anzeigen).
+    private var challengeStreak: Int { DailyChallengeStore.displayStreak() }
+
+    /// Karte mit der heutigen Mini-Challenge: Titel + Emoji, Fortschritt und Häkchen
+    /// bei Erfüllung, dazu der eigene Mini-Streak.
+    var dailyChallengeCard: some View {
+        let c = challenge
+        return VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            HStack {
+                Label(L("home.challenge.title"), systemImage: "flag.checkered")
+                    .font(.appCaption.weight(.semibold))
+                    .foregroundStyle(Theme.brandStart)
+                Spacer()
+                if challengeStreak > 0 {
+                    Label(L("home.challenge.streak", challengeStreak), systemImage: "flame.fill")
+                        .font(.appCaption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            HStack(spacing: Theme.Spacing.s) {
+                Text(c.challenge.emoji)
+                    .font(.appTitle2)
+                Text(L(c.challenge.titleKey, c.target))
+                    .font(.appHeadline)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+            HStack {
+                if c.satisfied {
+                    Label(L("home.challenge.done"), systemImage: "checkmark.circle.fill")
+                        .font(.appCaption.weight(.semibold))
+                        .foregroundStyle(LearningStatus.learned.color)
+                } else {
+                    Text(L("home.goal.progress", c.done, c.target))
+                        .font(.appCaption.weight(.semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+            GoalProgressBar(fraction: c.fraction, reached: c.satisfied)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardStyle(padding: Theme.Spacing.l)
+        .accessibilityElement(children: .combine)
     }
 }
 

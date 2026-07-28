@@ -34,6 +34,22 @@
 			<string>%d words to review</string>
 		</dict>
 	</dict>
+	<key>home.challenge.streak</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@days@</string>
+		<key>days</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d day in a row</string>
+			<key>other</key>
+			<string>%d days in a row</string>
+		</dict>
+	</dict>
 	<key>stats.heatmap.cell</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
