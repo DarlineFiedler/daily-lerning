@@ -81,9 +81,13 @@ struct SearchView: View {
 
     /// Immer sichtbare Filter-Chips (Status + Gruppe, Mehrfachauswahl). Erlaubt auch
     /// ohne Suchbegriff ein reines Browsen nach Gruppe/Status.
+    ///
+    /// Bewusst je Kriterium eine eigene, horizontal scrollende Zeile: Bei vielen
+    /// Gruppen würde ein umbrechendes Chip-Feld sonst fast den ganzen Bildschirm
+    /// füllen und die Trefferliste verdrängen.
     private var filterBar: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-            FlowChips {
+            chipRow(title: L("search.filter.status"), selectedCount: selectedStatuses.count) {
                 ForEach(LearningStatus.allCases) { status in
                     SelectableChip(
                         title: L(status.titleKey),
@@ -94,7 +98,7 @@ struct SearchView: View {
                 }
             }
             if groups.count > 1 {
-                FlowChips {
+                chipRow(title: L("search.filter.groups"), selectedCount: selectedGroups.count) {
                     ForEach(groups) { group in
                         SelectableChip(
                             title: group.name,
@@ -106,9 +110,46 @@ struct SearchView: View {
                 }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, Theme.Spacing.m)
         .padding(.top, Theme.Spacing.s)
+    }
+
+    /// Eine beschriftete Filterzeile: kleines Label (mit optionaler Auswahl-Anzahl)
+    /// über einer horizontal scrollenden Chip-Reihe.
+    @ViewBuilder
+    private func chipRow(
+        title: String,
+        selectedCount: Int,
+        @ViewBuilder chips: () -> some View
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Text(title)
+                    .font(.appCaption.weight(.semibold))
+                    .textCase(.uppercase)
+                if selectedCount > 0 {
+                    Text("\(selectedCount)")
+                        .font(.appCaption.weight(.bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, Theme.Spacing.xs / 2)
+                        .background(Capsule().fill(Theme.brandStart))
+                }
+            }
+            .foregroundStyle(.secondary)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(
+                selectedCount > 0
+                    ? "\(title), \(selectedCount) \(L("search.filter.selectedSuffix"))"
+                    : title
+            )
+            .padding(.horizontal, Theme.Spacing.m)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Theme.Spacing.s) { chips() }
+                    .padding(.horizontal, Theme.Spacing.m)
+                    .padding(.vertical, 2)
+            }
+        }
     }
 
     // MARK: - Inhalt
