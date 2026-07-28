@@ -21,4 +21,13 @@ enum DeepLink {
     static func isReview(_ url: URL) -> Bool {
         url.scheme == AppGroup.urlScheme && url.host == "review"
     }
+
+    /// Führt aus der Live Activity zurück in die laufende Lernsession.
+    static var sessionURL: URL {
+        URL(string: "\(AppGroup.urlScheme)://session")!
+    }
+
+    static func isSession(_ url: URL) -> Bool {
+        url.scheme == AppGroup.urlScheme && url.host == "session"
+    }
 }

@@ -9,8 +9,8 @@ options:
 
 settings:
   base:
-    MARKETING_VERSION: "2.9.5"
-    CURRENT_PROJECT_VERSION: "51"
+    MARKETING_VERSION: "2.10.0"
+    CURRENT_PROJECT_VERSION: "52"
     SWIFT_VERSION: "5.0"
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: ""
@@ -48,6 +48,7 @@ targets:
           UIApplicationSupportsMultipleScenes: false
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+        NSSupportsLiveActivities: true
         CFBundleURLTypes:
           - CFBundleURLName: com.darlinefiedler.DailyHangul
             CFBundleURLSchemes:

@@ -57,6 +57,15 @@ struct DirectionModeSelection: View {
     }
 
     private func toggle(_ mode: PracticeMode) {
-        if modes.contains(mode) { modes.remove(mode) } else { modes.insert(mode) }
+        if modes.contains(mode) {
+            modes.remove(mode)
+        } else if mode == .memory {
+            // Memory ist ein eigenständiges Kartenfeld und läuft nur exklusiv (nie im Mix).
+            modes = [.memory]
+        } else {
+            // Einen anderen Modus wählen hebt eine bestehende Memory-Auswahl auf.
+            modes.remove(.memory)
+            modes.insert(mode)
+        }
     }
 }

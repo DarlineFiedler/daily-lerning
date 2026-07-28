@@ -8,6 +8,7 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     @State private var localization = LocalizationManager.shared
+    @State private var sessionStore = ActiveSessionStore()
     @State private var deepLink: IdentifiableID?
     @State private var showReview = false
     @State private var showStoreError = false
@@ -32,6 +33,7 @@ struct RootView: View {
         .tint(Theme.brandStart)
         .id(localization.language)
         .environment(localization)
+        .environment(sessionStore)
         .environment(\.locale, localization.localeForFormatting)
         .task {
             if PersistenceController.storeOpenFailed {
@@ -62,6 +64,11 @@ struct RootView: View {
                 AchievementService.recordEvent(\.widgetUsed, context: context) // „Widget-Fan"
             } else if DeepLink.isReview(url) {
                 showReview = true
+            } else if DeepLink.isSession(url) {
+                // Aus der Live Activity zurück: läuft eine (wieder-präsentierbare)
+                // „Heute"-Session, das Sheet erneut zeigen – sonst bringt der Tap die
+                // App nur in den Vordergrund (Gruppen-Fluss läuft in der Navigation weiter).
+                showReview = sessionStore.active != nil
             }
         }
         .sheet(item: $deepLink) { item in

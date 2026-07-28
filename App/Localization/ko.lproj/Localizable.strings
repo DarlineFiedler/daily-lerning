@@ -104,6 +104,11 @@
 "practice.mode.review" = "넘기기";
 "practice.mode.writing" = "쓰기";
 "practice.mode.listening" = "듣기";
+"practice.mode.cloze" = "빈칸 채우기";
+"practice.mode.memory" = "짝 맞추기";
+"practice.cloze.typeWord" = "빠진 단어를 입력하세요";
+"practice.cloze.meaningHint" = "뜻: %@";
+"practice.cloze.empty" = "이 단어들에는 아직 예문이 없습니다. 단어 편집기에서 예문을 추가하면 빈칸 채우기를 연습할 수 있어요.";
 "practice.config.presets" = "저장된 설정";
 "practice.config.savePreset" = "설정으로 저장";
 "practice.preset.namePrompt" = "설정 이름";

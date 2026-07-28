@@ -5,23 +5,35 @@ struct PracticeContainerView: View {
     @State var session: PracticeSession
     /// Beendet den gesamten Lernvorgang (schließt das Practice-Sheet).
     var onClose: () -> Void
+    /// App-weiter Session-Speicher für die Live Activity (optional – Previews/Tests
+    /// laufen ohne). Wird von den Aufruf-Stellen aus dem Environment durchgereicht.
+    var sessionStore: ActiveSessionStore?
+    /// Ob diese Session aus der Live Activity heraus wieder-präsentierbar ist
+    /// (nur der „Heute"-Fluss).
+    var resumable = false
 
     var body: some View {
         VStack(spacing: 0) {
-            if let item = session.currentItem {
-                progressHeader
+            if session.total == 0 {
+                // Nur-Lückentext-Runde, in der kein Wort einen Beispielsatz hat.
+                emptyState
+            } else if session.currentItem == nil {
+                PracticeSummaryView(
+                    session: session,
+                    onRestart: { withAnimation { session.restart() } },
+                    onRetryWrong: { withAnimation { session.retryWrong() } },
+                    onClose: handleClose
+                )
+            } else if session.isMemory {
+                // Memory ist ein eigenständiges Kartenfeld mit eigenem Fortschritts-Header.
+                MemoryBoardView(session: session)
+            } else if let item = session.currentItem {
+                PracticeProgressHeader(session: session)
                 ScrollView {
                     modeView(for: item)
                         .padding(Theme.Spacing.m)
                         .id(session.index) // erzwingt frische State pro Wort
                 }
-            } else {
-                PracticeSummaryView(
-                    session: session,
-                    onRestart: { withAnimation { session.restart() } },
-                    onRetryWrong: { withAnimation { session.retryWrong() } },
-                    onClose: onClose
-                )
             }
         }
         .background(Theme.background.ignoresSafeArea())
@@ -29,7 +41,7 @@ struct PracticeContainerView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button(L("common.close"), action: onClose)
+                Button(L("common.close"), action: handleClose)
             }
         }
         // Haptik für die wichtigsten Lern-Momente (richtig/falsch).
@@ -38,9 +50,71 @@ struct PracticeContainerView: View {
         .overlay(alignment: .top) {
             AchievementUnlockBanner(achievements: session.newlyUnlocked)
         }
+        // Live Activity: bei Sessionbeginn starten, pro Karte aktualisieren, bei
+        // Abschluss/Schließen beenden (keine „hängenden" Activities).
+        .task { sessionStore?.begin(session, resumable: resumable) }
+        .onChange(of: session.index) {
+            guard let store = sessionStore else { return }
+            if session.isFinished { store.finish(session) } else { store.refresh(session) }
+        }
     }
 
-    private var progressHeader: some View {
+    /// Beendet die Live Activity und schließt danach den Lernvorgang.
+    private func handleClose() {
+        sessionStore?.finish(session)
+        onClose()
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: Theme.Spacing.m) {
+            Image(systemName: "square.dashed")
+                .font(.system(size: 52))
+                .foregroundStyle(Theme.brandStart)
+            Text(L("practice.cloze.empty"))
+                .font(.appBody)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Button(L("common.done"), action: onClose)
+                .buttonStyle(.primary)
+                .padding(.horizontal, Theme.Spacing.xl)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(Theme.Spacing.l)
+    }
+
+    @ViewBuilder
+    private func modeView(for item: PracticeItem) -> some View {
+        let onAnswer: (Bool) -> Void = { correct in
+            withAnimation { session.submit(correct: correct) }
+        }
+        switch item.mode {
+        case .multipleChoice:
+            MultipleChoiceView(item: item, onAnswer: onAnswer)
+        case .review:
+            ReviewSwipeView(item: item, onAnswer: onAnswer)
+        case .writing:
+            WritingView(item: item, onAnswer: onAnswer)
+        case .listening:
+            ListeningView(item: item, onAnswer: onAnswer)
+        case .cloze:
+            ClozeView(item: item, onAnswer: onAnswer)
+        case .memory:
+            // Memory läuft über `MemoryBoardView` (Sonderpfad im Body), nicht per Karte.
+            EmptyView()
+        }
+    }
+}
+
+/// Fortschrittsleiste eines Lernvorgangs (Position, Treffer/Fehler, Balken). Von
+/// Per-Karte-Modi (`PracticeContainerView`) und dem Memory-Board geteilt.
+struct PracticeProgressHeader: View {
+    let session: PracticeSession
+
+    private var progress: Double {
+        Double(session.index) / Double(max(session.total, 1))
+    }
+
+    var body: some View {
         VStack(spacing: Theme.Spacing.s) {
             HStack {
                 Text("\(session.position) / \(session.total)")
@@ -64,27 +138,6 @@ struct PracticeContainerView: View {
         }
         .padding(.horizontal, Theme.Spacing.m)
         .padding(.top, Theme.Spacing.s)
-    }
-
-    private var progress: Double {
-        Double(session.index) / Double(max(session.total, 1))
-    }
-
-    @ViewBuilder
-    private func modeView(for item: PracticeItem) -> some View {
-        let onAnswer: (Bool) -> Void = { correct in
-            withAnimation { session.submit(correct: correct) }
-        }
-        switch item.mode {
-        case .multipleChoice:
-            MultipleChoiceView(item: item, onAnswer: onAnswer)
-        case .review:
-            ReviewSwipeView(item: item, onAnswer: onAnswer)
-        case .writing:
-            WritingView(item: item, onAnswer: onAnswer)
-        case .listening:
-            ListeningView(item: item, onAnswer: onAnswer)
-        }
     }
 }
 

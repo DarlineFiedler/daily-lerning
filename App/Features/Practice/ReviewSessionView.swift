@@ -17,10 +17,13 @@ struct ReviewSessionView: View {
     @AppStorage("reviewModes") private var modesRaw = ""
     @AppStorage("reviewWordLimit") private var wordLimitRaw = 0
 
+    /// Die laufende Session liegt app-weit im Store (statt lokal), damit die Live
+    /// Activity und ein Deep-Link-Rücksprung dieselbe Session wiederfinden.
+    @Environment(ActiveSessionStore.self) private var sessionStore
+
     @State private var direction: PracticeDirection = .mixed
     @State private var modes: Set<PracticeMode> = []
     @State private var wordLimit: Int?
-    @State private var session: PracticeSession?
 
     /// Heute noch offene Wörter (lernen bzw. wiederholen) – gleiche Logik wie die Home-Karte.
     private var dueVocabs: [Vocab] { DailyPlan.today(from: allVocabs).words }
@@ -35,8 +38,9 @@ struct ReviewSessionView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if let session {
-                    PracticeContainerView(session: session, onClose: { dismiss() })
+                if let session = sessionStore.active {
+                    PracticeContainerView(session: session, onClose: { dismiss() },
+                                          sessionStore: sessionStore, resumable: true)
                 } else if dueVocabs.isEmpty {
                     emptyState
                 } else {
@@ -104,13 +108,16 @@ struct ReviewSessionView: View {
         directionRaw = selection.direction.rawValue
         modesRaw = selection.modesRaw
         wordLimitRaw = selection.wordLimitRaw
-        session = PracticeSession(
+        let newSession = PracticeSession(
             vocabs: due,
             distractorPool: allVocabs,
             config: PracticeConfig(statuses: [], direction: direction, modes: modes,
                                    wordLimit: wordLimit),
             context: context
         )
+        // Session app-weit ablegen + Live Activity starten (aus der „Heute"-Runde
+        // heraus wieder-präsentierbar).
+        sessionStore.begin(newSession, resumable: true)
     }
 
     private var emptyState: some View {

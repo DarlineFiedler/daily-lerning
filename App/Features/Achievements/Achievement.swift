@@ -388,7 +388,7 @@ struct AchievementProgress: Equatable, Codable {
         sessionsToday += 1
         newWordsToday += newlyLearned
         groupsToday.formUnion(groups)
-        if modesToday.count >= PracticeMode.allCases.count { allModesOneDay = true }
+        if modesToday.count >= PracticeMode.dailyBadgeModeCount { allModesOneDay = true }
         if sessionsToday >= 2 { doublePack = true }
         if groupsToday.count >= 3 { sprachmix = true } // Wörter aus ≥3 Gruppen an einem Tag
         // „Ein Wort am Tag": Tag zählt, solange genau 1 neues Wort. Kommt am selben Tag

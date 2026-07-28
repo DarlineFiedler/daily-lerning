@@ -66,6 +66,9 @@ final class PracticeSession {
     var total: Int { items.count }
     var position: Int { min(index + 1, total) }
 
+    /// Läuft diese Session als Memory-Kartenfeld (statt Einzelkarten)?
+    var isMemory: Bool { config.isMemorySession }
+
     /// Trefferquote in Prozent (0, wenn noch nichts beantwortet).
     var accuracy: Int {
         let answered = correctCount + wrongCount
@@ -78,26 +81,34 @@ final class PracticeSession {
     /// App-Start, Wechsel in den Vordergrund und beim Bearbeiten aktualisiert.
     func submit(correct: Bool) {
         guard let item = currentItem else { return }
-        let before = item.vocab.status
+        record(result: correct, for: item.vocab)
+    }
+
+    /// Verbucht ein Ergebnis für ein bestimmtes Wort und rückt den Fortschritt vor.
+    /// Im Per-Karte-Fluss ist das Wort `currentItem.vocab` (via `submit`); das
+    /// Memory-Board matcht Paare in beliebiger Reihenfolge und übergibt das jeweils
+    /// gelöste Wort direkt – so bleibt die komplette SRS-/Achievement-Buchung geteilt.
+    func record(result correct: Bool, for vocab: Vocab) {
+        let before = vocab.status
         // Zuvor falsch/zurückgesetzt? (geübt, aber Erfolgs-Counter auf 0) – für „Selbstkorrektur".
-        let wasPreviouslyWrong = item.vocab.timesPracticed > 0 && item.vocab.successCounter == 0
-        item.vocab.registerResult(correct: correct)
+        let wasPreviouslyWrong = vocab.timesPracticed > 0 && vocab.successCounter == 0
+        vocab.registerResult(correct: correct)
         if correct {
             correctCount += 1
             if wasPreviouslyWrong { didSelfCorrect = true }
             // Aufstieg? (rawValue steigt mit dem Lernfortschritt).
-            if item.vocab.status.rawValue > before.rawValue {
-                leveledUpVocabs.append(item.vocab)
-                if item.vocab.status == .learned, before != .learned { newlyLearnedCount += 1 }
+            if vocab.status.rawValue > before.rawValue {
+                leveledUpVocabs.append(vocab)
+                if vocab.status == .learned, before != .learned { newlyLearnedCount += 1 }
             }
         } else {
             wrongCount += 1
-            missedVocabs.append(item.vocab)
+            missedVocabs.append(vocab)
         }
         StreakStore.registerActivity() // idempotent pro Kalendertag
         // Wochenrückblick füttern: distinct geübtes Wort + evtl. Erstaufstieg auf „Gelernt".
-        let becameLearned = before != .learned && item.vocab.status == .learned
-        WeeklyReviewStore.record(wordID: item.vocab.id, becameLearned: becameLearned, correct: correct)
+        let becameLearned = before != .learned && vocab.status == .learned
+        WeeklyReviewStore.record(wordID: vocab.id, becameLearned: becameLearned, correct: correct)
         context.saveOrLog()
         index += 1
         if isFinished { finalizeRound() }
@@ -159,11 +170,25 @@ final class PracticeSession {
     /// Weist jedem Wort einen (zufälligen) Modus, eine aufgelöste Richtung und
     /// – für Auswahl-/Hör-Modi – vier Optionen zu.
     private static func buildItems(from vocabs: [Vocab], distractorPool: [Vocab], config: PracticeConfig) -> [PracticeItem] {
-        let modes = config.resolvedModes
-        return vocabs.map { vocab in
-            let mode = modes.randomElement() ?? .review
-            // Hör-Modus: immer Koreanisch hören → Bedeutung wählen.
-            let direction = mode == .listening ? .wordToMeaning : ResolvedDirection.resolve(config.direction)
+        // Memory ist ein eigenständiges Kartenfeld: alle Wörter werden zu Paaren, ohne
+        // Einzelkarten-Optionen (das Board matcht Wort ↔ eigene Bedeutung).
+        if config.isMemorySession {
+            return vocabs.map {
+                PracticeItem(vocab: $0, mode: .memory, direction: .wordToMeaning, choices: [])
+            }
+        }
+        // Memory nie in den Per-Karte-Fluss (auch nicht ins „Mix" = leere Auswahl) mischen.
+        let perCardModes = config.resolvedModes.filter { $0 != .memory }
+        return vocabs.compactMap { vocab in
+            // Lückentext nur für Wörter mit brauchbarem Beispielsatz. Fehlt er, entfällt der
+            // Modus für dieses Wort; bleibt dann keiner übrig (nur-Lückentext ohne Beispiel),
+            // wird das Wort für diese Runde übersprungen.
+            var candidates = perCardModes
+            if ClozeText.usableExample(for: vocab) == nil { candidates.removeAll { $0 == .cloze } }
+            guard let mode = candidates.randomElement() else { return nil }
+            // Hör-/Lückentext-Modus: feste Richtung (der Prompt bzw. die Lücke ist das Wort).
+            let direction: ResolvedDirection = (mode == .listening || mode == .cloze)
+                ? .wordToMeaning : ResolvedDirection.resolve(config.direction)
             let choices = makeChoices(for: vocab, sessionVocabs: vocabs, pool: distractorPool, direction: direction)
             return PracticeItem(vocab: vocab, mode: mode, direction: direction, choices: choices)
         }

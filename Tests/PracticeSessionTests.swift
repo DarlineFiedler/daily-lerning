@@ -222,4 +222,101 @@ final class PracticeSessionTests: XCTestCase {
         // Nicht-Hör-Modi sind unabhängig von der Stimme immer dabei.
         XCTAssertTrue(PracticeMode.available(hasVoice: false).contains(.review))
     }
+
+    // MARK: - Lückentext (#20)
+
+    private func makeVocabsWithExample(_ count: Int, prefix: String = "") -> [Vocab] {
+        (0 ..< count).map { i in
+            let v = Vocab(word: "\(prefix)단어\(i)", meaning: "\(prefix)Wort \(i)",
+                          example: "\(prefix)단어\(i) 예문")
+            context.insert(v)
+            return v
+        }
+    }
+
+    /// Im reinen Lückentext-Modus werden Wörter ohne Beispielsatz übersprungen.
+    func testClozeOnlySkipsWordsWithoutExample() {
+        let withExample = makeVocabsWithExample(2, prefix: "e")
+        let withoutExample = makeVocabs(3, prefix: "n")
+        let all = withExample + withoutExample
+        let session = PracticeSession(
+            vocabs: all, distractorPool: all,
+            config: PracticeConfig(modes: [.cloze]), context: context
+        )
+        XCTAssertEqual(session.total, 2)
+        XCTAssertTrue(session.items.allSatisfy { $0.mode == .cloze })
+    }
+
+    /// Lückentext erzwingt Wort→Bedeutung (die Lücke ist immer das Wort).
+    func testClozeForcesWordToMeaningDirection() {
+        let vocabs = makeVocabsWithExample(3)
+        let session = PracticeSession(
+            vocabs: vocabs, distractorPool: vocabs,
+            config: PracticeConfig(direction: .meaningToWord, modes: [.cloze]), context: context
+        )
+        XCTAssertFalse(session.items.isEmpty)
+        XCTAssertTrue(session.items.allSatisfy { $0.direction == .wordToMeaning })
+    }
+
+    // MARK: - Memory (#53)
+
+    func testIsMemorySessionOnlyWhenExclusive() {
+        XCTAssertTrue(PracticeConfig(modes: [.memory]).isMemorySession)
+        XCTAssertFalse(PracticeConfig(modes: [.memory, .review]).isMemorySession)
+        XCTAssertFalse(PracticeConfig(modes: []).isMemorySession)
+    }
+
+    func testMemorySessionBuildsMemoryItems() {
+        let vocabs = makeVocabs(6)
+        let session = PracticeSession(
+            vocabs: vocabs, distractorPool: vocabs,
+            config: PracticeConfig(modes: [.memory]), context: context
+        )
+        XCTAssertTrue(session.isMemory)
+        XCTAssertEqual(session.total, 6)
+        XCTAssertTrue(session.items.allSatisfy { $0.mode == .memory })
+    }
+
+    /// Memory darf nie im Per-Karte-„Mix" (leere Auswahl = alle Modi) landen.
+    func testMemoryNeverAppearsInMixPool() {
+        let vocabs = makeVocabs(30)
+        let session = PracticeSession(
+            vocabs: vocabs, distractorPool: vocabs,
+            config: PracticeConfig(modes: []), context: context
+        )
+        XCTAssertFalse(session.isMemory)
+        XCTAssertFalse(session.items.contains { $0.mode == .memory })
+    }
+
+    /// `record(result:for:)` verbucht ein bestimmtes (out-of-order) Wort und rückt vor.
+    func testRecordResultBooksSpecificVocabAndAdvances() throws {
+        let vocabs = makeVocabs(3)
+        let session = PracticeSession(
+            vocabs: vocabs, distractorPool: vocabs,
+            config: PracticeConfig(modes: [.memory]), context: context
+        )
+        let target = try XCTUnwrap(session.items.last).vocab
+        session.record(result: false, for: target)
+        XCTAssertEqual(session.index, 1)
+        XCTAssertEqual(session.wrongCount, 1)
+        XCTAssertEqual(session.missedVocabs.first?.id, target.id)
+        XCTAssertGreaterThanOrEqual(target.totalWrongCount, 1)
+    }
+
+    /// Nach dem Buchen aller Paare ist die Memory-Session fertig (Runden-Auswertung läuft).
+    func testMemorySessionFinishesAfterAllPairs() {
+        let vocabs = makeVocabs(4)
+        let session = PracticeSession(
+            vocabs: vocabs, distractorPool: vocabs,
+            config: PracticeConfig(modes: [.memory]), context: context
+        )
+        for vocab in vocabs { session.record(result: true, for: vocab) }
+        XCTAssertTrue(session.isFinished)
+        XCTAssertEqual(session.correctCount, 4)
+    }
+
+    /// Memory zählt nicht für das „alle Modi an einem Tag"-Badge (bliebe sonst unerreichbar).
+    func testDailyBadgeModeCountExcludesMemory() {
+        XCTAssertEqual(PracticeMode.dailyBadgeModeCount, PracticeMode.allCases.count - 1)
+    }
 }

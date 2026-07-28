@@ -20,4 +20,22 @@ enum WidgetStrings {
         default: return "No words"
         }
     }
+
+    /// Titel der Live Activity einer laufenden Lernsession.
+    static var sessionTitle: String {
+        switch languageCode {
+        case "de": return "Lernsession"
+        case "ko": return "학습 세션"
+        default: return "Practice session"
+        }
+    }
+
+    /// „Wort X von Y" – Fortschrittszeile der Live Activity.
+    static func wordProgress(position: Int, total: Int) -> String {
+        switch languageCode {
+        case "de": return "Wort \(position) von \(total)"
+        case "ko": return "\(total)개 중 \(position)번째"
+        default: return "Word \(position) of \(total)"
+        }
+    }
 }
