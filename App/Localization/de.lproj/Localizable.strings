@@ -206,6 +206,7 @@
 "home.goal.week" = "Diese Woche";
 "home.goal.progress" = "%d / %d";
 "home.goal.reached" = "Ziel erreicht 🏁";
+"home.goal.edit.hint" = "Tippen, um dein Ziel anzupassen";
 "streak.detail.title" = "Streak & Joker";
 "streak.detail.current" = "Aktuell";
 "streak.detail.longest" = "Rekord";

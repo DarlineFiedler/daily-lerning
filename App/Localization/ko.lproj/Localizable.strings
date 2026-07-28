@@ -206,6 +206,7 @@
 "home.goal.week" = "이번 주";
 "home.goal.progress" = "%d / %d";
 "home.goal.reached" = "목표 달성 🏁";
+"home.goal.edit.hint" = "목표를 조정하려면 탭하세요";
 "streak.detail.title" = "연속 학습 & 프리즈";
 "streak.detail.current" = "현재";
 "streak.detail.longest" = "최고 기록";

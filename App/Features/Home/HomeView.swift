@@ -13,6 +13,8 @@ struct HomeView: View {
     @State private var showingNewGroup = false
     @State private var showReview = false
     @State private var showStreakDetail = false
+    /// Blendet den Ziel-Einstellungs-Screen ein (Tippen auf die Ziel-Karte).
+    @State private var showGoalSettings = false
     /// Beim Erreichen des Wochenziels neu freigeschaltete Badges (fürs Banner).
     @State private var goalUnlocked: [Achievement] = []
 
@@ -101,6 +103,16 @@ struct HomeView: View {
             .sheet(item: $practiceGroup) { _ in PracticeConfigView() }
             .sheet(isPresented: $showingNewGroup) { GroupEditView(group: nil) }
             .sheet(isPresented: $showReview) { ReviewSessionView() }
+            .sheet(isPresented: $showGoalSettings) {
+                NavigationStack {
+                    GoalSettingsView()
+                        .toolbar {
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button(L("common.done")) { showGoalSettings = false }
+                            }
+                        }
+                }
+            }
             .sheet(isPresented: $showStreakDetail) {
                 StreakDetailView(streak: streak, longest: StreakStore.longest,
                                  jokers: jokers, maxJokers: StreakStore.maxJokers,
@@ -325,61 +337,6 @@ struct HomeView: View {
         delta >= 0 ? "arrow.up.right" : "arrow.down.right"
     }
 
-    // MARK: - Persönliches Ziel
-
-    /// Karte mit dem Fortschritt gegen das selbst gesetzte Tages-/Wochenziel für die
-    /// laufende Woche bzw. den heutigen Tag. Zeigt nur die aktiven Ziel-Ebenen (Wert > 0).
-    private var goalCard: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-            Label(L("home.goal.title"), systemImage: "target")
-                .font(.appCaption.weight(.semibold))
-                .foregroundStyle(Theme.brandStart)
-            if dailyGoal > 0 {
-                goalRow(labelKey: "home.goal.today", done: dayDone, target: dailyGoal)
-            }
-            if weeklyGoal > 0 {
-                goalRow(labelKey: "home.goal.week", done: weekDone, target: weeklyGoal)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .cardStyle(padding: Theme.Spacing.l)
-        .accessibilityElement(children: .combine)
-    }
-
-    /// Eine Ziel-Ebene (Tag oder Woche): Label, Zähler „6 / 10" bzw. „erreicht"-Häkchen
-    /// und ein Fortschrittsbalken.
-    @ViewBuilder
-    private func goalRow(labelKey: String, done: Int, target: Int) -> some View {
-        let fraction = target > 0 ? min(1, Double(done) / Double(target)) : 0
-        let reached = done >= target
-        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            HStack {
-                Text(L(labelKey))
-                    .font(.appCaption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                if reached {
-                    Label(L("home.goal.reached"), systemImage: "checkmark.circle.fill")
-                        .font(.appCaption.weight(.semibold))
-                        .foregroundStyle(LearningStatus.learned.color)
-                } else {
-                    Text(L("home.goal.progress", done, target))
-                        .font(.appCaption.weight(.semibold))
-                        .monospacedDigit()
-                }
-            }
-            GoalProgressBar(fraction: fraction, reached: reached)
-        }
-    }
-
-    /// Schaltet beim Erreichen des Wochenziels einmalig das „Zielstrebig"-Badge frei.
-    /// Idempotent (Flag im Fortschritt); bei Neu-Freischaltung erscheint das Banner.
-    private func checkWeeklyGoal() {
-        guard weeklyGoal > 0, weekDone >= weeklyGoal else { return }
-        let unlocked = AchievementService.recordEvent(\.weeklyGoalReached, context: context)
-        if !unlocked.isEmpty { goalUnlocked = unlocked }
-    }
-
     // MARK: - Fortschritt
 
     private var progressSection: some View {
@@ -466,6 +423,78 @@ struct HomeView: View {
             .padding(.horizontal, Theme.Spacing.xl)
         }
         .padding(.top, Theme.Spacing.xl)
+    }
+}
+
+// MARK: - Persönliches Ziel
+
+/// Ziel-bezogene Ansichten und Logik. Bewusst als Extension ausgelagert, damit der
+/// primäre `HomeView`-Body unter dem SwiftLint-`type_body_length`-Limit bleibt.
+extension HomeView {
+    /// Karte mit dem Fortschritt gegen das selbst gesetzte Tages-/Wochenziel für die
+    /// laufende Woche bzw. den heutigen Tag. Zeigt nur die aktiven Ziel-Ebenen (Wert > 0).
+    private var goalCard: some View {
+        Button {
+            showGoalSettings = true
+        } label: {
+            VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                HStack {
+                    Label(L("home.goal.title"), systemImage: "target")
+                        .font(.appCaption.weight(.semibold))
+                        .foregroundStyle(Theme.brandStart)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.appCaption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+                if dailyGoal > 0 {
+                    goalRow(labelKey: "home.goal.today", done: dayDone, target: dailyGoal)
+                }
+                if weeklyGoal > 0 {
+                    goalRow(labelKey: "home.goal.week", done: weekDone, target: weeklyGoal)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .cardStyle(padding: Theme.Spacing.l)
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint(L("home.goal.edit.hint"))
+    }
+
+    /// Eine Ziel-Ebene (Tag oder Woche): Label, Zähler „6 / 10" bzw. „erreicht"-Häkchen
+    /// und ein Fortschrittsbalken.
+    @ViewBuilder
+    private func goalRow(labelKey: String, done: Int, target: Int) -> some View {
+        let fraction = target > 0 ? min(1, Double(done) / Double(target)) : 0
+        let reached = done >= target
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            HStack {
+                Text(L(labelKey))
+                    .font(.appCaption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                if reached {
+                    Label(L("home.goal.reached"), systemImage: "checkmark.circle.fill")
+                        .font(.appCaption.weight(.semibold))
+                        .foregroundStyle(LearningStatus.learned.color)
+                } else {
+                    Text(L("home.goal.progress", done, target))
+                        .font(.appCaption.weight(.semibold))
+                        .monospacedDigit()
+                }
+            }
+            GoalProgressBar(fraction: fraction, reached: reached)
+        }
+    }
+
+    /// Schaltet beim Erreichen des Wochenziels einmalig das „Zielstrebig"-Badge frei.
+    /// Idempotent (Flag im Fortschritt); bei Neu-Freischaltung erscheint das Banner.
+    private func checkWeeklyGoal() {
+        guard weeklyGoal > 0, weekDone >= weeklyGoal else { return }
+        let unlocked = AchievementService.recordEvent(\.weeklyGoalReached, context: context)
+        if !unlocked.isEmpty { goalUnlocked = unlocked }
     }
 }
 

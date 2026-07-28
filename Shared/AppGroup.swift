@@ -6,9 +6,14 @@ enum AppGroup {
     static let identifier = "group.com.darlinefiedler.dailyhangul"
 
     /// Gemeinsamer UserDefaults-Container (Widget-Einstellungen).
-    static var defaults: UserDefaults {
-        UserDefaults(suiteName: identifier) ?? .standard
-    }
+    ///
+    /// Bewusst eine **stabile** (einmalig erzeugte) Instanz statt einer berechneten
+    /// Property: `@AppStorage` beobachtet Änderungen über genau das `UserDefaults`-Objekt,
+    /// das ihm beim Anlegen übergeben wird. Würde hier bei jedem Zugriff eine neue
+    /// `UserDefaults(suiteName:)`-Instanz zurückkommen, bekämen Views in anderen Tabs
+    /// (z.B. das Ziel auf dem Home-Screen) Schreibvorgänge aus den Einstellungen nicht
+    /// mit – die Änderung würde erst nach einem App-Neustart sichtbar.
+    static let defaults = UserDefaults(suiteName: identifier) ?? .standard
 
     /// Gemeinsamer Datei-Container (JSON-Snapshot für das Widget).
     static var containerURL: URL {
