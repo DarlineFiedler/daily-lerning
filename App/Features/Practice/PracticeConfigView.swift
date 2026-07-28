@@ -5,6 +5,7 @@ import SwiftUI
 struct PracticeConfigView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Environment(ActiveSessionStore.self) private var sessionStore
     @Query(sort: \VocabGroup.sortOrder) private var allGroups: [VocabGroup]
 
     @State private var selectedGroupIDs: Set<UUID>
@@ -102,7 +103,11 @@ struct PracticeConfigView: View {
                         config: config,
                         context: context
                     ),
-                    onClose: { dismiss() }
+                    onClose: { dismiss() },
+                    // Gruppen-Fluss läuft in der Navigation weiter; ein Live-Activity-Tap
+                    // bringt die App in den Vordergrund (nicht wieder-präsentierbar).
+                    sessionStore: sessionStore,
+                    resumable: false
                 )
             }
             .onAppear { presets = PracticePresetStore.all() }

@@ -5,5 +5,6 @@ import WidgetKit
 struct DailyHangulWidgetBundle: WidgetBundle {
     var body: some Widget {
         DailyHangulWidget()
+        PracticeLiveActivity()
     }
 }

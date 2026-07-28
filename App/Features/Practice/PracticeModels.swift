@@ -6,6 +6,10 @@ enum PracticeMode: String, CaseIterable, Identifiable {
     case review
     case writing
     case listening
+    /// Lückentext: der gespeicherte Beispielsatz mit dem gesuchten Wort als Lücke.
+    case cloze
+    /// Memory: Wort- und Bedeutungskarten paarweise zuordnen (eigenständiges Kartenfeld).
+    case memory
 
     var id: String { rawValue }
 
@@ -15,6 +19,8 @@ enum PracticeMode: String, CaseIterable, Identifiable {
         case .review: return "practice.mode.review"
         case .writing: return "practice.mode.writing"
         case .listening: return "practice.mode.listening"
+        case .cloze: return "practice.mode.cloze"
+        case .memory: return "practice.mode.memory"
         }
     }
 
@@ -24,6 +30,8 @@ enum PracticeMode: String, CaseIterable, Identifiable {
         case .review: return "rectangle.stack"
         case .writing: return "pencil"
         case .listening: return "ear.fill"
+        case .cloze: return "square.dashed"
+        case .memory: return "square.grid.2x2"
         }
     }
 
@@ -37,6 +45,13 @@ enum PracticeMode: String, CaseIterable, Identifiable {
     /// unabhängig von der Geräte-Konfiguration testbar.
     static func available(hasVoice: Bool) -> [PracticeMode] {
         allCases.filter { $0 != .listening || hasVoice }
+    }
+
+    /// Anzahl der Modi, die für das „alle Modi an einem Tag"-Badge zählen. Memory ist
+    /// ein eigenständiges Spiel (nur exklusiv spielbar) und bleibt hier außen vor,
+    /// damit das Badge erreichbar bleibt.
+    static var dailyBadgeModeCount: Int {
+        allCases.filter { $0 != .memory }.count
     }
 }
 
@@ -125,4 +140,12 @@ struct PracticeConfig {
     var resolvedModes: [PracticeMode] {
         modes.isEmpty ? PracticeMode.available : Array(modes)
     }
+
+    /// Memory ist ein eigenständiger Modus (ganzes Kartenfeld statt Einzelkarten) und
+    /// läuft nur, wenn er exklusiv gewählt wurde – nie als Teil von „Mix" (leere Auswahl).
+    var isMemorySession: Bool { modes == [.memory] }
+
+    /// Reine Lückentext-Runde. Nur dann ist ein leeres Ergebnis auf fehlende Beispiel-
+    /// sätze zurückzuführen (steuert die passende Leer-Meldung).
+    var isClozeOnlySession: Bool { modes == [.cloze] }
 }

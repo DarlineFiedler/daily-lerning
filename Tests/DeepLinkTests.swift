@@ -23,4 +23,13 @@ final class DeepLinkTests: XCTestCase {
         let url = URL(string: "dailyhangul://word/not-a-uuid")!
         XCTAssertNil(DeepLink.wordID(from: url))
     }
+
+    func testSessionURLRoundTrip() {
+        XCTAssertTrue(DeepLink.isSession(DeepLink.sessionURL))
+    }
+
+    func testIsSessionRejectsOtherHosts() {
+        XCTAssertFalse(DeepLink.isSession(DeepLink.reviewURL))
+        XCTAssertFalse(DeepLink.isSession(URL(string: "https://session")!))
+    }
 }

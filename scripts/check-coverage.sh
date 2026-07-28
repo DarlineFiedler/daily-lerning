@@ -22,7 +22,7 @@ THRESHOLD="${2:-75}"
 #  - System-Framework-Wrapper, die ohne UI-/Geräte-Automation nicht unit-testbar
 #    sind: AVSpeechSynthesizer / UNUserNotificationCenter (Scheduler + Badge) / WidgetKit
 # Erweiterbar per ERE-Alternation.
-EXCLUDE_REGEX='Tests\.swift$|/Tests/|/Features/|/DesignSystem/|View\.swift$|App\.swift$|WidgetBundle\.swift$|DailyHangulWidget\.swift$|SpeechService\.swift$|NotificationScheduler\.swift$|BadgeUpdater\.swift$|VocabTimelineProvider\.swift$'
+EXCLUDE_REGEX='Tests\.swift$|/Tests/|/Features/|/DesignSystem/|View\.swift$|App\.swift$|WidgetBundle\.swift$|DailyHangulWidget\.swift$|PracticeLiveActivity\.swift$|SpeechService\.swift$|NotificationScheduler\.swift$|BadgeUpdater\.swift$|VocabTimelineProvider\.swift$'
 
 if ! command -v xcrun >/dev/null 2>&1; then
   echo "xcrun nicht gefunden – läuft dieses Skript auf macOS?" >&2

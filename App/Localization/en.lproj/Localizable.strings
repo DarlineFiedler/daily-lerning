@@ -104,6 +104,11 @@
 "practice.mode.review" = "Review";
 "practice.mode.writing" = "Writing";
 "practice.mode.listening" = "Listening";
+"practice.mode.cloze" = "Cloze";
+"practice.mode.memory" = "Memory";
+"practice.cloze.typeWord" = "Type the missing word";
+"practice.cloze.meaningHint" = "Meaning: %@";
+"practice.cloze.empty" = "None of these words have an example sentence yet. Add one in the word editor to practice cloze.";
 "practice.config.presets" = "Presets";
 "practice.config.savePreset" = "Save as preset";
 "practice.preset.namePrompt" = "Preset name";
