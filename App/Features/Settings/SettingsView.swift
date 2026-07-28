@@ -95,14 +95,15 @@ struct SettingsView: View {
                 }
 
                 // MARK: Ziel
+                // Nur der Einstieg; die Picker und ihre Erklärung (Footer) leben in
+                // GoalSettingsView, damit „Wert 0 = deaktiviert" dort steht, wo auch
+                // die Picker sind (siehe [[GoalSettingsView]]).
                 Section {
                     NavigationLink {
                         GoalSettingsView()
                     } label: {
                         Label(L("settings.goal.section"), systemImage: "target")
                     }
-                } footer: {
-                    Text(L("settings.goal.footer"))
                 }
 
                 // MARK: Wortpakete
