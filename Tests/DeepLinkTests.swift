@@ -32,4 +32,14 @@ final class DeepLinkTests: XCTestCase {
         XCTAssertFalse(DeepLink.isSession(DeepLink.reviewURL))
         XCTAssertFalse(DeepLink.isSession(URL(string: "https://session")!))
     }
+
+    func testStreakURLRoundTrip() {
+        XCTAssertTrue(DeepLink.isStreak(DeepLink.streakURL))
+    }
+
+    func testIsStreakRejectsOtherHosts() {
+        XCTAssertFalse(DeepLink.isStreak(DeepLink.reviewURL))
+        XCTAssertFalse(DeepLink.isStreak(DeepLink.sessionURL))
+        XCTAssertFalse(DeepLink.isStreak(URL(string: "https://streak")!))
+    }
 }

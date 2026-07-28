@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 /// Fokussierter Einstellungs-Screen für das persönliche Tages-/Wochenziel.
 ///
@@ -47,6 +48,14 @@ struct GoalSettingsView: View {
         }
         .navigationTitle(L("settings.goal.section"))
         .navigationBarTitleDisplayMode(.inline)
+        // Zieländerung wirkt sich direkt auf den Ring des Streak-Widgets aus.
+        .onChange(of: goalMetricRaw) { reloadStreakWidget() }
+        .onChange(of: weeklyGoal) { reloadStreakWidget() }
+        .onChange(of: dailyGoal) { reloadStreakWidget() }
+    }
+
+    private func reloadStreakWidget() {
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     /// Label für die Ziel-Picker: `0` bedeutet „deaktiviert".

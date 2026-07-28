@@ -20,6 +20,23 @@ struct DailyHangulWidget: Widget {
     }
 }
 
+/// Zweiter Home-Screen-Widget-Kind: Streak-Serie + Fortschrittsring gegen das
+/// persönliche Ziel. Bewusst ein eigenständiger Kind (statt einer konfigurierbaren
+/// Variante des Wort-Widgets), damit das bestehende Wort-Widget unangetastet bleibt.
+struct StreakWidget: Widget {
+    let kind = "StreakWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: StreakTimelineProvider()) { entry in
+            StreakWidgetView(entry: entry)
+                .containerBackground(.fill.tertiary, for: .widget)
+        }
+        .configurationDisplayName(WidgetStrings.streakDisplayName)
+        .description(WidgetStrings.streakDescription)
+        .supportedFamilies([.systemSmall])
+    }
+}
+
 struct VocabWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: VocabEntry
