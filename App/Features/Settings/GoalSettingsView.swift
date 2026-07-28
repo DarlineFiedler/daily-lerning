@@ -55,7 +55,7 @@ struct GoalSettingsView: View {
     }
 
     private func reloadStreakWidget() {
-        WidgetCenter.shared.reloadAllTimelines()
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.streak)
     }
 
     /// Label für die Ziel-Picker: `0` bedeutet „deaktiviert".

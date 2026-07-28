@@ -30,3 +30,11 @@ enum AppGroup {
     /// Custom URL-Scheme für Deep-Links aus dem Widget.
     static let urlScheme = "dailyhangul"
 }
+
+/// `kind`-Identifikatoren der Home-Screen-Widgets. Geteilt zwischen Widget-Target
+/// (Registrierung) und App (gezieltes Neuladen), damit die App genau EIN Widget
+/// aktualisieren kann statt `reloadAllTimelines()` über alle Kinds zu feuern.
+enum WidgetKind {
+    static let vocab = "DailyHangulWidget"
+    static let streak = "StreakWidget"
+}

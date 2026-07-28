@@ -19,6 +19,23 @@ struct StreakWidgetView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .widgetURL(DeepLink.streakURL)
+        // Flamme und Ring sind dekorativ – VoiceOver bekommt einen zusammengefassten,
+        // lokalisierten Satz aus Streak- und Ziel-Stand statt der Einzelelemente.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
+    }
+
+    /// Zusammengefasster VoiceOver-Text: Streak-Stand plus – falls vorhanden – der
+    /// Ziel-Fortschritt bzw. ersatzweise die längste Serie. Setzt sich aus denselben
+    /// lokalisierten Bausteinen wie die sichtbare Darstellung zusammen.
+    private var accessibilityLabel: String {
+        var parts = [hasStreak ? WidgetStrings.streakDays(model.streak) : WidgetStrings.noStreak]
+        if let goal = model.goal {
+            parts.append("\(WidgetStrings.goalLabel(isDaily: goal.isDaily)): \(goal.done)/\(goal.target)")
+        } else if model.longest > 0 {
+            parts.append(WidgetStrings.longestStreak(model.longest))
+        }
+        return parts.joined(separator: ", ")
     }
 
     // MARK: - Streak-Kopf (Flamme + Zahl)

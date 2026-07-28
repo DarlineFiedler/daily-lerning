@@ -3,7 +3,7 @@ import WidgetKit
 
 /// Lock-Screen-Widget (accessoryRectangular) + kleines Home-Screen-Widget.
 struct DailyHangulWidget: Widget {
-    let kind = "DailyHangulWidget"
+    let kind = WidgetKind.vocab
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: VocabTimelineProvider()) { entry in
@@ -24,7 +24,7 @@ struct DailyHangulWidget: Widget {
 /// persönliche Ziel. Bewusst ein eigenständiger Kind (statt einer konfigurierbaren
 /// Variante des Wort-Widgets), damit das bestehende Wort-Widget unangetastet bleibt.
 struct StreakWidget: Widget {
-    let kind = "StreakWidget"
+    let kind = WidgetKind.streak
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: StreakTimelineProvider()) { entry in
