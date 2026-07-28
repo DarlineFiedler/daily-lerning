@@ -55,7 +55,7 @@ struct PracticeContainerView: View {
         .task { sessionStore?.begin(session, resumable: resumable) }
         .onChange(of: session.index) {
             guard let store = sessionStore else { return }
-            if session.isFinished { store.finish(session) } else { store.refresh(session) }
+            if session.isFinished { store.complete(session) } else { store.refresh(session) }
         }
     }
 
@@ -70,7 +70,7 @@ struct PracticeContainerView: View {
             Image(systemName: "square.dashed")
                 .font(.system(size: 52))
                 .foregroundStyle(Theme.brandStart)
-            Text(L("practice.cloze.empty"))
+            Text(L(session.isClozeOnly ? "practice.cloze.empty" : "practice.noWords"))
                 .font(.appBody)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

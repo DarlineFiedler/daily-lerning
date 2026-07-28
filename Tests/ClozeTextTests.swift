@@ -31,4 +31,19 @@ final class ClozeTextTests: XCTestCase {
         // Gebeugte Form: das Grundwort steht nicht wörtlich im Satz → ganzer Satz bleibt.
         XCTAssertEqual(ClozeText.blanked(example: "학교에 갔어요", word: "가다"), "학교에 갔어요")
     }
+
+    func testBlankedReplacesEveryOccurrence() {
+        // Kommt das Wort mehrfach vor, darf kein Treffer die Antwort verraten.
+        XCTAssertEqual(ClozeText.blanked(example: "가다 가다", word: "가다"),
+                       "\(ClozeText.blank) \(ClozeText.blank)")
+    }
+
+    func testCanClozeRequiresWordInExample() {
+        // Wort kommt wörtlich vor → abfragbar.
+        XCTAssertTrue(ClozeText.canCloze(Vocab(word: "가다", meaning: "gehen", example: "학교에 가다")))
+        // Nur gebeugte Form im Satz → die Lücke würde die Antwort zeigen → nicht abfragbar.
+        XCTAssertFalse(ClozeText.canCloze(Vocab(word: "가다", meaning: "gehen", example: "학교에 갔어요")))
+        // Kein Beispielsatz → nicht abfragbar.
+        XCTAssertFalse(ClozeText.canCloze(Vocab(word: "가다", meaning: "gehen")))
+    }
 }

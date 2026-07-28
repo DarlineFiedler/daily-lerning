@@ -247,6 +247,22 @@ final class PracticeSessionTests: XCTestCase {
         XCTAssertTrue(session.items.allSatisfy { $0.mode == .cloze })
     }
 
+    /// Im reinen Lückentext-Modus fallen Wörter weg, deren Beispielsatz das Wort nicht
+    /// wörtlich enthält (die Lücke würde sonst die Antwort zeigen statt sie zu verbergen).
+    func testClozeOnlySkipsWordsWhoseExampleLacksTheWord() {
+        let matching = Vocab(word: "가다", meaning: "gehen", example: "학교에 가다")
+        let inflectedOnly = Vocab(word: "가다", meaning: "gehen", example: "학교에 갔어요")
+        context.insert(matching)
+        context.insert(inflectedOnly)
+        let all = [matching, inflectedOnly]
+        let session = PracticeSession(
+            vocabs: all, distractorPool: all,
+            config: PracticeConfig(modes: [.cloze]), context: context
+        )
+        XCTAssertEqual(session.total, 1)
+        XCTAssertEqual(session.items.first?.vocab.id, matching.id)
+    }
+
     /// Lückentext erzwingt Wort→Bedeutung (die Lücke ist immer das Wort).
     func testClozeForcesWordToMeaningDirection() {
         let vocabs = makeVocabsWithExample(3)

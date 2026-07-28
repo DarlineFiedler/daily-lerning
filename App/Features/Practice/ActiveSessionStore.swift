@@ -35,11 +35,23 @@ final class ActiveSessionStore {
         Task { await update(state: state) }
     }
 
-    /// Beendet die Live Activity und gibt die Session frei. Ohne Argument beendet es die
-    /// gerade getrackte Session; mit Argument nur, wenn es dieselbe ist.
+    /// Beendet die Live Activity einer **abgeschlossenen** Session, lässt sie aber als
+    /// `active` bestehen. So bleibt im „Heute"-Fluss die Zusammenfassung (Genauigkeit,
+    /// Streak, „Falsche wiederholen") sichtbar; freigegeben wird die Session erst beim
+    /// tatsächlichen Schließen über `finish`.
+    func complete(_ session: PracticeSession) {
+        guard tracked === session else { return }
+        stopActivity()
+        tracked = nil
+    }
+
+    /// Räumt die Session beim Schließen vollständig ab: Live Activity beenden und die
+    /// Session freigeben (ein Deep-Link führt danach nicht mehr zurück). Ohne Argument
+    /// beendet es die gerade aktive/getrackte Session; mit Argument nur, wenn es dieselbe
+    /// ist (auch nachdem `complete` das Tracking bereits gelöst hat).
     func finish(_ session: PracticeSession? = nil) {
-        if let session, tracked !== session { return }
-        endActivity()
+        if let session, active !== session, tracked !== session { return }
+        stopActivity()
         tracked = nil
         active = nil
     }
@@ -53,7 +65,7 @@ final class ActiveSessionStore {
 
     private func startActivity(for session: PracticeSession) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled, session.total > 0 else { return }
-        endActivity() // keine „hängende" Activity aus einer früheren Session offen lassen
+        stopActivity() // keine „hängende" Activity aus einer früheren Session offen lassen
         let content = ActivityContent(state: state(for: session), staleDate: nil)
         activity = try? Activity.request(
             attributes: PracticeActivityAttributes(),
@@ -67,7 +79,7 @@ final class ActiveSessionStore {
         await activity.update(ActivityContent(state: state, staleDate: nil))
     }
 
-    private func endActivity() {
+    private func stopActivity() {
         guard let activity else { return }
         self.activity = nil
         Task { await activity.end(nil, dismissalPolicy: .immediate) }

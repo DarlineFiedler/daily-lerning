@@ -14,14 +14,22 @@ enum ClozeText {
         return trimmed.isEmpty ? nil : trimmed
     }
 
-    /// Der Beispielsatz mit dem gesuchten Wort als Lücke. Kommt das Wort wörtlich vor,
-    /// wird es (case-insensitiv) durch die Lücke ersetzt; sonst – z.B. bei gebeugten
-    /// Formen – bleibt der ganze Satz als Kontext stehen (das Wort wird trotzdem getippt).
+    /// Ob ein Wort im Lückentext abgefragt werden kann: es braucht einen brauchbaren
+    /// Beispielsatz, in dem das Wort auch wörtlich vorkommt. Fehlt es (z.B. nur eine
+    /// gebeugte Form steht im Satz), würde die „Lücke" die Antwort offen zeigen statt sie
+    /// zu verbergen – solche Wörter werden daher gar nicht erst im Lückentext abgefragt.
+    static func canCloze(_ vocab: Vocab) -> Bool {
+        guard let example = usableExample(for: vocab) else { return false }
+        let word = vocab.word.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !word.isEmpty && example.range(of: word, options: .caseInsensitive) != nil
+    }
+
+    /// Der Beispielsatz mit dem gesuchten Wort als Lücke. Alle (case-insensitiven)
+    /// Vorkommen werden ersetzt, damit kein Treffer die Antwort verrät. Kommt das Wort
+    /// nicht vor, bleibt der Satz unverändert (durch `canCloze` gefiltert; nur defensiv).
     static func blanked(example: String, word: String) -> String {
         let trimmedWord = word.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedWord.isEmpty,
-              let range = example.range(of: trimmedWord, options: .caseInsensitive)
-        else { return example }
-        return example.replacingCharacters(in: range, with: blank)
+        guard !trimmedWord.isEmpty else { return example }
+        return example.replacingOccurrences(of: trimmedWord, with: blank, options: [.caseInsensitive])
     }
 }

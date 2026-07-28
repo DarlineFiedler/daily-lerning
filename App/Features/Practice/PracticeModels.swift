@@ -144,4 +144,8 @@ struct PracticeConfig {
     /// Memory ist ein eigenständiger Modus (ganzes Kartenfeld statt Einzelkarten) und
     /// läuft nur, wenn er exklusiv gewählt wurde – nie als Teil von „Mix" (leere Auswahl).
     var isMemorySession: Bool { modes == [.memory] }
+
+    /// Reine Lückentext-Runde. Nur dann ist ein leeres Ergebnis auf fehlende Beispiel-
+    /// sätze zurückzuführen (steuert die passende Leer-Meldung).
+    var isClozeOnlySession: Bool { modes == [.cloze] }
 }

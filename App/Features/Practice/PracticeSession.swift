@@ -69,6 +69,10 @@ final class PracticeSession {
     /// Läuft diese Session als Memory-Kartenfeld (statt Einzelkarten)?
     var isMemory: Bool { config.isMemorySession }
 
+    /// Reine Lückentext-Runde? (Steuert die Leer-Meldung, wenn kein Wort einen
+    /// Beispielsatz hat.)
+    var isClozeOnly: Bool { config.isClozeOnlySession }
+
     /// Trefferquote in Prozent (0, wenn noch nichts beantwortet).
     var accuracy: Int {
         let answered = correctCount + wrongCount
@@ -184,12 +188,14 @@ final class PracticeSession {
             // Modus für dieses Wort; bleibt dann keiner übrig (nur-Lückentext ohne Beispiel),
             // wird das Wort für diese Runde übersprungen.
             var candidates = perCardModes
-            if ClozeText.usableExample(for: vocab) == nil { candidates.removeAll { $0 == .cloze } }
+            if !ClozeText.canCloze(vocab) { candidates.removeAll { $0 == .cloze } }
             guard let mode = candidates.randomElement() else { return nil }
             // Hör-/Lückentext-Modus: feste Richtung (der Prompt bzw. die Lücke ist das Wort).
             let direction: ResolvedDirection = (mode == .listening || mode == .cloze)
                 ? .wordToMeaning : ResolvedDirection.resolve(config.direction)
-            let choices = makeChoices(for: vocab, sessionVocabs: vocabs, pool: distractorPool, direction: direction)
+            // Nur Auswahl-/Hör-Modi brauchen Distraktoren; Lückentext (wie Schreiben/Durchgehen)
+            // wird eingetippt bzw. gewischt – die Options-Berechnung entfällt.
+            let choices = mode == .cloze ? [] : makeChoices(for: vocab, sessionVocabs: vocabs, pool: distractorPool, direction: direction)
             return PracticeItem(vocab: vocab, mode: mode, direction: direction, choices: choices)
         }
     }
