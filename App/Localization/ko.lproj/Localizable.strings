@@ -153,6 +153,8 @@
 "search.placeholder" = "단어 또는 뜻 검색";
 "search.empty" = "결과가 없습니다.";
 "search.prompt" = "모든 그룹에서 검색합니다.";
+"search.filter.status" = "상태";
+"search.filter.groups" = "그룹";
 
 /* Settings */
 "settings.title" = "설정";

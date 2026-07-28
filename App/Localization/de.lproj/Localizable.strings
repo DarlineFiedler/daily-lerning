@@ -153,6 +153,8 @@
 "search.placeholder" = "Wort oder Bedeutung suchen";
 "search.empty" = "Keine Treffer.";
 "search.prompt" = "Suche über alle Gruppen hinweg.";
+"search.filter.status" = "Status";
+"search.filter.groups" = "Gruppen";
 
 /* Einstellungen */
 "settings.title" = "Einstellungen";

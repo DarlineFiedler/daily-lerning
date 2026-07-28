@@ -153,6 +153,8 @@
 "search.placeholder" = "Search word or meaning";
 "search.empty" = "No results.";
 "search.prompt" = "Search across all groups.";
+"search.filter.status" = "Status";
+"search.filter.groups" = "Groups";
 
 /* Settings */
 "settings.title" = "Settings";
