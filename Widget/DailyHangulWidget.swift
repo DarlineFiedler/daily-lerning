@@ -3,7 +3,7 @@ import WidgetKit
 
 /// Lock-Screen-Widget (accessoryRectangular) + kleines Home-Screen-Widget.
 struct DailyHangulWidget: Widget {
-    let kind = "DailyHangulWidget"
+    let kind = WidgetKind.vocab
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: VocabTimelineProvider()) { entry in
@@ -17,6 +17,23 @@ struct DailyHangulWidget: Widget {
             .accessoryInline,
             .systemSmall
         ])
+    }
+}
+
+/// Zweiter Home-Screen-Widget-Kind: Streak-Serie + Fortschrittsring gegen das
+/// persönliche Ziel. Bewusst ein eigenständiger Kind (statt einer konfigurierbaren
+/// Variante des Wort-Widgets), damit das bestehende Wort-Widget unangetastet bleibt.
+struct StreakWidget: Widget {
+    let kind = WidgetKind.streak
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: StreakTimelineProvider()) { entry in
+            StreakWidgetView(entry: entry)
+                .containerBackground(.fill.tertiary, for: .widget)
+        }
+        .configurationDisplayName(WidgetStrings.streakDisplayName)
+        .description(WidgetStrings.streakDescription)
+        .supportedFamilies([.systemSmall])
     }
 }
 

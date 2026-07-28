@@ -30,4 +30,13 @@ enum DeepLink {
     static func isSession(_ url: URL) -> Bool {
         url.scheme == AppGroup.urlScheme && url.host == "session"
     }
+
+    /// Öffnet aus dem Streak-Widget die Streak-Detailansicht.
+    static var streakURL: URL {
+        URL(string: "\(AppGroup.urlScheme)://streak")!
+    }
+
+    static func isStreak(_ url: URL) -> Bool {
+        url.scheme == AppGroup.urlScheme && url.host == "streak"
+    }
 }

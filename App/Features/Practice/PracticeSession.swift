@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import WidgetKit
 
 /// Eine vorbereitete Lernaufgabe (Wort + zugewiesener Modus/Richtung/Optionen).
 struct PracticeItem: Identifiable {
@@ -142,6 +143,9 @@ final class PracticeSession {
         // Üben ändert den Fälligkeitsstand (nextReviewAt/lastPracticedAt) → App-Icon-Badge
         // aktualisieren. Anders als das Widget hängt das Badge an der offenen Wortzahl.
         BadgeUpdater.refresh(context: context)
+        // Streak & Ziel-Fortschritt haben sich geändert → gezielt nur das Streak-Widget
+        // neu laden (das Wort-Widget hängt nicht am Streak).
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.streak)
     }
 
     /// Startet denselben Satz Wörter erneut.

@@ -11,6 +11,7 @@ struct RootView: View {
     @State private var sessionStore = ActiveSessionStore()
     @State private var deepLink: IdentifiableID?
     @State private var showReview = false
+    @State private var showStreakDetail = false
     @State private var showStoreError = false
 
     var body: some View {
@@ -69,6 +70,9 @@ struct RootView: View {
                 // „Heute"-Session, das Sheet erneut zeigen – sonst bringt der Tap die
                 // App nur in den Vordergrund (Gruppen-Fluss läuft in der Navigation weiter).
                 showReview = sessionStore.active != nil
+            } else if DeepLink.isStreak(url) {
+                showStreakDetail = true
+                AchievementService.recordEvent(\.widgetUsed, context: context) // „Widget-Fan"
             }
         }
         .sheet(item: $deepLink) { item in
@@ -76,6 +80,16 @@ struct RootView: View {
         }
         .sheet(isPresented: $showReview) {
             ReviewSessionView()
+        }
+        .sheet(isPresented: $showStreakDetail) {
+            // Öffnet aus dem Streak-Widget dieselbe Detailansicht wie der Home-Screen –
+            // die Werte kommen direkt aus dem geteilten StreakStore.
+            StreakDetailView(streak: StreakStore.displayStreak(),
+                             longest: StreakStore.longest,
+                             jokers: StreakStore.availableJokers(),
+                             maxJokers: StreakStore.maxJokers,
+                             jokerUses: StreakStore.jokerUses,
+                             activeDays: StreakStore.activeDays)
         }
     }
 }
