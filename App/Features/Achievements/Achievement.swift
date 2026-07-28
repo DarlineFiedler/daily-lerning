@@ -288,6 +288,20 @@ struct AchievementProgress: Equatable, Codable {
     var hadBreak = false
     var preBreakStreak = 0
 
+    /// Explizit (statt synthetisiert `private`), damit der fehlertolerante `init(from:)`
+    /// in `AchievementProgress+Codable.swift` darauf zugreifen kann. Muss ALLE gespeicherten
+    /// Properties enthalten – ein fehlender Fall würde das Feld aus der Persistenz kippen.
+    enum CodingKeys: String, CodingKey {
+        case modesUsed, weekdays, sessionsCompleted, perfectRounds, nightOwl, earlyBird
+        case afterWork, weekend, comeback, selfCorrection, ghostHour, fridayThe13th
+        case newYearsEve, allModesOneDay, doublePack, serienComeback, hangulDay, fullMoon, sprachmix
+        case comebackCount, searchUsed, languageChanged, widgetUsed, groupCreated, weeklyGoalReached
+        case seasons, sameMode, sameModeMode, nightNights, oneWordDays, flawlessRun
+        case currentDay, modesToday, sessionsToday, newWordsToday, groupsToday, flawlessToday
+        case oneWordCountedToday, oneWordPreRun, oneWordPreLastDay
+        case lastSessionDay, lastStreakValue, hadBreak, preBreakStreak
+    }
+
     /// Meteorologische Jahreszeit (Nordhalbkugel) für einen Monat 1…12.
     static func season(forMonth month: Int) -> Int {
         switch month {
