@@ -375,6 +375,36 @@ final class AchievementTests: XCTestCase {
         }
     }
 
+    /// Regression: ein Speicherstand aus einer älteren App-Version (JSON ohne ein später
+    /// ergänztes Feld) darf NICHT den gesamten Fortschritt auf den leeren Legacy-Fallback
+    /// zurücksetzen. Das synthetisierte `Codable` würde hier `keyNotFound` werfen –
+    /// abgefangen durch den fehlertoleranten `init(from:)`.
+    func testProgressDecodesWhenNewerFieldIsMissing() throws {
+        let cal = Self.utc
+        var p = AchievementProgress()
+        p.recordSession(modes: [.review, .writing], date: date(2024, 1, 10, 2), isPerfect: true,
+                        isFlawless: true, newlyLearned: 1, currentStreak: 1, calendar: cal)
+        XCTAssertTrue(p.flawlessToday) // wird gleich aus dem JSON entfernt
+
+        // JSON eines älteren Builds simulieren: das jüngste Feld fehlt komplett.
+        let full = try JSONEncoder().encode(p)
+        var obj = try XCTUnwrap(try JSONSerialization.jsonObject(with: full) as? [String: Any])
+        obj.removeValue(forKey: "flawlessToday")
+        let trimmed = try JSONSerialization.data(withJSONObject: obj)
+
+        withCleanStore {
+            AppGroup.defaults.set(trimmed, forKey: AchievementKeys.progress)
+            let loaded = AchievementStore.progress
+            // Bestehender Fortschritt überlebt (kein Reset auf den leeren Legacy-Zustand).
+            XCTAssertEqual(loaded.sessionsCompleted, p.sessionsCompleted)
+            XCTAssertEqual(loaded.modesUsed, p.modesUsed)
+            XCTAssertEqual(loaded.flawlessRun.best, p.flawlessRun.best)
+            XCTAssertNotEqual(loaded, AchievementProgress()) // definitiv nicht der Default
+            // Das fehlende Feld nimmt seinen Property-Default an.
+            XCTAssertFalse(loaded.flawlessToday)
+        }
+    }
+
     func testLegacyProgressMigratesFromScalarKeys() {
         withCleanStore {
             let d = AppGroup.defaults

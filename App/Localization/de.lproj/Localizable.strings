@@ -212,6 +212,14 @@
 "home.goal.progress" = "%d / %d";
 "home.goal.reached" = "Ziel erreicht 🏁";
 "home.goal.edit.hint" = "Tippen, um dein Ziel anzupassen";
+/* Tages-Mini-Challenge (home.challenge.streak → Plural in Localizable.stringsdict) */
+"home.challenge.title" = "Tages-Challenge";
+"home.challenge.done" = "Geschafft! 🎉";
+"dailyChallenge.modes.title" = "Heute %d verschiedene Modi nutzen";
+"dailyChallenge.sessions.title" = "Heute %d Runden abschließen";
+"dailyChallenge.newWords.title" = "Heute %d neue Wörter lernen";
+"dailyChallenge.groups.title" = "Heute Wörter aus %d Gruppen üben";
+"dailyChallenge.flawless.title" = "Heute eine fehlerfreie Runde schaffen";
 "streak.detail.title" = "Streak & Joker";
 "streak.detail.current" = "Aktuell";
 "streak.detail.longest" = "Rekord";
@@ -409,5 +417,9 @@
 "ach.hangulDay.detail" = "Am 9. Oktober (한글날) geübt";
 "ach.mondSchein.title" = "Mondschein";
 "ach.mondSchein.detail" = "An einem Vollmond-Abend geübt";
+"ach.challengeAce.title" = "Challenge-Ass";
+"ach.challengeAce.detail" = "10 Tages-Challenges erfüllt";
+"ach.challengeMaster.title" = "Challenge-Meister";
+"ach.challengeMaster.detail" = "30 Tages-Challenges erfüllt";
 "ach.vollendung.title" = "Vollendung";
 "ach.vollendung.detail" = "Alle anderen Badges freigeschaltet";

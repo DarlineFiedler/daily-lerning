@@ -122,6 +122,8 @@ struct AchievementMetrics: Equatable {
     var oneWordDayStreak = 0
     var flawlessRoundStreak = 0
     var comebackCount = 0
+    // Anzahl insgesamt erfüllter Tages-Challenges (Meta-Anknüpfung).
+    var dailyChallengesCompleted = 0
     // Meta-Abschluss: freigeschaltete vs. gesamte (nicht-Meta-)Badges.
     var unlockedBadges = 0
     var totalBadges = 0
@@ -133,6 +135,7 @@ struct AchievementMetrics: Equatable {
                      groupMastered: Bool = false,
                      allGroupsMastered: Bool = false,
                      everUsedJoker: Bool = false,
+                     dailyChallengesCompleted: Int = 0,
                      unlockedIDs: Set<String> = [],
                      catalog: [Achievement] = AchievementCatalog.all) -> AchievementMetrics {
         // Für das Meta-Badge zählen alle Badges außer dem Meta-Badge selbst.
@@ -177,6 +180,7 @@ struct AchievementMetrics: Equatable {
             oneWordDayStreak: progress.oneWordDays.best,
             flawlessRoundStreak: progress.flawlessRun.best,
             comebackCount: progress.comebackCount,
+            dailyChallengesCompleted: dailyChallengesCompleted,
             unlockedBadges: nonMeta.filter { unlockedIDs.contains($0.id) }.count,
             totalBadges: nonMeta.count
         )
@@ -272,6 +276,7 @@ struct AchievementProgress: Equatable, Codable {
     var sessionsToday = 0
     var newWordsToday = 0
     var groupsToday: Set<String> = [] // an diesem Tag geübte Vokabelgruppen (für „Sprachmix")
+    var flawlessToday = false // heute mindestens eine fehlerfreie Runde geschafft (für Tages-Challenge)
     // Rollback-Puffer für „genau 1 Wort/Tag", falls später ein 2. Wort dazukommt.
     var oneWordCountedToday = false
     var oneWordPreRun = 0
@@ -282,6 +287,20 @@ struct AchievementProgress: Equatable, Codable {
     var lastStreakValue = 0
     var hadBreak = false
     var preBreakStreak = 0
+
+    /// Explizit (statt synthetisiert `private`), damit der fehlertolerante `init(from:)`
+    /// in `AchievementProgress+Codable.swift` darauf zugreifen kann. Muss ALLE gespeicherten
+    /// Properties enthalten – ein fehlender Fall würde das Feld aus der Persistenz kippen.
+    enum CodingKeys: String, CodingKey {
+        case modesUsed, weekdays, sessionsCompleted, perfectRounds, nightOwl, earlyBird
+        case afterWork, weekend, comeback, selfCorrection, ghostHour, fridayThe13th
+        case newYearsEve, allModesOneDay, doublePack, serienComeback, hangulDay, fullMoon, sprachmix
+        case comebackCount, searchUsed, languageChanged, widgetUsed, groupCreated, weeklyGoalReached
+        case seasons, sameMode, sameModeMode, nightNights, oneWordDays, flawlessRun
+        case currentDay, modesToday, sessionsToday, newWordsToday, groupsToday, flawlessToday
+        case oneWordCountedToday, oneWordPreRun, oneWordPreLastDay
+        case lastSessionDay, lastStreakValue, hadBreak, preBreakStreak
+    }
 
     /// Meteorologische Jahreszeit (Nordhalbkugel) für einen Monat 1…12.
     static func season(forMonth month: Int) -> Int {
@@ -323,6 +342,7 @@ struct AchievementProgress: Equatable, Codable {
         recordSpecialDates(comps: comps)
         recordSeries(modeRaws: modeRaws, day: day, hour: hour, isFlawless: isFlawless, calendar: calendar)
         recordDayBuffer(modeRaws: modeRaws, day: day, newlyLearned: newlyLearned, groups: groups, calendar: calendar)
+        if isFlawless { flawlessToday = true } // nach dem Tages-Rollover (setzt flawlessToday zurück) setzen
         recordComeback(day: day, currentStreak: currentStreak, calendar: calendar)
     }
 
@@ -382,6 +402,7 @@ struct AchievementProgress: Equatable, Codable {
             sessionsToday = 0
             newWordsToday = 0
             groupsToday = []
+            flawlessToday = false
             oneWordCountedToday = false
         }
         modesToday.formUnion(modeRaws)
@@ -522,6 +543,10 @@ enum AchievementCatalog {
         Achievement(id: "widgetActive", category: .fun, emoji: "📱", requirement: .flag(\.widgetUsed)),
         Achievement(id: "hangulDay", category: .fun, emoji: "🎊", requirement: .flag(\.hangulDay)),
         Achievement(id: "mondSchein", category: .fun, emoji: "🌕", requirement: .flag(\.fullMoon)),
+
+        // --- Erweiterung: Tages-Challenges ---
+        Achievement(id: "challengeAce", category: .sessions, emoji: "🎯", requirement: .count(\.dailyChallengesCompleted, 10)),
+        Achievement(id: "challengeMaster", category: .sessions, emoji: "🎯👑", requirement: .count(\.dailyChallengesCompleted, 30)),
 
         // --- Meta: 100 % ---
         Achievement(id: "vollendung", category: .fun, emoji: "🏆✨", requirement: .meta)

@@ -22,6 +22,7 @@ enum AchievementService {
                                        groupMastered: hasMasteredGroup(context: context),
                                        allGroupsMastered: hasMasteredAllGroups(context: context),
                                        everUsedJoker: !StreakStore.jokerUses.isEmpty,
+                                       dailyChallengesCompleted: DailyChallengeStore.totalCompleted,
                                        unlockedIDs: AchievementStore.unlockedIDs)
     }
 
@@ -80,6 +81,9 @@ enum AchievementService {
                                currentStreak: currentStreak,
                                groups: groups)
         AchievementStore.progress = progress
+        // Tages-Challenge gegen den frischen Tagespuffer prüfen und ggf. verbuchen –
+        // vor der Auswertung, damit das Meta-Badge im selben Aufruf freischalten kann.
+        DailyChallengeStore.registerCompletionIfNeeded(progress: progress, on: date)
 
         let unlocked = AchievementEvaluator.newlyUnlocked(metrics: metrics(context: context, progress: progress),
                                                           alreadyUnlocked: AchievementStore.unlockedIDs)

@@ -212,6 +212,14 @@
 "home.goal.progress" = "%d / %d";
 "home.goal.reached" = "목표 달성 🏁";
 "home.goal.edit.hint" = "목표를 조정하려면 탭하세요";
+/* 오늘의 미니 도전 (home.challenge.streak → Localizable.stringsdict의 복수형) */
+"home.challenge.title" = "오늘의 도전";
+"home.challenge.done" = "완료! 🎉";
+"dailyChallenge.modes.title" = "오늘 %d가지 모드 사용하기";
+"dailyChallenge.sessions.title" = "오늘 %d회 학습 완료하기";
+"dailyChallenge.newWords.title" = "오늘 새 단어 %d개 배우기";
+"dailyChallenge.groups.title" = "오늘 %d개 그룹의 단어 연습하기";
+"dailyChallenge.flawless.title" = "오늘 완벽한 한 판 달성하기";
 "streak.detail.title" = "연속 학습 & 프리즈";
 "streak.detail.current" = "현재";
 "streak.detail.longest" = "최고 기록";
@@ -409,5 +417,9 @@
 "ach.hangulDay.detail" = "10월 9일(한글날)에 연습";
 "ach.mondSchein.title" = "달빛";
 "ach.mondSchein.detail" = "보름달 밤에 연습";
+"ach.challengeAce.title" = "도전 에이스";
+"ach.challengeAce.detail" = "일일 도전 10회 완료";
+"ach.challengeMaster.title" = "도전 마스터";
+"ach.challengeMaster.detail" = "일일 도전 30회 완료";
 "ach.vollendung.title" = "완성";
 "ach.vollendung.detail" = "다른 모든 배지 획득";
