@@ -93,7 +93,13 @@ jobs:
       # erzeugt einen neuen Key (⇒ betroffene Teile werden neu gebaut), unveränderte
       # Sourcen treffen den warmen Cache inkl. Clang-Modul-Cache. restore-keys erlaubt
       # partielle Wiederverwendung bei Cache-Miss.
+      #
+      # NUR auf Pull-Requests: `main` baut bewusst immer clean, damit ein
+      # inkrementeller Build aus gecachter DerivedData keine neu eingeführte
+      # Warnung verschluckt (würde SWIFT_TREAT_WARNINGS_AS_ERRORS aushebeln).
+      # main bleibt so die verlässliche Integritäts-Baseline.
       - name: Cache DerivedData
+        if: github.event_name == 'pull_request'
         uses: actions/cache@v4
         with:
           path: build/DerivedData
@@ -121,34 +127,27 @@ jobs:
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
       # Sim-Boot ist unabhängig vom Kompilieren – im Hintergrund starten, damit er
-      # hinter dem Build verschwindet statt seriell davor.
+      # schon läuft, wenn xcodebuild ihn braucht (spart den seriellen Boot).
       - name: Simulator im Hintergrund booten
         run: xcrun simctl boot "${{ steps.sim.outputs.udid }}" || true
 
-      - name: Build for testing (Warnings = Errors)
+      # Ein einziger `xcodebuild test`: Build + Tests in einem Schritt. Bewusst OHNE
+      # -parallel-testing-enabled – das würde für die schnelle, sekundenkurze Suite
+      # zusätzliche Simulator-Klone booten (Minuten Overhead ohne Nutzen). Der Gewinn
+      # kommt aus dem warmen DerivedData-Cache + den Speed-Flags, nicht aus Parallelität.
+      - name: Build & run unit tests (mit Coverage, Warnings = Errors)
         run: |
-          xcodebuild build-for-testing \
+          xcodebuild test \
             -project DailyHangul.xcodeproj \
             -scheme DailyHangul \
             -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
             -derivedDataPath build/DerivedData \
             -enableCodeCoverage YES \
+            -resultBundlePath "build/Test.xcresult" \
             CODE_SIGNING_ALLOWED=NO \
             SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
             COMPILER_INDEX_STORE_ENABLE=NO \
             ONLY_ACTIVE_ARCH=YES
-
-      - name: Run tests (ohne erneuten Build, mit Coverage)
-        run: |
-          xcodebuild test-without-building \
-            -project DailyHangul.xcodeproj \
-            -scheme DailyHangul \
-            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
-            -derivedDataPath build/DerivedData \
-            -enableCodeCoverage YES \
-            -parallel-testing-enabled YES \
-            -resultBundlePath "build/Test.xcresult" \
-            CODE_SIGNING_ALLOWED=NO
 
       - name: Coverage-Gate (Logik-Schicht ≥ Schwelle)
         id: coverage
