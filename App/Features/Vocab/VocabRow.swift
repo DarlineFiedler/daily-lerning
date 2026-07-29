@@ -72,7 +72,6 @@ struct VocabRow: View {
     private func toggleWidget() {
         vocab.includeInWidget.toggle()
         context.saveOrLog()
-        WidgetSnapshotWriter.refresh(context: context)
-        BadgeUpdater.refresh(context: context)
+        AppContentRefresh.afterVocabChange(context: context)
     }
 }

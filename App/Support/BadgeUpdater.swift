@@ -15,16 +15,21 @@ enum BadgeUpdater {
 
     /// Berechnet die offene Wortzahl neu und aktualisiert das Badge.
     /// Ist das Feature deaktiviert, wird das Badge auf 0 gesetzt (entfernt).
-    static func refresh(context: ModelContext) {
+    /// Wörter aus archivierten Gruppen zählen nicht als „offen" – die Gruppe ist
+    /// pausiert und taucht auch sonst nicht mehr in den aktiven Flächen auf; daher
+    /// wird bereits eine gefilterte, aktive Wortliste erwartet.
+    static func refresh(activeVocabs: [Vocab]) {
         guard AppGroup.defaults.bool(forKey: BadgeKeys.enabled) else {
             setBadge(0)
             return
         }
-        // Wörter aus archivierten Gruppen zählen nicht als „offen" – die Gruppe ist
-        // pausiert und taucht auch sonst nicht mehr in den aktiven Flächen auf.
-        let all = (try? context.fetch(FetchDescriptor<Vocab>())) ?? []
-        let active = all.filter { $0.group?.isArchived != true }
-        setBadge(DailyPlan.openWordCount(from: active))
+        setBadge(DailyPlan.openWordCount(from: activeVocabs))
+    }
+
+    /// Convenience für Aufrufer ohne bereits geladene Wortliste (lädt sie selbst).
+    /// Der Vokabel-Änderungspfad teilt sich den Fetch über [[AppContentRefresh]].
+    static func refresh(context: ModelContext) {
+        refresh(activeVocabs: AppContentRefresh.activeVocabs(context: context))
     }
 
     /// Setzt das App-Icon-Badge. Fehlt die Berechtigung, schlägt der Aufruf still

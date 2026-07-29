@@ -147,8 +147,7 @@ struct VocabImportView: View {
 
         VocabImporter.importRows(rows, intoGroupNamed: groupName, context: context, existingGroups: groups)
         context.saveOrLog()
-        WidgetSnapshotWriter.refresh(context: context)
-        BadgeUpdater.refresh(context: context)
+        AppContentRefresh.afterVocabChange(context: context)
         dismiss()
     }
 }
