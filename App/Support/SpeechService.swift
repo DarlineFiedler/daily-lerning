@@ -1,4 +1,5 @@
 import AVFoundation
+import UIKit
 
 /// Sprachausgabe (Text-to-Speech) für Vokabeln – komplett offline via
 /// `AVSpeechSynthesizer`, keine externen Abhängigkeiten. Standardsprache Koreanisch.
@@ -13,10 +14,38 @@ final class SpeechService: NSObject {
         synthesizer.delegate = self
     }
 
+    /// Cache der Stimmen-Verfügbarkeit je Sprachcode. `AVSpeechSynthesisVoice(language:)`
+    /// enumeriert jedes Mal alle Stimmen. Ohne Cache lief das u.a. beim Session-Aufbau und
+    /// – teurer – in jedem Render von `SpeakButton`. `NSLock`, weil `isAvailable`
+    /// `nonisolated` ist. Der Cache wird beim Aktivwerden der App geleert (siehe
+    /// `cacheInvalidation`), damit eine in den System-Einstellungen nachinstallierte
+    /// Stimme ohne Neustart erkannt wird.
+    nonisolated(unsafe) private static var availabilityCache: [String: Bool] = [:]
+    nonisolated private static let availabilityLock = NSLock()
+
+    /// Registriert einmalig einen Beobachter, der den Cache beim Aktivwerden der App leert.
+    /// `static let` ⇒ genau einmal ausgewertet und thread-safe; die Referenz in
+    /// `isAvailable` löst diese Auswertung beim ersten Aufruf aus.
+    nonisolated private static let cacheInvalidation: Void = {
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification, object: nil, queue: nil
+        ) { _ in
+            availabilityLock.lock()
+            availabilityCache.removeAll()
+            availabilityLock.unlock()
+        }
+    }()
+
     /// Ist für die Sprache eine Stimme installiert? Wenn nein, sollte der Speaker-Button
-    /// ausgeblendet/deaktiviert werden.
+    /// ausgeblendet/deaktiviert werden. Ergebnis wird je Sprachcode zwischengespeichert.
     nonisolated static func isAvailable(language: String = "ko-KR") -> Bool {
-        AVSpeechSynthesisVoice(language: language) != nil
+        _ = cacheInvalidation // einmalige Registrierung des Invalidierungs-Beobachters
+        availabilityLock.lock()
+        defer { availabilityLock.unlock() }
+        if let cached = availabilityCache[language] { return cached }
+        let available = AVSpeechSynthesisVoice(language: language) != nil
+        availabilityCache[language] = available
+        return available
     }
 
     /// Spricht den Text. Unterbricht eine laufende Ausgabe. Duckt kurz laufende

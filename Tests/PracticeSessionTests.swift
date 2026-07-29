@@ -211,6 +211,25 @@ final class PracticeSessionTests: XCTestCase {
         XCTAssertEqual(Set(answers).count, 4) // eindeutige Antwortseite, keine Duplikate
     }
 
+    /// Große Runde mit großem Distraktor-Pool: jede Karte muss weiterhin 4 Optionen
+    /// mit eindeutiger Antwortseite (inkl. Zielwort) liefern. Sichert das Verhalten
+    /// nach der Umstellung auf vorberechnete, faul ausgewertete Distraktor-Tiers.
+    func testChoicesRemainValidForLargeSession() {
+        let group = makeGroup("G")
+        let vocabs = makeVocabs(200, group: group)
+        let extra = makeVocabs(300, group: makeGroup("H"), prefix: "x")
+        let practice = PracticeSession(
+            vocabs: vocabs, distractorPool: vocabs + extra,
+            config: PracticeConfig(modes: [.multipleChoice]), context: context
+        )
+        XCTAssertEqual(practice.items.count, 200)
+        for item in practice.items {
+            XCTAssertEqual(item.choices.count, 4)
+            XCTAssertEqual(Set(item.choices.map(\.meaning)).count, 4) // eindeutige Antwortseite
+            XCTAssertTrue(item.choices.contains { $0.id == item.vocab.id }) // Zielwort dabei
+        }
+    }
+
     func testResolvedModesUsesExplicitModesWhenSet() {
         let config = PracticeConfig(modes: [.review, .writing])
         XCTAssertEqual(Set(config.resolvedModes), [.review, .writing])
