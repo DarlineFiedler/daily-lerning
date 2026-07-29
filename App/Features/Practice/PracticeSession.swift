@@ -52,6 +52,12 @@ final class PracticeSession {
     private var newlyLearnedCount = 0
     /// Verhindert, dass die Runden-Auswertung (Achievements) mehrfach läuft.
     private var didFinalize = false
+    /// Streak-Aktivität wird pro Session nur einmal verbucht (ist ohnehin idempotent
+    /// pro Kalendertag) – spart den vollen UserDefaults-load+save je Folgekarte.
+    private var didRegisterStreak = false
+    /// Wochen-Log der laufenden Session: im Speicher gesammelt und gebündelt persistiert
+    /// (statt den ganzen Log je Karte zu de/encoden). Lazy beim ersten Ergebnis geladen.
+    private var weeklyActivity: WeeklyActivity?
 
     init(vocabs: [Vocab], distractorPool: [Vocab], config: PracticeConfig, context: ModelContext) {
         self.context = context
@@ -110,10 +116,19 @@ final class PracticeSession {
             wrongCount += 1
             missedVocabs.append(vocab)
         }
-        StreakStore.registerActivity() // idempotent pro Kalendertag
+        // Streak nur einmal je Session verbuchen; die Idempotenz pro Kalendertag macht
+        // weitere load+save-Runden je Karte überflüssig. Schon der erste Treffer
+        // persistiert die Aktivität (überlebt einen früh abgebrochenen Durchgang).
+        if !didRegisterStreak {
+            StreakStore.registerActivity() // idempotent pro Kalendertag
+            didRegisterStreak = true
+        }
         // Wochenrückblick füttern: distinct geübtes Wort + evtl. Erstaufstieg auf „Gelernt".
+        // Nur im Speicher aggregieren – die Persistenz läuft gebündelt über `flushProgress()`.
         let becameLearned = before != .learned && vocab.status == .learned
-        WeeklyReviewStore.record(wordID: vocab.id, becameLearned: becameLearned, correct: correct)
+        let log = weeklyActivity ?? WeeklyReviewStore.loadActivity()
+        weeklyActivity = log.recording(wordID: vocab.id, becameLearned: becameLearned,
+                                       correct: correct, on: .now, calendar: .current)
         context.saveOrLog()
         index += 1
         if isFinished { finalizeRound() }
@@ -124,6 +139,7 @@ final class PracticeSession {
     private func finalizeRound() {
         guard !didFinalize else { return }
         didFinalize = true
+        flushProgress() // gesammelten Wochen-Log am Rundenende persistieren
         let now = Date.now
         // Fehlerfreie Runde mit genug Wörtern → „Makellos". `isFlawless` gilt für die
         // Fehlerfrei-Serie schon ohne Mindestwortzahl.
@@ -146,6 +162,15 @@ final class PracticeSession {
         // Streak & Ziel-Fortschritt haben sich geändert → gezielt nur das Streak-Widget
         // neu laden (das Wort-Widget hängt nicht am Streak).
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.streak)
+    }
+
+    /// Persistiert den in dieser Session gesammelten Wochen-Log. Wird am Rundenende
+    /// und beim Verlassen der Ansicht (Schließen/Hintergrund) aufgerufen, damit der
+    /// Fortschritt auch einen früh abgebrochenen Durchgang übersteht. No-op, solange
+    /// nichts gesammelt wurde; wiederholte Aufrufe schreiben nur denselben Stand.
+    func flushProgress() {
+        guard let weeklyActivity else { return }
+        WeeklyReviewStore.saveActivity(weeklyActivity)
     }
 
     /// Startet denselben Satz Wörter erneut.

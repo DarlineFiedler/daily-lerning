@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Führt durch einen Lernvorgang und zeigt je Wort die passende Modus-View.
 struct PracticeContainerView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @State var session: PracticeSession
     /// Beendet den gesamten Lernvorgang (schließt das Practice-Sheet).
     var onClose: () -> Void
@@ -56,6 +57,13 @@ struct PracticeContainerView: View {
         .onChange(of: session.index) {
             guard let store = sessionStore else { return }
             if session.isFinished { store.complete(session) } else { store.refresh(session) }
+        }
+        // Gesammelten Wochen-Log sichern, wenn die Runde vorzeitig verlassen wird
+        // (Schließen/Swipe-Dismiss) oder die App in den Hintergrund geht (dann feuert
+        // `onDisappear` nicht). Am Rundenende flusht die Session selbst.
+        .onDisappear { session.flushProgress() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { session.flushProgress() }
         }
     }
 
