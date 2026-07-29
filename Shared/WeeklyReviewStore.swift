@@ -276,6 +276,16 @@ enum WeeklyReviewStore {
         }
     }
 
+    // MARK: - Batch (Übungs-Hotpath)
+
+    /// Lädt den persistierten Log für Aufrufer, die mehrere Buchungen im Speicher
+    /// sammeln und gebündelt via `saveActivity(_:)` zurückschreiben – so entfällt der
+    /// volle JSON-Decode/Encode je Übungsantwort.
+    static func loadActivity() -> WeeklyActivity { load() }
+
+    /// Schreibt einen im Speicher gesammelten Log gebündelt zurück.
+    static func saveActivity(_ activity: WeeklyActivity) { save(activity) }
+
     // MARK: - Laden / Speichern
 
     private static func load() -> WeeklyActivity {
