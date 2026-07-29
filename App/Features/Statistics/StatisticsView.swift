@@ -6,18 +6,6 @@ struct StatisticsView: View {
     @Query private var vocabs: [Vocab]
     @Query(sort: \VocabGroup.sortOrder) private var groups: [VocabGroup]
 
-    private var overallCounts: [LearningStatus: Int] {
-        Dictionary(uniqueKeysWithValues: LearningStatus.allCases.map { status in
-            (status, vocabs.filter { $0.status == status }.count)
-        })
-    }
-
-    private var learnedCount: Int { overallCounts[.learned] ?? 0 }
-    private var rate: Int {
-        guard !vocabs.isEmpty else { return 0 }
-        return Int(round(Double(learnedCount) / Double(vocabs.count) * 100))
-    }
-
     @State private var showAchievements = false
 
     var body: some View {
@@ -26,9 +14,14 @@ struct StatisticsView: View {
                 if vocabs.isEmpty {
                     emptyState
                 } else {
+                    // Status-Verteilung einmal je Render berechnen, statt sie in
+                    // mehreren computed properties erneut zu filtern.
+                    let counts = vocabs.statusCounts()
+                    let learned = counts[.learned] ?? 0
+                    let rate = Int(round(Double(learned) / Double(vocabs.count) * 100))
                     ScrollView {
                         VStack(alignment: .leading, spacing: Theme.Spacing.l) {
-                            overallSection
+                            overallSection(counts: counts, learned: learned, rate: rate)
                             trendSection
                             heatmapSection
                             if !groups.isEmpty { byGroupSection }
@@ -54,25 +47,25 @@ struct StatisticsView: View {
 
     // MARK: - Gesamt
 
-    private var overallSection: some View {
+    private func overallSection(counts: [LearningStatus: Int], learned: Int, rate: Int) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             SectionHeader(L("stats.overall"))
             HStack(spacing: Theme.Spacing.s) {
                 StatTile(value: "\(vocabs.count)", label: L("stats.total"),
                          systemImage: "text.book.closed.fill", tint: Theme.brandStart)
-                StatTile(value: "\(learnedCount)", label: L("status.learned"),
+                StatTile(value: "\(learned)", label: L("status.learned"),
                          systemImage: "checkmark.seal.fill", tint: LearningStatus.learned.color)
                 StatTile(value: "\(rate)%", label: L("home.stat.rate"),
                          systemImage: "chart.pie.fill", tint: Theme.brandEnd)
             }
             VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-                StatusDistributionBar(counts: overallCounts, height: 14)
+                StatusDistributionBar(counts: counts, height: 14)
                 ForEach(LearningStatus.allCases) { status in
                     HStack {
                         StatusDot(status: status, size: 12)
                         Text(L(status.titleKey)).font(.appBody)
                         Spacer()
-                        Text("\(overallCounts[status] ?? 0)")
+                        Text("\(counts[status] ?? 0)")
                             .font(.appBody.weight(.semibold))
                             .foregroundStyle(.secondary)
                             .monospacedDigit()
@@ -130,7 +123,7 @@ private struct GroupStatRow: View {
     let group: VocabGroup
 
     private var counts: [LearningStatus: Int] {
-        Dictionary(uniqueKeysWithValues: LearningStatus.allCases.map { ($0, group.count(of: $0)) })
+        group.vocabs.statusCounts()
     }
 
     var body: some View {

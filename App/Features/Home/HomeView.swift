@@ -34,13 +34,9 @@ struct HomeView: View {
     private var activeVocabs: [Vocab] { vocabs.filter { $0.group?.isArchived != true } }
     private var activeGroups: [VocabGroup] { groups.filter { !$0.isArchived } }
 
-    private var learnedCount: Int { activeVocabs.filter { $0.status == .learned }.count }
-    /// Heutiger Tagesplan (lernen / wiederholen / erledigt) über alle aktiven Gruppen.
-    private var plan: DailyPlan.Result { DailyPlan.today(from: activeVocabs) }
-    /// Aktueller Tages-Streak (0, wenn abgelaufen).
+    /// Aktueller Tages-Streak (0, wenn abgelaufen). Für die Streak-Detail-Sheet;
+    /// im Dashboard-Hot-Path wird der Wert einmal in `scrollContent` gecacht.
     private var streak: Int { StreakStore.displayStreak() }
-    /// Rückblick auf die letzte abgeschlossene Kalenderwoche (für die Wochen-Karte).
-    private var weeklyReview: WeeklyReview { WeeklyReviewStore.currentReview() }
     /// Verfügbare Streak-Freeze-Joker.
     private var jokers: Int { StreakStore.availableJokers() }
     /// Gewählte Zielart (geübte vs. neu gelernte Wörter).
@@ -50,18 +46,6 @@ struct HomeView: View {
     private var dayDone: Int { WeeklyReviewStore.dayProgress(for: goalMetric) }
     /// Ist überhaupt ein Ziel gesetzt (Tages- oder Wochenziel)?
     private var hasGoal: Bool { weeklyGoal > 0 || dailyGoal > 0 }
-    private var rate: Int {
-        guard !activeVocabs.isEmpty else { return 0 }
-        return Int(round(Double(learnedCount) / Double(activeVocabs.count) * 100))
-    }
-    private var overallCounts: [LearningStatus: Int] {
-        Dictionary(uniqueKeysWithValues: LearningStatus.allCases.map { status in
-            (status, activeVocabs.filter { $0.status == status }.count)
-        })
-    }
-
-    /// Wort des Tages – stabil pro Kalendertag, bevorzugt Wörter im Lernprozess.
-    private var wordOfDay: Vocab? { WordOfDay.pick(from: activeVocabs) }
 
     /// Empfohlene Gruppe zum Üben: die mit den meisten noch nicht gelernten Wörtern.
     private var recommendedGroup: VocabGroup? {
@@ -72,25 +56,7 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: Theme.Spacing.l) {
-                    header
-                    if activeVocabs.isEmpty {
-                        emptyState
-                    } else {
-                        todayCard
-                        dailyChallengeCard
-                        if weeklyReview.hasActivity { weeklyReviewCard }
-                        if hasGoal { goalCard }
-                        if let word = wordOfDay { wordOfDayCard(word) }
-                        progressSection
-                        startPracticeButton
-                        groupsSection
-                    }
-                }
-                .padding(Theme.Spacing.m)
-                .padding(.bottom, Theme.Spacing.xl)
-            }
+            scrollContent
             .background(Theme.background.ignoresSafeArea())
             .navigationBarHidden(true)
             .overlay(alignment: .top) {
@@ -123,9 +89,41 @@ struct HomeView: View {
         }
     }
 
+    /// Dashboard-Inhalt. Die teuren Werte (aktive Wörter, Status-Verteilung,
+    /// Tagesplan, Wochenrückblick, Streak/Joker) werden hier **einmal** je Render
+    /// berechnet und in die Teil-Views durchgereicht – statt sie in mehreren
+    /// computed properties erneut zu filtern/dekodieren.
+    private var scrollContent: some View {
+        let active = activeVocabs
+        let streak = StreakStore.displayStreak()
+        let jokers = StreakStore.availableJokers()
+        return ScrollView {
+            VStack(spacing: Theme.Spacing.l) {
+                header(streak: streak, jokers: jokers)
+                if active.isEmpty {
+                    emptyState
+                } else {
+                    let counts = active.statusCounts()
+                    let plan = DailyPlan.today(from: active)
+                    let review = WeeklyReviewStore.currentReview()
+                    todayCard(plan)
+                    dailyChallengeCard
+                    if review.hasActivity { weeklyReviewCard(review) }
+                    if hasGoal { goalCard }
+                    if let word = WordOfDay.pick(from: active) { wordOfDayCard(word) }
+                    progressSection(active: active, counts: counts)
+                    startPracticeButton
+                    groupsSection
+                }
+            }
+            .padding(Theme.Spacing.m)
+            .padding(.bottom, Theme.Spacing.xl)
+        }
+    }
+
     // MARK: - Header
 
-    private var header: some View {
+    private func header(streak: Int, jokers: Int) -> some View {
         GradientCard(gradient: Theme.brandGradient, radius: 28, padding: Theme.Spacing.l) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .top) {
@@ -133,7 +131,7 @@ struct HomeView: View {
                         .font(.appTitle3)
                         .opacity(0.9)
                     Spacer()
-                    if streak > 0 || jokers > 0 { streakCluster }
+                    if streak > 0 || jokers > 0 { streakCluster(streak: streak, jokers: jokers) }
                 }
                 Text(greeting)
                     .font(.appLargeTitle)
@@ -146,11 +144,11 @@ struct HomeView: View {
     }
 
     /// Tappbare Badge-Gruppe (Streak + Joker) – öffnet die Detailansicht.
-    private var streakCluster: some View {
+    private func streakCluster(streak: Int, jokers: Int) -> some View {
         Button { showStreakDetail = true } label: {
             HStack(spacing: Theme.Spacing.xs) {
-                if streak > 0 { streakBadge }
-                if jokers > 0 { jokerBadge }
+                if streak > 0 { streakBadge(streak) }
+                if jokers > 0 { jokerBadge(jokers) }
             }
         }
         .buttonStyle(.plain)
@@ -158,12 +156,12 @@ struct HomeView: View {
         .accessibilityHint(L("home.streak.detail.hint"))
     }
 
-    private var streakBadge: some View {
+    private func streakBadge(_ streak: Int) -> some View {
         badge(L("home.streak", streak), systemImage: "flame.fill")
             .accessibilityLabel(L("home.streak.a11y", streak))
     }
 
-    private var jokerBadge: some View {
+    private func jokerBadge(_ jokers: Int) -> some View {
         badge("\(jokers)", systemImage: "snowflake")
             .accessibilityLabel(L("home.jokers.a11y", jokers))
     }
@@ -179,7 +177,7 @@ struct HomeView: View {
     // MARK: - Heutiger Tagesplan
 
     @ViewBuilder
-    private var todayCard: some View {
+    private func todayCard(_ plan: DailyPlan.Result) -> some View {
         switch plan.kind {
         case .learn:
             todayActionCard(icon: "bolt.heart.fill",
@@ -284,9 +282,8 @@ struct HomeView: View {
     // MARK: - Wochenrückblick
 
     /// Kompakte Karte mit den Zahlen der letzten abgeschlossenen Woche.
-    private var weeklyReviewCard: some View {
-        let review = weeklyReview
-        return VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+    private func weeklyReviewCard(_ review: WeeklyReview) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             HStack(alignment: .firstTextBaseline) {
                 Label(L("home.weekly.title"), systemImage: "calendar")
                     .font(.appCaption.weight(.semibold))
@@ -340,18 +337,20 @@ struct HomeView: View {
 
     // MARK: - Fortschritt
 
-    private var progressSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+    private func progressSection(active: [Vocab], counts: [LearningStatus: Int]) -> some View {
+        let learned = counts[.learned] ?? 0
+        let rate = active.isEmpty ? 0 : Int(round(Double(learned) / Double(active.count) * 100))
+        return VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             SectionHeader(L("home.progress"))
             HStack(spacing: Theme.Spacing.s) {
-                StatTile(value: "\(activeVocabs.count)", label: L("home.stat.total"),
+                StatTile(value: "\(active.count)", label: L("home.stat.total"),
                          systemImage: "text.book.closed.fill", tint: Theme.brandStart)
-                StatTile(value: "\(learnedCount)", label: L("home.stat.learned"),
+                StatTile(value: "\(learned)", label: L("home.stat.learned"),
                          systemImage: "checkmark.seal.fill", tint: LearningStatus.learned.color)
                 StatTile(value: "\(rate)%", label: L("home.stat.rate"),
                          systemImage: "chart.pie.fill", tint: Theme.brandEnd)
             }
-            StatusDistributionBar(counts: overallCounts, height: 14)
+            StatusDistributionBar(counts: counts, height: 14)
                 .padding(.top, Theme.Spacing.xs)
         }
     }
