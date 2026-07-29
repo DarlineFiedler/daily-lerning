@@ -263,8 +263,7 @@ struct SettingsView: View {
     }
 
     private func refreshWidget() {
-        WidgetSnapshotWriter.refresh(context: context)
-        BadgeUpdater.refresh(context: context)
+        AppContentRefresh.afterVocabChange(context: context)
     }
 
     // MARK: - Sicherung
@@ -293,8 +292,7 @@ struct SettingsView: View {
             )
         }
         context.saveOrLog()
-        WidgetSnapshotWriter.refresh(context: context)
-        BadgeUpdater.refresh(context: context)
+        AppContentRefresh.afterVocabChange(context: context)
         packMessage = L("wordpacks.result", total.added, total.updated, total.skipped)
     }
 
@@ -317,8 +315,7 @@ struct SettingsView: View {
             return
         }
         backup.apply(into: context)
-        WidgetSnapshotWriter.refresh(context: context)
-        BadgeUpdater.refresh(context: context)
+        AppContentRefresh.afterVocabChange(context: context)
         restoreMessage = L("settings.backup.restored", backup.vocabs.count, backup.groups.count)
     }
 }

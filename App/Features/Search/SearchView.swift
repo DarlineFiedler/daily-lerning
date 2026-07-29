@@ -195,8 +195,7 @@ struct SearchView: View {
         context.delete(vocab)
         context.saveOrLog()
         pendingDelete = nil
-        WidgetSnapshotWriter.refresh(context: context)
-        BadgeUpdater.refresh(context: context)
+        AppContentRefresh.afterVocabChange(context: context)
     }
 }
 

@@ -337,8 +337,7 @@ struct GroupDetailView: View {
     private func apply(_ status: LearningStatus, to targets: [Vocab]) {
         for vocab in targets { vocab.setStatusManually(status) }
         context.saveOrLog()
-        WidgetSnapshotWriter.refresh(context: context)
-        BadgeUpdater.refresh(context: context)
+        AppContentRefresh.afterVocabChange(context: context)
         exitSelection()
     }
 
@@ -346,8 +345,7 @@ struct GroupDetailView: View {
         context.delete(vocab)
         context.saveOrLog()
         pendingDelete = nil
-        WidgetSnapshotWriter.refresh(context: context)
-        BadgeUpdater.refresh(context: context)
+        AppContentRefresh.afterVocabChange(context: context)
     }
 
     /// Verschiebt die übergebenen Wörter in eine andere Gruppe. Lernstand/Fortschritt/
@@ -357,8 +355,7 @@ struct GroupDetailView: View {
     private func move(_ vocabs: [Vocab], to target: VocabGroup) {
         for vocab in vocabs { vocab.group = target }
         context.saveOrLog()
-        WidgetSnapshotWriter.refresh(context: context)
-        BadgeUpdater.refresh(context: context)
+        AppContentRefresh.afterVocabChange(context: context)
         exitSelection()
     }
 

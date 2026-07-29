@@ -159,8 +159,7 @@ struct GroupListView: View {
         context.delete(group)
         context.saveOrLog()
         pendingDelete = nil
-        WidgetSnapshotWriter.refresh(context: context)
-        BadgeUpdater.refresh(context: context)
+        AppContentRefresh.afterVocabChange(context: context)
     }
 
     /// Archiviert bzw. reaktiviert eine Gruppe. Da sich damit die aktiven Wörter
@@ -172,8 +171,7 @@ struct GroupListView: View {
         group.isArchived = archived
         if !archived { renumberActiveOrder(bringingToEnd: group) }
         context.saveOrLog()
-        WidgetSnapshotWriter.refresh(context: context)
-        BadgeUpdater.refresh(context: context)
+        AppContentRefresh.afterVocabChange(context: context)
     }
 
     /// Vergibt lückenlose `sortOrder`-Werte (0…n) an alle aktiven Gruppen in ihrer

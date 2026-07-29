@@ -263,8 +263,7 @@ struct VocabEditView: View {
         }
 
         context.saveOrLog()
-        WidgetSnapshotWriter.refresh(context: context)
-        BadgeUpdater.refresh(context: context)
+        AppContentRefresh.afterVocabChange(context: context)
         dismiss()
     }
 }
