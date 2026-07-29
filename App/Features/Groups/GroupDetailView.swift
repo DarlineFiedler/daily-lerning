@@ -44,8 +44,9 @@ struct GroupDetailView: View {
     }
 
     var body: some View {
+        let vocabs = vocabs // einmal filtern/sortieren pro Body-Auswertung
         ScrollView {
-            VStack(spacing: Theme.Spacing.m) {
+            LazyVStack(spacing: Theme.Spacing.m) {
                 header
                 if group.vocabs.isEmpty {
                     emptyState
