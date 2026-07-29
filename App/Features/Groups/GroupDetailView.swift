@@ -44,7 +44,6 @@ struct GroupDetailView: View {
     }
 
     var body: some View {
-        let vocabs = vocabs // einmal filtern/sortieren pro Body-Auswertung
         ScrollView {
             LazyVStack(spacing: Theme.Spacing.m) {
                 header
