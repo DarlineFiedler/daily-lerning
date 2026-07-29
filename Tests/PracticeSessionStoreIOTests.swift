@@ -91,4 +91,32 @@ final class PracticeSessionStoreIOTests: XCTestCase {
 
         XCTAssertEqual(WeeklyReviewStore.dayProgress(for: .practiced), 1)
     }
+
+    /// Früher Flush (z.B. Backgrounding) und anschließendes Fertigspielen darf nicht
+    /// doppelt zählen: der Rundenend-Flush schreibt denselben, weitergesammelten Stand.
+    func testMidRoundFlushThenFinishDoesNotDoubleCount() {
+        let session = makeSession(makeVocabs(5))
+        session.submit(correct: true)
+        session.submit(correct: true)
+        session.flushProgress() // Backgrounding mitten in der Runde
+        XCTAssertEqual(WeeklyReviewStore.dayProgress(for: .practiced), 2)
+
+        for _ in 0 ..< 3 { session.submit(correct: true) } // Runde zu Ende → finalizeRound flusht
+        XCTAssertTrue(session.isFinished)
+        XCTAssertEqual(WeeklyReviewStore.dayProgress(for: .practiced), 5)
+    }
+
+    /// `restart()` setzt den gesammelten Wochen-Log nicht zurück: dieselben Wörter noch
+    /// einmal zu üben bleibt distinct-dedupliziert (identisch zum Per-Karte-Schreiben).
+    func testRestartKeepsWeeklyProgressDeduplicated() {
+        let vocabs = makeVocabs(4)
+        let session = makeSession(vocabs)
+        for _ in 0 ..< 4 { session.submit(correct: true) }
+        XCTAssertEqual(WeeklyReviewStore.dayProgress(for: .practiced), 4)
+
+        session.restart()
+        for _ in 0 ..< 4 { session.submit(correct: true) }
+
+        XCTAssertEqual(WeeklyReviewStore.dayProgress(for: .practiced), 4)
+    }
 }

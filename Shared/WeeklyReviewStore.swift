@@ -281,6 +281,11 @@ enum WeeklyReviewStore {
     /// Lädt den persistierten Log für Aufrufer, die mehrere Buchungen im Speicher
     /// sammeln und gebündelt via `saveActivity(_:)` zurückschreiben – so entfällt der
     /// volle JSON-Decode/Encode je Übungsantwort.
+    ///
+    /// Load-once/flush-later ist nur sicher, solange während der Sammelphase kein
+    /// zweiter Schreiber den Log anfasst (sonst überschreibt das spätere `saveActivity`
+    /// dessen Änderung). Aktuell ist die laufende Übungssession der einzige Schreiber –
+    /// diese Invariante halten, falls je ein weiterer Aufrufer dazukommt.
     static func loadActivity() -> WeeklyActivity { load() }
 
     /// Schreibt einen im Speicher gesammelten Log gebündelt zurück.
