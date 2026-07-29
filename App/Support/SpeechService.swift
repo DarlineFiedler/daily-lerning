@@ -13,10 +13,22 @@ final class SpeechService: NSObject {
         synthesizer.delegate = self
     }
 
+    /// Cache der Stimmen-Verfügbarkeit je Sprachcode. Die installierten Stimmen ändern
+    /// sich zur Laufzeit nicht, `AVSpeechSynthesisVoice(language:)` enumeriert aber jedes
+    /// Mal alle Stimmen. Ohne Cache lief das u.a. beim Session-Aufbau und – teurer – in
+    /// jedem Render von `SpeakButton`. `NSLock`, weil `isAvailable` `nonisolated` ist.
+    nonisolated(unsafe) private static var availabilityCache: [String: Bool] = [:]
+    nonisolated private static let availabilityLock = NSLock()
+
     /// Ist für die Sprache eine Stimme installiert? Wenn nein, sollte der Speaker-Button
-    /// ausgeblendet/deaktiviert werden.
+    /// ausgeblendet/deaktiviert werden. Ergebnis wird je Sprachcode zwischengespeichert.
     nonisolated static func isAvailable(language: String = "ko-KR") -> Bool {
-        AVSpeechSynthesisVoice(language: language) != nil
+        availabilityLock.lock()
+        defer { availabilityLock.unlock() }
+        if let cached = availabilityCache[language] { return cached }
+        let available = AVSpeechSynthesisVoice(language: language) != nil
+        availabilityCache[language] = available
+        return available
     }
 
     /// Spricht den Text. Unterbricht eine laufende Ausgabe. Duckt kurz laufende

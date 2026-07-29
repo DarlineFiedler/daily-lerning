@@ -187,6 +187,14 @@ final class PracticeSession {
         }
         // Memory nie in den Per-Karte-Fluss (auch nicht ins „Mix" = leere Auswahl) mischen.
         let perCardModes = config.resolvedModes.filter { $0 != .memory }
+        // Session-weite Invarianten der Distraktor-Auswahl EINMAL vorberechnen (statt pro
+        // Wort): die Session-IDs, den um sie bereinigten Pool und dessen Gruppierung. Das
+        // Gruppieren fasst den teuren SwiftData-`group`-Relationship-Zugriff auf einen
+        // einzigen Durchlauf zusammen – vorher wurde der ganze Pool je Wort neu gefiltert
+        // und gemischt (O(Wörter × Pool)).
+        let sessionIDs = Set(vocabs.map(\.id))
+        let remaining = distractorPool.filter { !sessionIDs.contains($0.id) }
+        let remainingByGroup = Dictionary(grouping: remaining) { $0.group?.id }
         return vocabs.compactMap { vocab in
             // Lückentext nur für Wörter mit brauchbarem Beispielsatz. Fehlt er, entfällt der
             // Modus für dieses Wort; bleibt dann keiner übrig (nur-Lückentext ohne Beispiel),
@@ -199,47 +207,68 @@ final class PracticeSession {
                 ? .wordToMeaning : ResolvedDirection.resolve(config.direction)
             // Nur Auswahl-/Hör-Modi brauchen Distraktoren; Lückentext (wie Schreiben/Durchgehen)
             // wird eingetippt bzw. gewischt – die Options-Berechnung entfällt.
-            let choices = mode == .cloze ? [] : makeChoices(for: vocab, sessionVocabs: vocabs, pool: distractorPool, direction: direction)
+            let choices = mode == .cloze ? [] : makeChoices(
+                for: vocab, sessionVocabs: vocabs,
+                remaining: remaining, remainingByGroup: remainingByGroup, direction: direction
+            )
             return PracticeItem(vocab: vocab, mode: mode, direction: direction, choices: choices)
         }
     }
 
     // MARK: - Multiple-Choice-Optionen
 
-    private static func makeChoices(for vocab: Vocab, sessionVocabs: [Vocab], pool: [Vocab], direction: ResolvedDirection) -> [Vocab] {
+    /// Wählt drei Distraktoren mit eindeutiger Antwortseite (plus das Zielwort) und mischt.
+    /// Kandidaten werden nach Nähe zum Zielwort geschichtet, damit die Distraktoren
+    /// möglichst Wörter sind, die im Lernvorgang vorkommen (statt nie gesehener
+    /// Zufallswörter, unter denen das gesuchte Wort sofort heraussticht):
+    /// 1. andere Wörter aus diesem Durchgang → 2. Wörter derselben Gruppe →
+    /// 3. Rest des Pools (nur als Auffüllung für kleine Sessions).
+    ///
+    /// `remaining`/`remainingByGroup` sind bereits um die Session-Wörter bereinigt und
+    /// werden vom Aufrufer einmal je Session vorberechnet. Die Tiers werden faul
+    /// abgearbeitet und nur so weit gemischt, bis drei Distraktoren stehen – im Normalfall
+    /// (genug Session-Wörter) wird der große Pool gar nicht erst angefasst.
+    private static func makeChoices(
+        for vocab: Vocab,
+        sessionVocabs: [Vocab],
+        remaining: [Vocab],
+        remainingByGroup: [UUID?: [Vocab]],
+        direction: ResolvedDirection
+    ) -> [Vocab] {
         let answerText: (Vocab) -> String = {
             direction == .wordToMeaning ? $0.meaning : $0.word
         }
-        // Kandidaten nach Nähe zum Zielwort schichten, damit die Distraktoren
-        // möglichst Wörter sind, die im Lernvorgang vorkommen (statt nie gesehener
-        // Zufallswörter, unter denen das gesuchte Wort sofort heraussticht):
-        // 1. andere Wörter aus diesem Durchgang → 2. Wörter derselben Gruppe →
-        // 3. Rest des Pools (nur als Auffüllung für kleine Sessions).
-        let sessionIDs = Set(sessionVocabs.map(\.id))
-        let tier1 = sessionVocabs.filter { $0.id != vocab.id }.shuffled()
-        let remaining = pool.filter { !sessionIDs.contains($0.id) }
-        let tier2: [Vocab]
-        let tier3: [Vocab]
-        if let groupID = vocab.group?.id {
-            tier2 = remaining.filter { $0.group?.id == groupID }.shuffled()
-            tier3 = remaining.filter { $0.group?.id != groupID }.shuffled()
-        } else {
-            tier2 = []
-            tier3 = remaining.shuffled()
-        }
-
-        // Distraktoren mit eindeutiger Antwortseite auswählen: kein Distraktor
-        // darf denselben Antworttext wie die richtige Antwort (oder ein bereits
-        // gewählter Distraktor) haben – sonst wäre die Frage mehrdeutig.
-        // Das Zielwort selbst ist bereits ausgeschlossen: tier1 filtert es raus,
-        // tier2/tier3 stammen aus `remaining` (ohne Session-IDs, die das Ziel
-        // enthalten). Zudem liegt sein Antworttext schon in `seenAnswers`.
+        // Das Zielwort ist ausgeschlossen: gleiche ID wird übersprungen und sein
+        // Antworttext liegt vorab in `seenAnswers` (kein Distraktor darf denselben
+        // Antworttext tragen – sonst wäre die Frage mehrdeutig).
         var seenAnswers: Set<String> = [answerText(vocab)]
         var distractors: [Vocab] = []
-        for candidate in tier1 + tier2 + tier3 {
-            guard seenAnswers.insert(answerText(candidate)).inserted else { continue }
-            distractors.append(candidate)
-            if distractors.count == 3 { break }
+        // Nimmt Kandidaten auf, bis drei stehen; meldet, ob damit fertig.
+        func collect(_ candidates: [Vocab]) -> Bool {
+            for candidate in candidates {
+                guard candidate.id != vocab.id else { continue }
+                guard seenAnswers.insert(answerText(candidate)).inserted else { continue }
+                distractors.append(candidate)
+                if distractors.count == 3 { return true }
+            }
+            return false
+        }
+
+        // Tier 1: andere Wörter dieser Runde (nur Referenzen, kein Relationship-Zugriff).
+        if !collect(sessionVocabs.shuffled()) {
+            if let groupID = vocab.group?.id {
+                // Tier 2: restlicher Pool derselben Gruppe.
+                if !collect((remainingByGroup[groupID] ?? []).shuffled()) {
+                    // Tier 3: übrige Gruppen – nur bei kleinen Runden/Gruppen nötig.
+                    let others = remainingByGroup.lazy
+                        .filter { $0.key != groupID }
+                        .flatMap(\.value)
+                    _ = collect(Array(others).shuffled())
+                }
+            } else {
+                // Zielwort ohne Gruppe: der ganze restliche Pool füllt auf.
+                _ = collect(remaining.shuffled())
+            }
         }
         return ([vocab] + distractors).shuffled()
     }
