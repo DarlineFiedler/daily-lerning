@@ -88,4 +88,32 @@ final class WidgetSnapshotWriterTests: XCTestCase {
         let words = WidgetSnapshotWriter.widgetWords(context: context)
         XCTAssertEqual(words.map(\.word), ["가다"])
     }
+
+    /// Zweimal derselbe Inhalt: Der erste Refresh schreibt, der zweite (identische)
+    /// wird als redundant übersprungen (kein Datei-Write / Widget-Reload).
+    /// Eindeutige Wörter je Test halten die prozess-lokale Change-Detection deterministisch.
+    func testSkipsRedundantRefreshWithUnchangedContent() {
+        let vocabs = [insert("스킵테스트가", meaning: "a", includeInWidget: false)]
+
+        XCTAssertTrue(WidgetSnapshotWriter.refresh(activeVocabs: vocabs),
+                      "Neuer Inhalt muss geschrieben werden")
+        XCTAssertFalse(WidgetSnapshotWriter.refresh(activeVocabs: vocabs),
+                       "Unveränderter Inhalt darf nicht erneut geschrieben werden")
+    }
+
+    /// Ändert sich die Wortauswahl (hier: Stern-Toggle), schreibt der nächste Refresh
+    /// wieder – die Change-Detection verschluckt echte Änderungen nicht.
+    func testWritesAgainWhenContentChanges() {
+        let a = insert("스킵테스트나", meaning: "a", includeInWidget: false)
+        let b = insert("스킵테스트다", meaning: "b", includeInWidget: false)
+        let vocabs = [a, b]
+
+        XCTAssertTrue(WidgetSnapshotWriter.refresh(activeVocabs: vocabs))
+        XCTAssertFalse(WidgetSnapshotWriter.refresh(activeVocabs: vocabs))
+
+        // Stern auf b → Auswahl schrumpft von [a, b] auf [b].
+        b.includeInWidget = true
+        XCTAssertTrue(WidgetSnapshotWriter.refresh(activeVocabs: vocabs),
+                      "Geänderte Wortauswahl muss erneut geschrieben werden")
+    }
 }
