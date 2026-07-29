@@ -45,7 +45,7 @@ struct GroupDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: Theme.Spacing.m) {
+            LazyVStack(spacing: Theme.Spacing.m) {
                 header
                 if group.vocabs.isEmpty {
                     emptyState
