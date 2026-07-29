@@ -7,7 +7,11 @@ extension Sequence where Element == Vocab {
     ///
     /// Liefert ein sparses Dictionary (nur vorkommende Status). Aufrufer greifen
     /// mit `counts[status] ?? 0` zu, daher verhält es sich wie die volle Tabelle.
+    ///
+    /// `reduce(into:)` zählt direkt hoch, statt (wie `Dictionary(grouping:)`) erst
+    /// die Wörter je Status in Arrays zu sammeln – gleiches O(n), ohne die
+    /// Zwischen-Arrays zu allozieren.
     func statusCounts() -> [LearningStatus: Int] {
-        Dictionary(grouping: self, by: \.status).mapValues(\.count)
+        reduce(into: [:]) { $0[$1.status, default: 0] += 1 }
     }
 }
