@@ -13,6 +13,11 @@ enum AppContentRefresh {
     /// Kalendertag des letzten Vordergrund-Refreshes. Prozess-lokal & flüchtig (analog zu
     /// [[WidgetSnapshotWriter]] `lastWritten`): nach einem Kaltstart `nil`, sodass der erste
     /// `onAppActive` immer durchläuft und Widget/Badge garantiert frisch sind.
+    ///
+    /// **Invariante, auf der das Überspringen beruht:** Vokabeln ändern sich nur im
+    /// Vordergrund (lokaler SwiftData-Store, KEIN CloudKit/Hintergrund-Sync – siehe
+    /// [[PersistenceController]]). Käme je eine Hintergrund-Mutation dazu (CloudKit-Sync,
+    /// `BGTaskScheduler`), muss dieses Tag neu überdacht werden.
     private static var lastActiveRefreshDay: Date?
 
     /// Nach einer Vokabel-Änderung: aktiven Wortbestand einmal laden und daraus
