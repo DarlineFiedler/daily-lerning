@@ -10,6 +10,11 @@ import WidgetKit
 @MainActor
 enum AppContentRefresh {
 
+    /// Kalendertag des letzten Vordergrund-Refreshes. Prozess-lokal & flüchtig (analog zu
+    /// [[WidgetSnapshotWriter]] `lastWritten`): nach einem Kaltstart `nil`, sodass der erste
+    /// `onAppActive` immer durchläuft und Widget/Badge garantiert frisch sind.
+    private static var lastActiveRefreshDay: Date?
+
     /// Nach einer Vokabel-Änderung: aktiven Wortbestand einmal laden und daraus
     /// Widget-Snapshot und Badge ableiten.
     static func afterVocabChange(context: ModelContext) {
@@ -21,9 +26,24 @@ enum AppContentRefresh {
     /// Wie `afterVocabChange`, aber zusätzlich beim App-Start / Vordergrund-Wechsel: Da
     /// Zeit vergangen sein kann (Tageswechsel), auch das Streak-Widget auffrischen – so
     /// bleibt das bisherige `reloadAllTimelines()`-Verhalten an diesen Stellen erhalten.
-    static func onAppActive(context: ModelContext) {
+    ///
+    /// Beim **reinen App-Switch** (gleicher Kalendertag, schon einmal aufgefrischt) kann sich
+    /// seit dem letzten Refresh nichts geändert haben: Vokabeln und Widget-Einstellungen ändern
+    /// sich nur im Vordergrund (dort wird direkt via `afterVocabChange`/`refresh` aufgefrischt),
+    /// und der einzige zeitabhängige Faktor ist der Tageswechsel (`DailyPlan` ist tagesbasiert).
+    /// Deshalb wird dann der sonst nutzlose Fetch + Badge- + Streak-Reload übersprungen.
+    static func onAppActive(context: ModelContext, now: Date = .now) {
+        guard shouldRefreshOnActive(lastRefreshDay: lastActiveRefreshDay, now: now) else { return }
+        lastActiveRefreshDay = Calendar.current.startOfDay(for: now)
         afterVocabChange(context: context)
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.streak)
+    }
+
+    /// Entscheidet, ob beim Vordergrund-Wechsel voll aufgefrischt werden muss: nur beim ersten
+    /// Aufruf (`lastRefreshDay == nil`) oder bei einem Tageswechsel seit dem letzten Refresh.
+    /// Reine Funktion ohne Seiteneffekte – Kern der No-Op-Vermeidung.
+    static func shouldRefreshOnActive(lastRefreshDay: Date?, now: Date = .now) -> Bool {
+        lastRefreshDay != Calendar.current.startOfDay(for: now)
     }
 
     /// Aktive (nicht archivierte) Wörter, nach Anlagedatum sortiert. Wörter aus
