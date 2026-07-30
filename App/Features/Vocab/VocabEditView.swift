@@ -29,6 +29,13 @@ struct VocabEditView: View {
     /// Bestehende Vokabel, deren Wort mit der Eingabe in derselben Gruppe kollidiert – löst
     /// beim Speichern den Warn-Dialog aus (statt still eine Dublette anzulegen).
     @State private var pendingDuplicate: Vocab?
+    /// Gecachte Kandidatenliste (alle Vokabeln aller Gruppen), einmal beim Erscheinen aus
+    /// `allGroups` befüllt. Vermeidet, `allGroups.flatMap(\.vocabs)` pro Tastenanschlag neu
+    /// aufzubauen; im modalen Sheet ist der Bestand stabil.
+    @State private var duplicateCandidates: [Vocab] = []
+    /// Gecachtes Wort-Duplikat, nur bei tatsächlicher Wort-/Gruppenänderung neu berechnet
+    /// (siehe `refreshDuplicateMatch`) statt in jeder `body`-Auswertung.
+    @State private var duplicateMatch: DuplicateChecker.Match?
 
     init(vocab: Vocab?, group: VocabGroup?, onSelectExisting: ((Vocab) -> Void)? = nil) {
         self.vocab = vocab
@@ -57,13 +64,14 @@ struct VocabEditView: View {
         !meaning.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    /// Aktuelles Wort-Duplikat (falls vorhanden) gegen alle Vokabeln, die eigene Vokabel
-    /// ausgenommen. Zielgruppe ist die aktuell gewählte Gruppe.
-    private var duplicateMatch: DuplicateChecker.Match? {
-        DuplicateChecker.firstDuplicate(of: word,
-                                        in: selectedGroup ?? group,
-                                        among: allGroups.flatMap(\.vocabs),
-                                        excluding: vocab)
+    /// Berechnet das aktuelle Wort-Duplikat gegen den gecachten Bestand (eigene Vokabel
+    /// ausgenommen, Zielgruppe = aktuell gewählte Gruppe) und schreibt es in `duplicateMatch`.
+    /// Wird nur bei echter Wort-/Gruppenänderung aufgerufen, nicht pro Render.
+    private func refreshDuplicateMatch() {
+        duplicateMatch = DuplicateChecker.firstDuplicate(of: word,
+                                                         in: selectedGroup ?? group,
+                                                         among: duplicateCandidates,
+                                                         excluding: vocab)
     }
 
     /// Dezenter Hinweis, wenn dasselbe Wort bereits in einer **anderen** Gruppe existiert –
@@ -136,6 +144,13 @@ struct VocabEditView: View {
                 guard !emojiTouchedManually else { return }
                 emoji = emojiSuggestion ?? ""
             }
+            // Dubletten-Erkennung nur bei tatsächlicher Wort-/Gruppenänderung neu berechnen.
+            .onAppear {
+                duplicateCandidates = allGroups.flatMap(\.vocabs)
+                refreshDuplicateMatch()
+            }
+            .onChange(of: word) { refreshDuplicateMatch() }
+            .onChange(of: selectedGroup) { refreshDuplicateMatch() }
             .scrollContentBackground(.hidden)
             .background(Theme.background.ignoresSafeArea())
             .navigationTitle(vocab == nil ? L("vocab.new") : L("vocab.edit"))

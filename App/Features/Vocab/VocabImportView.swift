@@ -22,8 +22,9 @@ struct VocabImportView: View {
     /// Aktiver Niveau-Filter (`nil` = alle Niveaus importieren). Nur relevant, wenn die
     /// eingefügten Daten überhaupt eine TOPIK-Spalte enthalten (siehe `hasLevels`).
     @State private var levelFilter: TopikLevel?
-
-    private var parsedRows: [VocabCSV.Row] { VocabCSV.parse(text) }
+    /// Gecachtes Parse-Ergebnis, nur bei tatsächlicher Textänderung neu berechnet (siehe
+    /// `.onChange(of: text)`) statt `VocabCSV.parse(text)` mehrfach pro Tastenanschlag.
+    @State private var parsedRows: [VocabCSV.Row] = []
 
     /// Enthält der eingefügte Text mindestens eine eingestufte Zeile? Nur dann blenden
     /// wir den Niveau-Filter ein (alte Pakete ohne Spalte bleiben unverändert).
@@ -111,6 +112,8 @@ struct VocabImportView: View {
             .onAppear {
                 if case .new = target, let first = groups.first { target = .existing(first) }
             }
+            // Text nur bei echter Änderung parsen (auch beim Datei-Import, der `text` setzt).
+            .onChange(of: text) { parsedRows = VocabCSV.parse(text) }
             .fileImporter(
                 isPresented: $showFileImporter,
                 allowedContentTypes: [.commaSeparatedText, .plainText, .text],
