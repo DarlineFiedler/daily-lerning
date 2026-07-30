@@ -39,14 +39,15 @@ final class WeeklyReviewTests: XCTestCase {
 
     // MARK: - Zählung der letzten abgeschlossenen Woche
 
-    func testDistinctWordsAreCountedOncePerWeek() {
+    func testPracticedIsSummedPerDayAcrossWeek() {
         let a = UUID(), b = UUID()
         var log = WeeklyActivity()
-        log = record(log, a, on: day(2026, 7, 14)) // Di
-        log = record(log, a, on: day(2026, 7, 15)) // dasselbe Wort erneut → kein Doppel
-        log = record(log, b, on: day(2026, 7, 15)) // zweites Wort
+        log = record(log, a, on: day(2026, 7, 14)) // Di: {a} → 1
+        log = record(log, a, on: day(2026, 7, 15)) // Mi: dasselbe Wort erneut zählt am neuen Tag
+        log = record(log, b, on: day(2026, 7, 15)) // Mi: {a, b} → 2
         let r = review(log)
-        XCTAssertEqual(r.practicedCount, 2)
+        // Pro-Tag distinct aufsummiert: 1 (Di) + 2 (Mi) = 3.
+        XCTAssertEqual(r.practicedCount, 3)
         XCTAssertTrue(r.hasActivity)
     }
 
@@ -107,13 +108,14 @@ final class WeeklyReviewTests: XCTestCase {
         log.currentWeekTotals(asOf: cal.date(from: today)!, calendar: cal)
     }
 
-    func testCurrentWeekCountsInProgressWeekDistinct() {
+    func testCurrentWeekSumsPractisedPerDay() {
         let a = UUID(), b = UUID()
         var log = WeeklyActivity()
-        log = record(log, a, on: day(2026, 7, 20)) // Mo (laufende Woche)
-        log = record(log, a, on: day(2026, 7, 21)) // dasselbe Wort → kein Doppel
-        log = record(log, b, on: day(2026, 7, 21)) // zweites Wort
-        XCTAssertEqual(currentWeek(log).practiced, 2)
+        log = record(log, a, on: day(2026, 7, 20)) // Mo: {a} → 1
+        log = record(log, a, on: day(2026, 7, 21)) // Di: dasselbe Wort zählt am neuen Tag
+        log = record(log, b, on: day(2026, 7, 21)) // Di: {a, b} → 2
+        // Pro-Tag distinct aufsummiert: 1 (Mo) + 2 (Di) = 3.
+        XCTAssertEqual(currentWeek(log).practiced, 3)
     }
 
     func testCurrentWeekSumsNewlyLearned() {
@@ -209,15 +211,15 @@ final class WeeklyReviewTests: XCTestCase {
         XCTAssertFalse(buckets.dropLast().contains { $0.hasActivity })
     }
 
-    func testWeeklySeriesCountsDistinctPractisedPerWeek() {
+    func testWeeklySeriesSumsPractisedPerDay() {
         let a = UUID(), b = UUID()
         var log = WeeklyActivity()
-        log = record(log, a, on: day(2026, 7, 14))
-        log = record(log, a, on: day(2026, 7, 15)) // dasselbe Wort → kein Doppel
-        log = record(log, b, on: day(2026, 7, 15))
-        // Woche 13.–19.7. enthält 2 distinct Wörter.
+        log = record(log, a, on: day(2026, 7, 14)) // Di: {a} → 1
+        log = record(log, a, on: day(2026, 7, 15)) // Mi: dasselbe Wort zählt am neuen Tag
+        log = record(log, b, on: day(2026, 7, 15)) // Mi: {a, b} → 2
+        // Woche 13.–19.7.: pro-Tag distinct aufsummiert = 1 + 2 = 3.
         let week = series(log, weeks: 12).first { cal.isDate($0.weekStart, inSameDayAs: day(2026, 7, 13)) }
-        XCTAssertEqual(week?.practiced, 2)
+        XCTAssertEqual(week?.practiced, 3)
     }
 
     // MARK: - Trefferquote (Lernkurve #40)
