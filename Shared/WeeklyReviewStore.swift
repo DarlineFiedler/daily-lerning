@@ -200,20 +200,24 @@ struct WeeklyActivity: Codable, Equatable {
     // MARK: - Intern
 
     /// Aggregiert die Kalenderwoche `[weekStart, weekStart+7)` zu einem `WeekBucket`.
+    ///
+    /// `practiced` summiert die **pro Tag** eindeutig geübten Wörter über die Woche
+    /// auf (nicht wochenweit dedupliziert). So trägt jeder Übungstag bei – auch wenn
+    /// dasselbe Wort an mehreren Tagen wiederholt wird –, konsistent zum Tagesziel.
     private func totals(forWeekStarting weekStart: Date, calendar: Calendar) -> WeekBucket {
         let empty = WeekBucket(weekStart: weekStart, practiced: 0, newlyLearned: 0, correct: 0, wrong: 0)
         guard let weekEnd = calendar.date(byAdding: .day, value: 7, to: weekStart) else { return empty }
-        var ids: Set<UUID> = []
+        var practiced = 0
         var learned = 0
         var correct = 0
         var wrong = 0
         for entry in days where entry.day >= weekStart && entry.day < weekEnd {
-            ids.formUnion(entry.practicedIDs)
+            practiced += entry.practicedIDs.count // Summe der je Tag distinct geübten Wörter
             learned += entry.newlyLearned
             correct += entry.correctCount
             wrong += entry.wrongCount
         }
-        return WeekBucket(weekStart: weekStart, practiced: ids.count, newlyLearned: learned,
+        return WeekBucket(weekStart: weekStart, practiced: practiced, newlyLearned: learned,
                           correct: correct, wrong: wrong)
     }
 
