@@ -21,7 +21,9 @@ struct SettingsView: View {
     @State private var packMessage: String?
 
     /// Zu teilende Sicherungsdatei (löst das Share-Sheet aus).
-    @State private var backupFile: BackupFile?
+    @State private var backupFile: ShareFile?
+    /// Zu teilende CSV-Exportdatei (löst das Share-Sheet aus).
+    @State private var csvFile: ShareFile?
     @State private var showRestore = false
     @State private var restoreMessage: String?
 
@@ -143,10 +145,9 @@ struct SettingsView: View {
                         Label(L("settings.data.import"), systemImage: "square.and.arrow.down")
                     }
                     if !allVocabs.isEmpty {
-                        ShareLink(
-                            item: VocabCSV.export(allVocabs),
-                            preview: SharePreview(L("settings.data.export"))
-                        ) {
+                        Button {
+                            exportCSV()
+                        } label: {
                             Label(L("settings.data.export"), systemImage: "square.and.arrow.up")
                         }
                     }
@@ -183,6 +184,9 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showImport) { VocabImportView() }
             .sheet(item: $backupFile) { file in
+                ActivityView(items: [file.url])
+            }
+            .sheet(item: $csvFile) { file in
                 ActivityView(items: [file.url])
             }
             .fileImporter(isPresented: $showRestore,
@@ -296,12 +300,22 @@ struct SettingsView: View {
         packMessage = L("wordpacks.result", total.added, total.updated, total.skipped)
     }
 
+    /// Baut den CSV-Export erst beim Antippen (nicht bei jeder `body`-Auswertung)
+    /// und teilt ihn als Datei.
+    private func exportCSV() {
+        guard let url = try? VocabCSV.exportFile(allVocabs) else {
+            restoreMessage = L("settings.backup.error")
+            return
+        }
+        csvFile = ShareFile(url: url)
+    }
+
     private func exportBackup() {
         guard let url = try? VocabBackup.exportFile(groups: allGroups, vocabs: allVocabs) else {
             restoreMessage = L("settings.backup.error")
             return
         }
-        backupFile = BackupFile(url: url)
+        backupFile = ShareFile(url: url)
     }
 
     private func restoreBackup(_ result: Result<[URL], Error>) {
@@ -320,8 +334,9 @@ struct SettingsView: View {
     }
 }
 
-/// Identifizierbarer Wrapper um die Sicherungs-URL fürs `.sheet(item:)`.
-private struct BackupFile: Identifiable {
+/// Identifizierbarer Wrapper um eine zu teilende Datei-URL fürs `.sheet(item:)`
+/// (Sicherung wie auch CSV-Export).
+private struct ShareFile: Identifiable {
     let url: URL
     var id: String { url.path }
 }

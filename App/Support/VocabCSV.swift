@@ -64,6 +64,21 @@ enum VocabCSV {
         return lines.joined(separator: "\n")
     }
 
+    /// Schreibt den Export als `.csv`-Datei ins temporäre Verzeichnis und gibt die
+    /// URL zurück (zum Teilen via Share-Sheet). Wird erst beim tatsächlichen Teilen
+    /// aufgerufen – nicht bei jeder View-Auswertung (siehe [[SettingsView]]).
+    static func exportFile(_ vocabs: [Vocab]) throws -> URL {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        let stamp = formatter.string(from: .now)
+
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("DailyHangul-Vokabeln-\(stamp).csv")
+        try export(vocabs).write(to: url, atomically: true, encoding: .utf8)
+        return url
+    }
+
     // MARK: - Intern
 
     /// Wählt das Trennzeichen: Semikolon, dann Tab, dann Komma.

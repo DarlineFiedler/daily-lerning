@@ -104,4 +104,19 @@ final class VocabCSVTests: XCTestCase {
             VocabCSV.Row(word: "a;b", meaning: "x;y", example: nil)
         ])
     }
+
+    func testExportFileWritesCSVWithIdenticalContent() throws {
+        let vocabs = [
+            Vocab(word: "사과", meaning: "Apfel", example: "Ein Beispiel"),
+            Vocab(word: "a;b", meaning: "x;y", example: nil)
+        ]
+        let url = try VocabCSV.exportFile(vocabs)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        XCTAssertEqual(url.pathExtension, "csv")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
+        // Datei-Inhalt ist exakt der String-Export (nur on-demand als Datei geschrieben).
+        let content = try String(contentsOf: url, encoding: .utf8)
+        XCTAssertEqual(content, VocabCSV.export(vocabs))
+    }
 }
