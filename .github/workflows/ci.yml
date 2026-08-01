@@ -104,12 +104,18 @@ jobs:
 
       - name: Build & run unit tests (mit Coverage, Warnings = Errors)
         run: |
+          # -retry-tests-on-failure + -test-iterations: fängt sporadische
+          # Simulator-Abbrüche ("Exiting due to IDE disconnection") ab – ein
+          # Test gilt erst nach mehreren Fehlversuchen als rot, echte
+          # Fehlschläge bleiben rot (siehe Flaky-Crash in #86).
           xcodebuild test \
             -project DailyHangul.xcodeproj \
             -scheme DailyHangul \
             -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
             -enableCodeCoverage YES \
             -resultBundlePath "build/Test.xcresult" \
+            -retry-tests-on-failure \
+            -test-iterations 3 \
             CODE_SIGNING_ALLOWED=NO \
             SWIFT_TREAT_WARNINGS_AS_ERRORS=YES
 
