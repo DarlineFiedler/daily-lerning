@@ -16,6 +16,11 @@
 "home.stat.total" = "단어";
 "home.stat.learned" = "완료";
 "home.stat.rate" = "비율";
+"words.all.title" = "모든 단어";
+"words.learned.title" = "학습한 단어";
+"mastery.title" = "숙련도";
+"mastery.ring.label" = "학습 완료";
+"mastery.ranking.title" = "그룹 순위";
 "home.groups" = "내 그룹";
 "home.seeAll" = "전체";
 "home.empty" = "먼저 그룹을 만들어 시작하세요.";

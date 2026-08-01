@@ -16,6 +16,11 @@
 "home.stat.total" = "Words";
 "home.stat.learned" = "Learned";
 "home.stat.rate" = "Rate";
+"words.all.title" = "All Words";
+"words.learned.title" = "Learned Words";
+"mastery.title" = "Mastery";
+"mastery.ring.label" = "Learned";
+"mastery.ranking.title" = "Group ranking";
 "home.groups" = "Your groups";
 "home.seeAll" = "All";
 "home.empty" = "Create your first group to get started.";
