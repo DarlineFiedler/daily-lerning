@@ -15,38 +15,45 @@ enum AchievementService {
         let learnedRaw = LearningStatus.learned.rawValue
         let learned = (try? context.fetchCount(FetchDescriptor<Vocab>(predicate: #Predicate { $0.statusRaw == learnedRaw }))) ?? 0
         let total = (try? context.fetchCount(FetchDescriptor<Vocab>())) ?? 0
+        // Gruppen einmal fetchen und pro Gruppe in einem Durchlauf die Kennzahlen bilden –
+        // beide Meister-Ableitungen (eine Gruppe / alle Gruppen) speisen sich daraus.
+        let groups = (try? context.fetch(FetchDescriptor<VocabGroup>())) ?? []
+        let summaries = groups.map { group in
+            (count: group.vocabs.count,
+             learned: group.vocabs.reduce(0) { $0 + ($1.statusRaw == learnedRaw ? 1 : 0) })
+        }
+        let mastery = groupMastery(from: summaries)
         return AchievementMetrics.from(progress: progress,
                                        learnedWords: learned,
                                        totalWords: total,
                                        longestStreak: StreakStore.longest,
-                                       groupMastered: hasMasteredGroup(context: context),
-                                       allGroupsMastered: hasMasteredAllGroups(context: context),
+                                       groupMastered: mastery.any,
+                                       allGroupsMastered: mastery.all,
                                        everUsedJoker: !StreakStore.jokerUses.isEmpty,
                                        dailyChallengesCompleted: DailyChallengeStore.totalCompleted,
                                        unlockedIDs: AchievementStore.unlockedIDs)
     }
 
-    /// Ist mindestens eine ausreichend große Vokabelgruppe komplett gelernt?
-    private static func hasMasteredGroup(context: ModelContext) -> Bool {
-        let learnedRaw = LearningStatus.learned.rawValue
-        let groups = (try? context.fetch(FetchDescriptor<VocabGroup>())) ?? []
-        return groups.contains { group in
-            group.vocabs.count >= themenMeisterMinSize
-                && group.vocabs.allSatisfy { $0.statusRaw == learnedRaw }
+    /// Reine Auswertung aus Gruppen-Kennzahlen (Vokabelzahl + davon gelernt), damit ein
+    /// einziger Gruppen-Fetch beide Badge-Ableitungen speist – und die Logik testbar bleibt.
+    /// - `any`: mindestens eine ausreichend große Gruppe (`>= themenMeisterMinSize`) komplett
+    ///   gelernt („Themen-Meister").
+    /// - `all`: alle nicht-leeren Gruppen komplett gelernt und insgesamt genug Wörter, damit
+    ///   es nicht trivial ist (härtere Version).
+    static func groupMastery(from groups: [(count: Int, learned: Int)]) -> (any: Bool, all: Bool) {
+        var anyMastered = false
+        var allNonEmptyMastered = true
+        var hasNonEmpty = false
+        var totalNonEmptyVocabs = 0
+        for group in groups where group.count > 0 {
+            hasNonEmpty = true
+            totalNonEmptyVocabs += group.count
+            let fullyLearned = group.learned == group.count
+            if group.count >= themenMeisterMinSize, fullyLearned { anyMastered = true }
+            if !fullyLearned { allNonEmptyMastered = false }
         }
-    }
-
-    /// Sind *alle* nicht-leeren Vokabelgruppen komplett gelernt (härtere Version von
-    /// „Themen-Meister")? Verlangt insgesamt genug Wörter, damit es nicht trivial ist.
-    private static func hasMasteredAllGroups(context: ModelContext) -> Bool {
-        let learnedRaw = LearningStatus.learned.rawValue
-        let groups = (try? context.fetch(FetchDescriptor<VocabGroup>())) ?? []
-        let nonEmpty = groups.filter { !$0.vocabs.isEmpty }
-        let totalVocabs = nonEmpty.reduce(0) { $0 + $1.vocabs.count }
-        guard !nonEmpty.isEmpty, totalVocabs >= themenMeisterMinSize else { return false }
-        return nonEmpty.allSatisfy { group in
-            group.vocabs.allSatisfy { $0.statusRaw == learnedRaw }
-        }
+        let all = hasNonEmpty && totalNonEmptyVocabs >= themenMeisterMinSize && allNonEmptyMastered
+        return (anyMastered, all)
     }
 
     /// Wertet den aktuellen Stand aus und schaltet neue Badges frei (persistiert).

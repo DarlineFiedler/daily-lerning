@@ -332,6 +332,55 @@ final class AchievementTests: XCTestCase {
         XCTAssertTrue(AchievementEvaluator.newlyUnlocked(metrics: AchievementMetrics(), alreadyUnlocked: []).isEmpty)
     }
 
+    // MARK: - Gruppen-Meisterschaft (reine Auswertung)
+
+    @MainActor
+    func testGroupMasteryEmptyInput() {
+        let result = AchievementService.groupMastery(from: [])
+        XCTAssertFalse(result.any)
+        XCTAssertFalse(result.all)
+    }
+
+    @MainActor
+    func testGroupMasterySingleFullGroupAtMinSize() {
+        // Genau die Mindestgröße, komplett gelernt → beide Ableitungen wahr.
+        let result = AchievementService.groupMastery(from: [(count: 5, learned: 5)])
+        XCTAssertTrue(result.any)
+        XCTAssertTrue(result.all)
+    }
+
+    @MainActor
+    func testGroupMasterySmallFullGroupBelowTotalThreshold() {
+        // Voll gelernt, aber zu klein (< MinSize) und Gesamtsumme < MinSize → nichts.
+        let result = AchievementService.groupMastery(from: [(count: 4, learned: 4)])
+        XCTAssertFalse(result.any)
+        XCTAssertFalse(result.all)
+    }
+
+    @MainActor
+    func testGroupMasteryManySmallFullGroupsReachTotalThreshold() {
+        // Jede Gruppe < MinSize (kein „any"), aber alle voll gelernt und Summe >= MinSize → „all".
+        let result = AchievementService.groupMastery(from: [(count: 3, learned: 3), (count: 3, learned: 3)])
+        XCTAssertFalse(result.any)
+        XCTAssertTrue(result.all)
+    }
+
+    @MainActor
+    func testGroupMasteryOneMasteredOnePartial() {
+        // Eine große Gruppe komplett, eine teils gelernt → „any", aber nicht „all".
+        let result = AchievementService.groupMastery(from: [(count: 6, learned: 6), (count: 4, learned: 2)])
+        XCTAssertTrue(result.any)
+        XCTAssertFalse(result.all)
+    }
+
+    @MainActor
+    func testGroupMasteryIgnoresEmptyGroups() {
+        // Leere Gruppen (count 0) zählen nicht mit und kippen „all" nicht.
+        let result = AchievementService.groupMastery(from: [(count: 5, learned: 5), (count: 0, learned: 0)])
+        XCTAssertTrue(result.any)
+        XCTAssertTrue(result.all)
+    }
+
     // MARK: - Persistenz (AchievementStore)
 
     /// Sichert und leert die Achievement-Keys vor jedem Store-Test und stellt sie
