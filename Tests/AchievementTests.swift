@@ -344,7 +344,8 @@ final class AchievementTests: XCTestCase {
     @MainActor
     func testGroupMasterySingleFullGroupAtMinSize() {
         // Genau die Mindestgröße, komplett gelernt → beide Ableitungen wahr.
-        let result = AchievementService.groupMastery(from: [(count: 5, learned: 5)])
+        let min = AchievementService.themenMeisterMinSize
+        let result = AchievementService.groupMastery(from: [(count: min, learned: min)])
         XCTAssertTrue(result.any)
         XCTAssertTrue(result.all)
     }
@@ -352,7 +353,8 @@ final class AchievementTests: XCTestCase {
     @MainActor
     func testGroupMasterySmallFullGroupBelowTotalThreshold() {
         // Voll gelernt, aber zu klein (< MinSize) und Gesamtsumme < MinSize → nichts.
-        let result = AchievementService.groupMastery(from: [(count: 4, learned: 4)])
+        let min = AchievementService.themenMeisterMinSize
+        let result = AchievementService.groupMastery(from: [(count: min - 1, learned: min - 1)])
         XCTAssertFalse(result.any)
         XCTAssertFalse(result.all)
     }
@@ -360,7 +362,9 @@ final class AchievementTests: XCTestCase {
     @MainActor
     func testGroupMasteryManySmallFullGroupsReachTotalThreshold() {
         // Jede Gruppe < MinSize (kein „any"), aber alle voll gelernt und Summe >= MinSize → „all".
-        let result = AchievementService.groupMastery(from: [(count: 3, learned: 3), (count: 3, learned: 3)])
+        let min = AchievementService.themenMeisterMinSize
+        let small = min - 1 // je < MinSize; zwei davon summieren >= MinSize
+        let result = AchievementService.groupMastery(from: [(count: small, learned: small), (count: small, learned: small)])
         XCTAssertFalse(result.any)
         XCTAssertTrue(result.all)
     }
@@ -368,7 +372,8 @@ final class AchievementTests: XCTestCase {
     @MainActor
     func testGroupMasteryOneMasteredOnePartial() {
         // Eine große Gruppe komplett, eine teils gelernt → „any", aber nicht „all".
-        let result = AchievementService.groupMastery(from: [(count: 6, learned: 6), (count: 4, learned: 2)])
+        let min = AchievementService.themenMeisterMinSize
+        let result = AchievementService.groupMastery(from: [(count: min + 1, learned: min + 1), (count: min - 1, learned: 1)])
         XCTAssertTrue(result.any)
         XCTAssertFalse(result.all)
     }
@@ -376,7 +381,8 @@ final class AchievementTests: XCTestCase {
     @MainActor
     func testGroupMasteryIgnoresEmptyGroups() {
         // Leere Gruppen (count 0) zählen nicht mit und kippen „all" nicht.
-        let result = AchievementService.groupMastery(from: [(count: 5, learned: 5), (count: 0, learned: 0)])
+        let min = AchievementService.themenMeisterMinSize
+        let result = AchievementService.groupMastery(from: [(count: min, learned: min), (count: 0, learned: 0)])
         XCTAssertTrue(result.any)
         XCTAssertTrue(result.all)
     }
