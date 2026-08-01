@@ -125,6 +125,9 @@ struct PracticeConfig {
     var modes: Set<PracticeMode> = []
     /// Maximale Wortanzahl pro Durchgang. `nil` = alle.
     var wordLimit: Int?
+    /// „Endgegner"-Modus: rein visuelle Kampf-Schicht (HP-Leiste, Sieg/Niederlage)
+    /// über der Runde (Issue #89). Ändert die Lern-Logik nicht.
+    var bossMode = false
 
     var resolvedModes: [PracticeMode] {
         modes.isEmpty ? PracticeMode.available : Array(modes)

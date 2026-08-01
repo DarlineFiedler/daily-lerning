@@ -139,6 +139,13 @@
 "practice.finishedSummary" = "%d richtig · %d falsch";
 "practice.restart" = "Nochmal";
 "practice.swipeHint" = "Nach links: weiß ich · Nach rechts: weiß ich nicht";
+"practice.config.boss" = "Endgegner";
+"practice.boss.toggle" = "Boss-Modus";
+"practice.boss.hint" = "Die Runde als Kampf gegen einen Endgegner: richtige Antworten sind Treffer, Fehler kosten Leben.";
+"practice.boss.generic" = "Endgegner";
+"practice.boss.hp" = "%d / %d HP";
+"practice.boss.victory" = "Boss besiegt!";
+"practice.boss.defeat" = "Vom Boss besiegt";
 
 /* Statistik */
 "stats.title" = "Statistik";
@@ -426,6 +433,8 @@
 "ach.hangulDay.detail" = "Am 9. Oktober (한글날) geübt";
 "ach.mondSchein.title" = "Mondschein";
 "ach.mondSchein.detail" = "An einem Vollmond-Abend geübt";
+"ach.bossDefeated.title" = "Boss-Bezwinger";
+"ach.bossDefeated.detail" = "Einen Endgegner besiegt ⚔️";
 "ach.challengeAce.title" = "Challenge-Ass";
 "ach.challengeAce.detail" = "10 Tages-Challenges erfüllt";
 "ach.challengeMaster.title" = "Challenge-Meister";

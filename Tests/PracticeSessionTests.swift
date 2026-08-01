@@ -309,4 +309,56 @@ final class PracticeSessionTests: XCTestCase {
         XCTAssertEqual(session.missedVocabs.first?.id, target.id)
         XCTAssertGreaterThanOrEqual(target.totalWrongCount, 1)
     }
+
+    // MARK: - Endgegner-Modus (Issue #89)
+
+    /// Im Boss-Modus beendet ein K.o. (Leben aufgebraucht) die Runde vorzeitig,
+    /// noch bevor alle Karten durch sind – der Boss gewinnt.
+    func testBossModeKnockoutFinishesRoundEarly() {
+        let vocabs = makeVocabs(10) // maxLives = ceil(10*0.34) = 4
+        let session = PracticeSession(
+            vocabs: vocabs, distractorPool: vocabs,
+            config: PracticeConfig(modes: [.review], bossMode: true), context: context
+        )
+        XCTAssertEqual(session.bossBattle.maxLives, 4)
+        // Vier Fehler verbrauchen alle Leben → sofortiges Runden-Ende.
+        for _ in 0 ..< 4 { session.submit(correct: false) }
+        XCTAssertTrue(session.isFinished)
+        XCTAssertEqual(session.index, session.total)
+        XCTAssertTrue(session.bossBattle.isPlayerDefeated)
+        XCTAssertFalse(session.bossBattle.playerWon)
+    }
+
+    /// Wird die Runde mit genug Leben durchgestanden, gilt der Boss als besiegt.
+    func testBossModeVictoryWhenSurviving() {
+        let vocabs = makeVocabs(5) // maxLives = max(3, ceil(5*0.34)) = 3
+        let session = PracticeSession(
+            vocabs: vocabs, distractorPool: vocabs,
+            config: PracticeConfig(modes: [.review], bossMode: true), context: context
+        )
+        session.submit(correct: false) // ein Fehler ist verkraftbar
+        for _ in 0 ..< 4 { session.submit(correct: true) }
+        XCTAssertTrue(session.isFinished)
+        XCTAssertFalse(session.bossBattle.isPlayerDefeated)
+        XCTAssertTrue(session.bossBattle.playerWon)
+    }
+
+    /// Die Boss-Identität ist die einzige Gruppe der Runde – bei gemischten Gruppen
+    /// (oder ohne Gruppe) gibt es keinen gruppenspezifischen Boss.
+    func testBossGroupIsSingleDistinctGroup() {
+        let groupA = makeGroup("A")
+        let single = PracticeSession(
+            vocabs: makeVocabs(3, group: groupA), distractorPool: [],
+            config: PracticeConfig(modes: [.review], bossMode: true), context: context
+        )
+        XCTAssertEqual(single.bossGroup?.id, groupA.id)
+
+        let groupB = makeGroup("B")
+        let mixed = PracticeSession(
+            vocabs: makeVocabs(2, group: groupA) + makeVocabs(2, group: groupB),
+            distractorPool: [],
+            config: PracticeConfig(modes: [.review], bossMode: true), context: context
+        )
+        XCTAssertNil(mixed.bossGroup)
+    }
 }

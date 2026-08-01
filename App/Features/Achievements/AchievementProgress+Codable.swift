@@ -40,6 +40,7 @@ extension AchievementProgress {
         hangulDay = try c.decodeIfPresent(Bool.self, forKey: .hangulDay) ?? hangulDay
         fullMoon = try c.decodeIfPresent(Bool.self, forKey: .fullMoon) ?? fullMoon
         sprachmix = try c.decodeIfPresent(Bool.self, forKey: .sprachmix) ?? sprachmix
+        bossDefeated = try c.decodeIfPresent(Bool.self, forKey: .bossDefeated) ?? bossDefeated
 
         comebackCount = try c.decodeIfPresent(Int.self, forKey: .comebackCount) ?? comebackCount
 

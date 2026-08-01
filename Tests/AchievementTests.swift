@@ -280,6 +280,24 @@ final class AchievementTests: XCTestCase {
         XCTAssertEqual(p.groupsToday, ["A"])
     }
 
+    func testBossDefeatedFlagAndBadge() {
+        let cal = Self.utc
+        var p = AchievementProgress()
+        // Normale (Nicht-Boss-)Runde setzt das Flag nicht.
+        p.recordSession(modes: [.review], date: date(2024, 2, 1, 12), isPerfect: false, calendar: cal)
+        XCTAssertFalse(p.bossDefeated)
+        // Siegreiche Endgegner-Runde setzt das Flag.
+        p.recordSession(modes: [.review], date: date(2024, 2, 1, 13), isPerfect: false,
+                        bossDefeated: true, calendar: cal)
+        XCTAssertTrue(p.bossDefeated)
+
+        let metrics = AchievementMetrics.from(progress: p, learnedWords: 0, totalWords: 0, longestStreak: 0)
+        XCTAssertTrue(metrics.bossDefeated)
+        let badge = AchievementCatalog.all.first { $0.id == "bossDefeated" }
+        XCTAssertNotNil(badge)
+        XCTAssertTrue(badge!.isUnlocked(metrics))
+    }
+
     func testMetaBadgeNeedsAllOthers() {
         let meta = AchievementCatalog.all.first { $0.requirement == .meta }
         XCTAssertNotNil(meta)
