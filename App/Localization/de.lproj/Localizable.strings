@@ -16,6 +16,11 @@
 "home.stat.total" = "Wörter";
 "home.stat.learned" = "Gelernt";
 "home.stat.rate" = "Quote";
+"words.all.title" = "Alle Wörter";
+"words.learned.title" = "Gelernte Wörter";
+"mastery.title" = "Beherrschung";
+"mastery.ring.label" = "Gelernt";
+"mastery.ranking.title" = "Gruppen-Ranking";
 "home.groups" = "Deine Gruppen";
 "home.seeAll" = "Alle";
 "home.empty" = "Lege deine erste Gruppe an, um loszulegen.";

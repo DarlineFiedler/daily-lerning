@@ -343,12 +343,23 @@ struct HomeView: View {
         return VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             SectionHeader(L("home.progress"))
             HStack(spacing: Theme.Spacing.s) {
-                StatTile(value: "\(active.count)", label: L("home.stat.total"),
-                         systemImage: "text.book.closed.fill", tint: Theme.brandStart)
-                StatTile(value: "\(learned)", label: L("home.stat.learned"),
-                         systemImage: "checkmark.seal.fill", tint: LearningStatus.learned.color)
-                StatTile(value: "\(rate)%", label: L("home.stat.rate"),
-                         systemImage: "chart.pie.fill", tint: Theme.brandEnd)
+                NavigationLink { WordListView(titleKey: "words.all.title") } label: {
+                    StatTile(value: "\(active.count)", label: L("home.stat.total"),
+                             systemImage: "text.book.closed.fill", tint: Theme.brandStart)
+                }
+                .buttonStyle(.plain)
+                NavigationLink {
+                    WordListView(titleKey: "words.learned.title", lockedStatus: .learned)
+                } label: {
+                    StatTile(value: "\(learned)", label: L("home.stat.learned"),
+                             systemImage: "checkmark.seal.fill", tint: LearningStatus.learned.color)
+                }
+                .buttonStyle(.plain)
+                NavigationLink { MasteryView() } label: {
+                    StatTile(value: "\(rate)%", label: L("home.stat.rate"),
+                             systemImage: "chart.pie.fill", tint: Theme.brandEnd)
+                }
+                .buttonStyle(.plain)
             }
             StatusDistributionBar(counts: counts, height: 14)
                 .padding(.top, Theme.Spacing.xs)
