@@ -64,19 +64,37 @@ enum VocabCSV {
         return lines.joined(separator: "\n")
     }
 
+    /// Dateiname-Präfix der Export-Dateien im Temp-Verzeichnis.
+    private static let exportPrefix = "DailyHangul-Vokabeln-"
+
     /// Schreibt den Export als `.csv`-Datei ins temporäre Verzeichnis und gibt die
     /// URL zurück (zum Teilen via Share-Sheet). Wird erst beim tatsächlichen Teilen
     /// aufgerufen – nicht bei jeder View-Auswertung (siehe [[SettingsView]]).
+    /// Ältere Export-Dateien werden vorher entfernt, damit sie sich (etwa pro Tag,
+    /// wegen des Datums-Stamps) nicht im Temp-Verzeichnis ansammeln.
     static func exportFile(_ vocabs: [Vocab]) throws -> URL {
+        let tmp = FileManager.default.temporaryDirectory
+        cleanupOldExports(in: tmp)
+
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.locale = Locale(identifier: "en_US_POSIX")
         let stamp = formatter.string(from: .now)
 
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("DailyHangul-Vokabeln-\(stamp).csv")
+        let url = tmp.appendingPathComponent("\(exportPrefix)\(stamp).csv")
         try export(vocabs).write(to: url, atomically: true, encoding: .utf8)
         return url
+    }
+
+    /// Entfernt zuvor erzeugte Export-Dateien (`DailyHangul-Vokabeln-*.csv`). Läuft
+    /// vor dem Schreiben der neuen Datei, berührt also nie die gerade geteilte Datei.
+    private static func cleanupOldExports(in dir: URL) {
+        let files = (try? FileManager.default.contentsOfDirectory(
+            at: dir, includingPropertiesForKeys: nil)) ?? []
+        for file in files where file.lastPathComponent.hasPrefix(exportPrefix)
+            && file.pathExtension == "csv" {
+            try? FileManager.default.removeItem(at: file)
+        }
     }
 
     // MARK: - Intern

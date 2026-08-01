@@ -119,4 +119,18 @@ final class VocabCSVTests: XCTestCase {
         let content = try String(contentsOf: url, encoding: .utf8)
         XCTAssertEqual(content, VocabCSV.export(vocabs))
     }
+
+    func testExportFileRemovesStaleExports() throws {
+        // Simulierte Export-Datei eines früheren Tages im selben Temp-Verzeichnis.
+        let stale = FileManager.default.temporaryDirectory
+            .appendingPathComponent("DailyHangul-Vokabeln-2000-01-01.csv")
+        try "alt".write(to: stale, atomically: true, encoding: .utf8)
+
+        let url = try VocabCSV.exportFile([Vocab(word: "사과", meaning: "Apfel", example: nil)])
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        // Die alte Datei wurde aufgeräumt, die neue existiert.
+        XCTAssertFalse(FileManager.default.fileExists(atPath: stale.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
+    }
 }

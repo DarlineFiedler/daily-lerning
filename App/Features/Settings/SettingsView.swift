@@ -304,7 +304,7 @@ struct SettingsView: View {
     /// und teilt ihn als Datei.
     private func exportCSV() {
         guard let url = try? VocabCSV.exportFile(allVocabs) else {
-            restoreMessage = L("settings.backup.error")
+            restoreMessage = L("settings.export.error")
             return
         }
         csvFile = ShareFile(url: url)
