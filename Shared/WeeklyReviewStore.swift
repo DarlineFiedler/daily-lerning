@@ -24,8 +24,12 @@ enum GoalMetric: String, CaseIterable, Identifiable {
 
 /// Vordefinierte Zielwert-Optionen für die Einstellungs-Picker (jeweils inkl. `0` = aus).
 enum GoalOptions {
-    static let weekly = [0, 5, 10, 15, 20, 30, 50, 75, 100]
-    static let daily = [0, 1, 2, 3, 5, 8, 10, 15, 20]
+    static let weekly = [0, 5, 10, 15, 20, 30, 50, 75, 100, 150, 200, 300]
+    static let daily = [0, 1, 2, 3, 5, 8, 10, 15, 20, 30, 50]
+
+    /// Obergrenze für frei eingegebene Zielwerte – schützt vor versehentlich
+    /// riesigen Eingaben, die Fortschrittsringe/Badges unsinnig machen würden.
+    static let maxCustom = 9999
     /// Standard: kein Ziel gesetzt – die Ziel-Karte erscheint erst, wenn der Nutzer
     /// bewusst einen Wert wählt (verhindert ungefragte Karten/Badges nach Update).
     static let defaultWeekly = 0

@@ -18,6 +18,11 @@ struct GoalSettingsView: View {
     @AppStorage(GoalKeys.daily, store: AppGroup.defaults)
     private var dailyGoal = GoalOptions.defaultDaily
 
+    /// Welches Ziel gerade per Freitext-Eingabe bearbeitet wird (`nil` = keins).
+    private enum GoalField { case weekly, daily }
+    @State private var editingField: GoalField?
+    @State private var customText = ""
+
     var body: some View {
         Form {
             Section {
@@ -28,20 +33,20 @@ struct GoalSettingsView: View {
                 } label: {
                     Label(L("settings.goal.metric"), systemImage: "target")
                 }
-                Picker(selection: $weeklyGoal) {
-                    ForEach(GoalOptions.weekly, id: \.self) { value in
-                        Text(goalValueLabel(value)).tag(value)
-                    }
-                } label: {
-                    Label(L("settings.goal.weekly"), systemImage: "calendar")
-                }
-                Picker(selection: $dailyGoal) {
-                    ForEach(GoalOptions.daily, id: \.self) { value in
-                        Text(goalValueLabel(value)).tag(value)
-                    }
-                } label: {
-                    Label(L("settings.goal.daily"), systemImage: "sun.max")
-                }
+                goalRow(
+                    titleKey: "settings.goal.weekly",
+                    systemImage: "calendar",
+                    value: $weeklyGoal,
+                    options: GoalOptions.weekly,
+                    field: .weekly
+                )
+                goalRow(
+                    titleKey: "settings.goal.daily",
+                    systemImage: "sun.max",
+                    value: $dailyGoal,
+                    options: GoalOptions.daily,
+                    field: .daily
+                )
             } footer: {
                 Text(L("settings.goal.footer"))
             }
@@ -52,6 +57,62 @@ struct GoalSettingsView: View {
         .onChange(of: goalMetricRaw) { reloadStreakWidget() }
         .onChange(of: weeklyGoal) { reloadStreakWidget() }
         .onChange(of: dailyGoal) { reloadStreakWidget() }
+        .alert(L("settings.goal.customPrompt"), isPresented: customAlertPresented) {
+            TextField(L("settings.goal.customPlaceholder"), text: $customText)
+                #if os(iOS)
+                    .keyboardType(.numberPad)
+                #endif
+            Button(L("common.cancel"), role: .cancel) {}
+            Button(L("common.save")) { applyCustom() }
+        } message: {
+            Text(L("settings.goal.customHint"))
+        }
+    }
+
+    /// Eine Zielzeile: Preset-Auswahl per Menü plus „Eigener Wert…" für freie Eingabe.
+    /// Ein bereits gesetzter Wert außerhalb der Presets bleibt korrekt sichtbar, da das
+    /// Label immer den tatsächlichen `value` anzeigt.
+    private func goalRow(titleKey: String, systemImage: String,
+                         value: Binding<Int>, options: [Int], field: GoalField) -> some View {
+        Menu {
+            Picker(selection: value) {
+                ForEach(options, id: \.self) { option in
+                    Text(goalValueLabel(option)).tag(option)
+                }
+            } label: { EmptyView() }
+            Button {
+                customText = value.wrappedValue == 0 ? "" : "\(value.wrappedValue)"
+                editingField = field
+            } label: {
+                Label(L("settings.goal.custom"), systemImage: "pencil")
+            }
+        } label: {
+            LabeledContent {
+                Text(goalValueLabel(value.wrappedValue))
+                    .foregroundStyle(Theme.brandStart)
+            } label: {
+                Label(L(titleKey), systemImage: systemImage)
+            }
+        }
+    }
+
+    /// Bindung, die das Ziel-Freitext-Alert öffnet/schließt (leitet aus `editingField` ab).
+    private var customAlertPresented: Binding<Bool> {
+        Binding(get: { editingField != nil }, set: { if !$0 { editingField = nil } })
+    }
+
+    /// Übernimmt die eingegebene Zahl. Gültig sind `0…maxCustom` (0 = Ziel aus);
+    /// leere oder ungültige Eingaben lassen den Wert unverändert.
+    private func applyCustom() {
+        defer { editingField = nil }
+        let trimmed = customText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let entered = Int(trimmed), entered >= 0 else { return }
+        let clamped = min(entered, GoalOptions.maxCustom)
+        switch editingField {
+        case .weekly: weeklyGoal = clamped
+        case .daily: dailyGoal = clamped
+        case nil: break
+        }
     }
 
     private func reloadStreakWidget() {
