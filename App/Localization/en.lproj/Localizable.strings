@@ -250,6 +250,10 @@
 "settings.goal.daily" = "Daily goal";
 "settings.goal.off" = "Off";
 "settings.goal.footer" = "Track your progress on the home screen. Set a value to 0 to turn that goal off.";
+"settings.goal.custom" = "Custom…";
+"settings.goal.customPrompt" = "Enter goal";
+"settings.goal.customPlaceholder" = "e.g. 250";
+"settings.goal.customHint" = "Enter a number from 0 to 9999. 0 turns this goal off.";
 "notification.title" = "Time to learn 🇰🇷";
 "notification.body" = "Your words are waiting — a few minutes is enough.";
 

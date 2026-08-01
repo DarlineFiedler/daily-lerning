@@ -250,6 +250,10 @@
 "settings.goal.daily" = "Tagesziel";
 "settings.goal.off" = "Aus";
 "settings.goal.footer" = "Verfolge deinen Fortschritt auf dem Home-Screen. Setze einen Wert auf 0, um dieses Ziel abzuschalten.";
+"settings.goal.custom" = "Eigener Wert…";
+"settings.goal.customPrompt" = "Zielwert eingeben";
+"settings.goal.customPlaceholder" = "z. B. 250";
+"settings.goal.customHint" = "Gib eine Zahl von 0 bis 9999 ein. 0 schaltet dieses Ziel ab.";
 "notification.title" = "Zeit zum Lernen 🇰🇷";
 "notification.body" = "Deine Vokabeln warten – ein paar Minuten reichen.";
 
