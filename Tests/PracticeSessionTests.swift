@@ -293,42 +293,14 @@ final class PracticeSessionTests: XCTestCase {
         XCTAssertTrue(session.items.allSatisfy { $0.direction == .wordToMeaning })
     }
 
-    // MARK: - Memory (#53)
+    // MARK: - record(result:for:)
 
-    func testIsMemorySessionOnlyWhenExclusive() {
-        XCTAssertTrue(PracticeConfig(modes: [.memory]).isMemorySession)
-        XCTAssertFalse(PracticeConfig(modes: [.memory, .review]).isMemorySession)
-        XCTAssertFalse(PracticeConfig(modes: []).isMemorySession)
-    }
-
-    func testMemorySessionBuildsMemoryItems() {
-        let vocabs = makeVocabs(6)
-        let session = PracticeSession(
-            vocabs: vocabs, distractorPool: vocabs,
-            config: PracticeConfig(modes: [.memory]), context: context
-        )
-        XCTAssertTrue(session.isMemory)
-        XCTAssertEqual(session.total, 6)
-        XCTAssertTrue(session.items.allSatisfy { $0.mode == .memory })
-    }
-
-    /// Memory darf nie im Per-Karte-„Mix" (leere Auswahl = alle Modi) landen.
-    func testMemoryNeverAppearsInMixPool() {
-        let vocabs = makeVocabs(30)
-        let session = PracticeSession(
-            vocabs: vocabs, distractorPool: vocabs,
-            config: PracticeConfig(modes: []), context: context
-        )
-        XCTAssertFalse(session.isMemory)
-        XCTAssertFalse(session.items.contains { $0.mode == .memory })
-    }
-
-    /// `record(result:for:)` verbucht ein bestimmtes (out-of-order) Wort und rückt vor.
+    /// `record(result:for:)` verbucht ein bestimmtes Wort und rückt den Fortschritt vor.
     func testRecordResultBooksSpecificVocabAndAdvances() throws {
         let vocabs = makeVocabs(3)
         let session = PracticeSession(
             vocabs: vocabs, distractorPool: vocabs,
-            config: PracticeConfig(modes: [.memory]), context: context
+            config: PracticeConfig(modes: [.review]), context: context
         )
         let target = try XCTUnwrap(session.items.last).vocab
         session.record(result: false, for: target)
@@ -336,22 +308,5 @@ final class PracticeSessionTests: XCTestCase {
         XCTAssertEqual(session.wrongCount, 1)
         XCTAssertEqual(session.missedVocabs.first?.id, target.id)
         XCTAssertGreaterThanOrEqual(target.totalWrongCount, 1)
-    }
-
-    /// Nach dem Buchen aller Paare ist die Memory-Session fertig (Runden-Auswertung läuft).
-    func testMemorySessionFinishesAfterAllPairs() {
-        let vocabs = makeVocabs(4)
-        let session = PracticeSession(
-            vocabs: vocabs, distractorPool: vocabs,
-            config: PracticeConfig(modes: [.memory]), context: context
-        )
-        for vocab in vocabs { session.record(result: true, for: vocab) }
-        XCTAssertTrue(session.isFinished)
-        XCTAssertEqual(session.correctCount, 4)
-    }
-
-    /// Memory zählt nicht für das „alle Modi an einem Tag"-Badge (bliebe sonst unerreichbar).
-    func testDailyBadgeModeCountExcludesMemory() {
-        XCTAssertEqual(PracticeMode.dailyBadgeModeCount, PracticeMode.allCases.count - 1)
     }
 }

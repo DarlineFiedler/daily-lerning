@@ -105,7 +105,6 @@
 "practice.mode.writing" = "Schreiben";
 "practice.mode.listening" = "Hören";
 "practice.mode.cloze" = "Lückentext";
-"practice.mode.memory" = "Memory";
 "practice.cloze.typeWord" = "Fehlendes Wort eintippen";
 "practice.cloze.meaningHint" = "Bedeutung: %@";
 "practice.cloze.empty" = "Keines dieser Wörter hat bisher einen Beispielsatz. Ergänze einen im Wort-Editor, um Lückentext zu üben.";

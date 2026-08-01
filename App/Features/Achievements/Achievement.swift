@@ -243,7 +243,7 @@ struct AchievementProgress: Equatable, Codable {
     var ghostHour = false // Runde exakt um 00:00 beendet
     var fridayThe13th = false // an einem Freitag, dem 13.
     var newYearsEve = false // am 31.12.
-    var allModesOneDay = false // alle 4 Modi an einem Kalendertag
+    var allModesOneDay = false // alle Modi an einem Kalendertag
     var doublePack = false // ≥2 Runden am selben Tag
     var serienComeback = false // nach gerissenem Streak einen längeren aufgebaut
     var hangulDay = false // am 9. Oktober (한글날) geübt
@@ -409,7 +409,7 @@ struct AchievementProgress: Equatable, Codable {
         sessionsToday += 1
         newWordsToday += newlyLearned
         groupsToday.formUnion(groups)
-        if modesToday.count >= PracticeMode.dailyBadgeModeCount { allModesOneDay = true }
+        if modesToday.count >= PracticeMode.allCases.count { allModesOneDay = true }
         if sessionsToday >= 2 { doublePack = true }
         if groupsToday.count >= 3 { sprachmix = true } // Wörter aus ≥3 Gruppen an einem Tag
         // „Ein Wort am Tag": Tag zählt, solange genau 1 neues Wort. Kommt am selben Tag
