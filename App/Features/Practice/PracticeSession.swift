@@ -77,6 +77,29 @@ final class PracticeSession {
     /// Beispielsatz hat.)
     var isClozeOnly: Bool { config.isClozeOnlySession }
 
+    /// „Endgegner"-Modus aktiv? (Issue #89 – rein visuelle Kampf-Schicht.)
+    var isBossMode: Bool { config.bossMode }
+
+    /// Aktueller Kampfstand, komplett aus den Zählern abgeleitet.
+    var bossBattle: BossBattle {
+        BossBattle(total: total, correct: correctCount, wrong: wrongCount)
+    }
+
+    /// Die einzige distinkte Vokabelgruppe dieser Runde – für die Boss-Identität
+    /// (Name/Farbe). `nil`, wenn die Runde keine oder mehrere Gruppen umfasst.
+    var bossGroup: VocabGroup? {
+        var found: VocabGroup?
+        for item in items {
+            guard let group = item.vocab.group else { return nil }
+            if let found {
+                if found.id != group.id { return nil }
+            } else {
+                found = group
+            }
+        }
+        return found
+    }
+
     /// Trefferquote in Prozent (0, wenn noch nichts beantwortet).
     var accuracy: Int {
         let answered = correctCount + wrongCount
@@ -126,6 +149,9 @@ final class PracticeSession {
                                        correct: correct, on: .now, calendar: .current)
         context.saveOrLog()
         index += 1
+        // Endgegner-Modus: sind die Leben aufgebraucht, gewinnt der Boss – die Runde
+        // endet sofort (der bestehende `isFinished`/`finalizeRound`-Pfad übernimmt).
+        if config.bossMode, bossBattle.isPlayerDefeated { index = items.count }
         if isFinished { finalizeRound() }
     }
 
@@ -140,6 +166,8 @@ final class PracticeSession {
         // Fehlerfrei-Serie schon ohne Mindestwortzahl.
         let isPerfect = wrongCount == 0 && total >= 5
         let isFlawless = wrongCount == 0 && total >= 1
+        // Boss besiegt = im Endgegner-Modus die Runde durchgestanden, ohne k.o. zu gehen.
+        let bossDefeated = config.bossMode && bossBattle.playerWon
         newlyUnlocked = AchievementService.registerSession(
             modes: Set(items.map(\.mode)),
             date: now,
@@ -149,6 +177,7 @@ final class PracticeSession {
             newlyLearned: newlyLearnedCount,
             currentStreak: StreakStore.current,
             groups: Set(items.compactMap { $0.vocab.group?.id.uuidString }),
+            bossDefeated: bossDefeated,
             context: context
         )
         // Üben ändert den Fälligkeitsstand (nextReviewAt/lastPracticedAt) → App-Icon-Badge

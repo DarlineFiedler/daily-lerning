@@ -139,6 +139,13 @@
 "practice.finishedSummary" = "%d correct · %d wrong";
 "practice.restart" = "Again";
 "practice.swipeHint" = "Swipe left: I know · Swipe right: I don't";
+"practice.config.boss" = "Boss battle";
+"practice.boss.toggle" = "Boss mode";
+"practice.boss.hint" = "Frame the round as a fight against a boss: correct answers are hits, mistakes cost lives.";
+"practice.boss.generic" = "Boss";
+"practice.boss.hp" = "%d / %d HP";
+"practice.boss.victory" = "Boss defeated!";
+"practice.boss.defeat" = "Defeated by the boss";
 
 /* Statistics */
 "stats.title" = "Statistics";
@@ -426,6 +433,8 @@
 "ach.hangulDay.detail" = "Practiced on October 9 (한글날)";
 "ach.mondSchein.title" = "Moonlight";
 "ach.mondSchein.detail" = "Practiced on a full-moon night";
+"ach.bossDefeated.title" = "Boss Slayer";
+"ach.bossDefeated.detail" = "Defeated a boss ⚔️";
 "ach.challengeAce.title" = "Challenge Ace";
 "ach.challengeAce.detail" = "Completed 10 daily challenges";
 "ach.challengeMaster.title" = "Challenge Master";

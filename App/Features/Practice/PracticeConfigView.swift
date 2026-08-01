@@ -15,6 +15,7 @@ struct PracticeConfigView: View {
     @State private var direction: PracticeDirection = .wordToMeaning
     @State private var selectedModes: Set<PracticeMode> = []
     @State private var wordLimit: Int?
+    @State private var bossMode = false
     @State private var startSession = false
 
     @State private var presets: [PracticePreset] = []
@@ -60,7 +61,7 @@ struct PracticeConfigView: View {
 
     private var config: PracticeConfig {
         PracticeConfig(statuses: selectedStatuses, direction: direction,
-                       modes: selectedModes, wordLimit: wordLimit)
+                       modes: selectedModes, wordLimit: wordLimit, bossMode: bossMode)
     }
 
     var body: some View {
@@ -74,6 +75,7 @@ struct PracticeConfigView: View {
                     focusSection
                     DirectionModeSelection(direction: $direction, modes: $selectedModes)
                     WordLimitSelection(wordLimit: $wordLimit)
+                    bossSection
                 }
                 .padding(Theme.Spacing.m)
             }
@@ -217,6 +219,25 @@ struct PracticeConfigView: View {
                     isSelected: problemsOnly
                 ) { problemsOnly.toggle() }
             }
+        }
+    }
+
+    /// Optionaler „Endgegner"-Modus: rahmt die Runde als Kampf gegen einen Boss
+    /// (HP-Leiste, Sieg/Niederlage). Rein visuell – ändert Modi/Statistiken nicht.
+    private var bossSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(L("practice.config.boss"))
+            FlowChips {
+                SelectableChip(
+                    title: L("practice.boss.toggle"),
+                    systemImage: "flame.fill",
+                    tint: Theme.brandEnd,
+                    isSelected: bossMode
+                ) { bossMode.toggle() }
+            }
+            Text(L("practice.boss.hint"))
+                .font(.appCaption)
+                .foregroundStyle(.secondary)
         }
     }
 

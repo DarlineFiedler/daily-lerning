@@ -139,6 +139,13 @@
 "practice.finishedSummary" = "정답 %d · 오답 %d";
 "practice.restart" = "다시";
 "practice.swipeHint" = "왼쪽: 알아요 · 오른쪽: 몰라요";
+"practice.config.boss" = "보스전";
+"practice.boss.toggle" = "보스 모드";
+"practice.boss.hint" = "라운드를 보스와의 전투로: 정답은 공격, 오답은 생명이 줄어듭니다.";
+"practice.boss.generic" = "보스";
+"practice.boss.hp" = "%d / %d HP";
+"practice.boss.victory" = "보스 격파!";
+"practice.boss.defeat" = "보스에게 패배";
 
 /* Statistics */
 "stats.title" = "통계";
@@ -426,6 +433,8 @@
 "ach.hangulDay.detail" = "10월 9일(한글날)에 연습";
 "ach.mondSchein.title" = "달빛";
 "ach.mondSchein.detail" = "보름달 밤에 연습";
+"ach.bossDefeated.title" = "보스 처치자";
+"ach.bossDefeated.detail" = "보스를 격파 ⚔️";
 "ach.challengeAce.title" = "도전 에이스";
 "ach.challengeAce.detail" = "일일 도전 10회 완료";
 "ach.challengeMaster.title" = "도전 마스터";

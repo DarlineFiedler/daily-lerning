@@ -104,6 +104,7 @@ struct AchievementMetrics: Equatable {
     var hangulDay = false
     var fullMoon = false
     var sprachmix = false
+    var bossDefeated = false
     // Ereignis-Flags aus der App-Nutzung (außerhalb der Übungsrunde).
     var searchUsed = false
     var languageChanged = false
@@ -164,6 +165,7 @@ struct AchievementMetrics: Equatable {
             hangulDay: progress.hangulDay,
             fullMoon: progress.fullMoon,
             sprachmix: progress.sprachmix,
+            bossDefeated: progress.bossDefeated,
             searchUsed: progress.searchUsed,
             languageChanged: progress.languageChanged,
             widgetUsed: progress.widgetUsed,
@@ -249,6 +251,7 @@ struct AchievementProgress: Equatable, Codable {
     var hangulDay = false // am 9. Oktober (한글날) geübt
     var fullMoon = false // an einem Vollmond-Datum geübt
     var sprachmix = false // Wörter aus ≥3 Gruppen an einem Tag geübt
+    var bossDefeated = false // eine „Endgegner"-Runde siegreich beendet (Issue #89)
 
     // Zähler für mehrfache Comebacks (nach je ≥3 Tagen Pause wieder geübt).
     var comebackCount = 0
@@ -294,7 +297,7 @@ struct AchievementProgress: Equatable, Codable {
     enum CodingKeys: String, CodingKey {
         case modesUsed, weekdays, sessionsCompleted, perfectRounds, nightOwl, earlyBird
         case afterWork, weekend, comeback, selfCorrection, ghostHour, fridayThe13th
-        case newYearsEve, allModesOneDay, doublePack, serienComeback, hangulDay, fullMoon, sprachmix
+        case newYearsEve, allModesOneDay, doublePack, serienComeback, hangulDay, fullMoon, sprachmix, bossDefeated
         case comebackCount, searchUsed, languageChanged, widgetUsed, groupCreated, weeklyGoalReached
         case seasons, sameMode, sameModeMode, nightNights, oneWordDays, flawlessRun
         case currentDay, modesToday, sessionsToday, newWordsToday, groupsToday, flawlessToday
@@ -329,7 +332,9 @@ struct AchievementProgress: Equatable, Codable {
                                 newlyLearned: Int = 0,
                                 currentStreak: Int = 0,
                                 groups: Set<String> = [],
+                                bossDefeated: Bool = false,
                                 calendar: Calendar = .current) {
+        if bossDefeated { self.bossDefeated = true }
         let modeRaws = Set(modes.map(\.rawValue))
         let day = calendar.startOfDay(for: date)
         let comps = calendar.dateComponents([.weekday, .hour, .minute, .year, .month, .day], from: date)
@@ -543,6 +548,7 @@ enum AchievementCatalog {
         Achievement(id: "widgetActive", category: .fun, emoji: "📱", requirement: .flag(\.widgetUsed)),
         Achievement(id: "hangulDay", category: .fun, emoji: "🎊", requirement: .flag(\.hangulDay)),
         Achievement(id: "mondSchein", category: .fun, emoji: "🌕", requirement: .flag(\.fullMoon)),
+        Achievement(id: "bossDefeated", category: .fun, emoji: "⚔️", requirement: .flag(\.bossDefeated)),
 
         // --- Erweiterung: Tages-Challenges ---
         Achievement(id: "challengeAce", category: .sessions, emoji: "🎯", requirement: .count(\.dailyChallengesCompleted, 10)),
