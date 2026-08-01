@@ -7,7 +7,6 @@ import SwiftUI
 struct AchievementsView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-    @Query private var vocabs: [Vocab]
 
     @State private var metrics = AchievementMetrics()
     @State private var unlockedIDs: Set<String> = []

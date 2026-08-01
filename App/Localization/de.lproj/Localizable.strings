@@ -277,6 +277,7 @@
 "settings.backup.hint" = "Vollständige Sicherung aller Wörter und Gruppen als Datei (in Dateien/iCloud Drive speichern). Beim Wiederherstellen werden vorhandene Wörter aktualisiert, keine Duplikate.";
 "settings.backup.restored" = "%d Wörter und %d Gruppen wiederhergestellt.";
 "settings.backup.error" = "Die Datei konnte nicht gelesen werden.";
+"settings.export.error" = "Der Export konnte nicht erstellt werden.";
 "store.error.title" = "Datenbankfehler";
 "store.error.message" = "Die Datenbank konnte nicht geöffnet werden. Bitte keine Wörter hinzufügen und die App neu starten.";
 "import.target" = "Zielgruppe";

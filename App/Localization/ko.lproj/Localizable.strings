@@ -277,6 +277,7 @@
 "settings.backup.hint" = "모든 단어와 그룹을 파일로 완전히 백업합니다(파일/iCloud Drive에 저장). 복원 시 기존 단어는 업데이트되며 중복되지 않습니다.";
 "settings.backup.restored" = "단어 %d개와 그룹 %d개를 복원했습니다.";
 "settings.backup.error" = "파일을 읽을 수 없습니다.";
+"settings.export.error" = "내보내기를 만들 수 없습니다.";
 "store.error.title" = "데이터베이스 오류";
 "store.error.message" = "데이터베이스를 열 수 없습니다. 단어를 추가하지 말고 앱을 다시 시작하세요.";
 "import.target" = "대상 그룹";
