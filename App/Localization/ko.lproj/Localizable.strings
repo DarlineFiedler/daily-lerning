@@ -253,7 +253,7 @@
 "settings.goal.custom" = "직접 입력…";
 "settings.goal.customPrompt" = "목표 입력";
 "settings.goal.customPlaceholder" = "예: 250";
-"settings.goal.customHint" = "원하는 숫자를 입력하세요. 0으로 설정하면 목표가 꺼집니다.";
+"settings.goal.customHint" = "0부터 9999까지의 숫자를 입력하세요. 0으로 설정하면 목표가 꺼집니다.";
 "notification.title" = "학습할 시간이에요 🇰🇷";
 "notification.body" = "단어들이 기다려요 — 몇 분이면 충분해요.";
 

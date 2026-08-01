@@ -34,6 +34,20 @@ enum GoalOptions {
     /// bewusst einen Wert wählt (verhindert ungefragte Karten/Badges nach Update).
     static let defaultWeekly = 0
     static let defaultDaily = 0
+
+    /// Normalisiert eine Freitext-Eingabe zu einem gültigen Zielwert.
+    /// Gültig sind ganze Zahlen `0…maxCustom` (0 = Ziel aus); zu große Werte werden
+    /// auf `maxCustom` gekappt. Leere, negative oder nicht-numerische Eingaben liefern
+    /// `nil` – der Aufrufer lässt den Wert dann unverändert.
+    static func normalizedCustom(_ text: String) -> Int? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Nur reine ASCII-Ziffernfolgen sind gültig (schließt leer, negativ, Dezimal
+        // und Nicht-Zahlen aus). Eine so lange Folge, dass sie `Int` überschreitet, ist
+        // eindeutig „viel zu groß" → auf `maxCustom` kappen statt verwerfen.
+        guard !trimmed.isEmpty, trimmed.allSatisfy({ $0.isASCII && $0.isNumber }) else { return nil }
+        guard let entered = Int(trimmed) else { return maxCustom }
+        return min(entered, maxCustom)
+    }
 }
 
 /// Zusammenfassung einer abgeschlossenen Kalenderwoche – rein abgeleitet, für die

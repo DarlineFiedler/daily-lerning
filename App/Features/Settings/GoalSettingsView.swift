@@ -105,9 +105,7 @@ struct GoalSettingsView: View {
     /// leere oder ungültige Eingaben lassen den Wert unverändert.
     private func applyCustom() {
         defer { editingField = nil }
-        let trimmed = customText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let entered = Int(trimmed), entered >= 0 else { return }
-        let clamped = min(entered, GoalOptions.maxCustom)
+        guard let clamped = GoalOptions.normalizedCustom(customText) else { return }
         switch editingField {
         case .weekly: weeklyGoal = clamped
         case .daily: dailyGoal = clamped
