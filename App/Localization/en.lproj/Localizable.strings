@@ -146,6 +146,11 @@
 "practice.boss.hp" = "%d / %d HP";
 "practice.boss.victory" = "Boss defeated!";
 "practice.boss.defeat" = "Defeated by the boss";
+"practice.boss.giveUp" = "Give up";
+"practice.boss.giveUp.confirm" = "Really give up the fight?";
+"practice.boss.stat.hits" = "Hits";
+"practice.boss.stat.rounds" = "Rounds";
+"practice.boss.stat.misses" = "Misses";
 
 /* Statistics */
 "stats.title" = "Statistics";

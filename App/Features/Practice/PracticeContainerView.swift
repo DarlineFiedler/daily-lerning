@@ -21,25 +21,17 @@ struct PracticeContainerView: View {
             } else if session.currentItem == nil {
                 PracticeSummaryView(
                     session: session,
-                    bossOutcome: bossOutcome,
                     onRestart: { withAnimation { session.restart() } },
                     onRetryWrong: { withAnimation { session.retryWrong() } },
                     onClose: handleClose
                 )
             } else if let item = session.currentItem {
-                if session.isBossMode {
-                    BossBattleHeader(session: session)
-                } else {
-                    PracticeProgressHeader(session: session)
-                }
+                PracticeProgressHeader(session: session)
                 ScrollView {
                     modeView(for: item)
                         .padding(Theme.Spacing.m)
                         .id(session.index) // erzwingt frische State pro Wort
                 }
-                // Endgegner-Modus: Gegenschlag = Screen-Shake bei jeder falschen Antwort.
-                .modifier(ShakeEffect(animatableData: session.isBossMode ? CGFloat(session.wrongCount) : 0))
-                .animation(.linear(duration: 0.4), value: session.wrongCount)
             }
         }
         .background(Theme.background.ignoresSafeArea())
@@ -76,12 +68,6 @@ struct PracticeContainerView: View {
     private func handleClose() {
         sessionStore?.finish(session)
         onClose()
-    }
-
-    /// Ausgang des Endgegner-Kampfes für den Ergebnis-Screen – nur im Boss-Modus.
-    private var bossOutcome: BossOutcome? {
-        guard session.isBossMode else { return nil }
-        return session.bossBattle.playerWon ? .victory : .defeat
     }
 
     private var emptyState: some View {
@@ -160,8 +146,6 @@ struct PracticeProgressHeader: View {
 /// aufgestiegene Wörter, plus gezieltes Nachüben der falschen.
 struct PracticeSummaryView: View {
     let session: PracticeSession
-    /// Ausgang des Endgegner-Kampfes; `nil` = normale Runde (Standard-Hero).
-    var bossOutcome: BossOutcome?
     let onRestart: () -> Void
     let onRetryWrong: () -> Void
     let onClose: () -> Void
@@ -173,10 +157,13 @@ struct PracticeSummaryView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.Spacing.l) {
-                hero
-                Text(L(bossOutcome?.titleKey ?? "practice.finished"))
+                Image(systemName: "party.popper.fill")
+                    .font(.system(size: 64))
+                    .foregroundStyle(Theme.brandGradient)
+                    .scaleEffect(appeared ? 1 : 0.4)
+                    .rotationEffect(.degrees(appeared ? 0 : -20))
+                Text(L("practice.finished"))
                     .font(.appLargeTitle)
-                    .multilineTextAlignment(.center)
 
                 statRow
                 Text(L("practice.finishedSummary", session.correctCount, session.wrongCount))
@@ -202,24 +189,6 @@ struct PracticeSummaryView: View {
         }
         .onAppear {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) { appeared = true }
-        }
-    }
-
-    /// Kopf-Symbol des Ergebnis-Screens: Party-Popper für normale Runden, im
-    /// Endgegner-Modus stattdessen ein Sieg-/Niederlage-Emoji.
-    @ViewBuilder
-    private var hero: some View {
-        if let bossOutcome {
-            Text(bossOutcome.emoji)
-                .font(.system(size: 64))
-                .scaleEffect(appeared ? 1 : 0.4)
-                .rotationEffect(.degrees(appeared ? 0 : -20))
-        } else {
-            Image(systemName: "party.popper.fill")
-                .font(.system(size: 64))
-                .foregroundStyle(Theme.brandGradient)
-                .scaleEffect(appeared ? 1 : 0.4)
-                .rotationEffect(.degrees(appeared ? 0 : -20))
         }
     }
 
@@ -309,111 +278,5 @@ struct PromptCard: View {
         .background(Theme.brandGradientSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
         .foregroundStyle(.white)
         .shadow(color: Theme.brandStart.opacity(0.3), radius: 16, y: 8)
-    }
-}
-
-// MARK: - Endgegner-Modus (Issue #89)
-
-/// Ausgang eines Endgegner-Kampfes für den Ergebnis-Screen.
-enum BossOutcome {
-    case victory
-    case defeat
-
-    var emoji: String {
-        switch self {
-        case .victory: return "🏆"
-        case .defeat: return "💀"
-        }
-    }
-
-    var titleKey: String {
-        switch self {
-        case .victory: return "practice.boss.victory"
-        case .defeat: return "practice.boss.defeat"
-        }
-    }
-}
-
-/// Horizontaler „Screen-Shake" – der Gegenschlag des Bosses bei einer falschen
-/// Antwort. `animatableData` ist die (falsche) Antwortzahl; jeder Sprung um 1
-/// erzeugt genau einen Wackel-Zyklus.
-struct ShakeEffect: GeometryEffect {
-    var animatableData: CGFloat
-
-    func effectValue(size _: CGSize) -> ProjectionTransform {
-        let dx = 8 * sin(animatableData * .pi * 6)
-        return ProjectionTransform(CGAffineTransform(translationX: dx, y: 0))
-    }
-}
-
-/// Kampf-Kopfzeile im Endgegner-Modus: Boss (Name der einzigen Gruppe oder
-/// generisch) mit HP-Leiste plus Herz-Anzeige der verbleibenden Leben. Rein
-/// visuell – die Werte kommen aus `session.bossBattle`.
-struct BossBattleHeader: View {
-    let session: PracticeSession
-
-    /// Ab dieser Lebenszahl wird kompakt „❤️ ×N" statt einzelner Herzen gezeigt.
-    private static let heartsThreshold = 6
-
-    private var battle: BossBattle { session.bossBattle }
-
-    private var tint: Color {
-        session.bossGroup.map { Color(hex: $0.colorHex) } ?? Theme.brandStart
-    }
-
-    private var bossName: String {
-        session.bossGroup?.name ?? L("practice.boss.generic")
-    }
-
-    var body: some View {
-        VStack(spacing: Theme.Spacing.s) {
-            HStack(spacing: Theme.Spacing.s) {
-                Text("🐲")
-                    .font(.system(size: 34))
-                    .phaseAnimator([1.0, 0.82, 1.0], trigger: session.correctCount) { view, scale in
-                        view.scaleEffect(scale)
-                    }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(bossName)
-                        .font(.appHeadline)
-                        .lineLimit(1)
-                    Text(L("practice.boss.hp", battle.currentHP, battle.maxHP))
-                        .font(.appCaption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                lives
-            }
-
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Theme.surfaceMuted)
-                    Capsule().fill(tint)
-                        .frame(width: geo.size.width * battle.hpFraction)
-                        .animation(.easeOut(duration: 0.3), value: battle.currentHP)
-                }
-            }
-            .frame(height: 10)
-        }
-        .padding(.horizontal, Theme.Spacing.m)
-        .padding(.top, Theme.Spacing.s)
-    }
-
-    /// Verbleibende Leben – einzelne Herzen bei kleinen Runden, sonst kompakt.
-    @ViewBuilder
-    private var lives: some View {
-        if battle.maxLives > Self.heartsThreshold {
-            Label("\(battle.livesRemaining)", systemImage: "heart.fill")
-                .font(.appCaption.weight(.semibold))
-                .foregroundStyle(Theme.wrong)
-        } else {
-            HStack(spacing: 2) {
-                ForEach(0 ..< battle.maxLives, id: \.self) { i in
-                    Image(systemName: i < battle.livesRemaining ? "heart.fill" : "heart")
-                        .font(.appCaption)
-                        .foregroundStyle(Theme.wrong)
-                }
-            }
-        }
     }
 }

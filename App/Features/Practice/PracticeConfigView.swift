@@ -98,19 +98,33 @@ struct PracticeConfigView: View {
             }
             .safeAreaInset(edge: .bottom) { startBar }
             .navigationDestination(isPresented: $startSession) {
-                PracticeContainerView(
-                    session: PracticeSession(
-                        vocabs: pool,
-                        distractorPool: resolvedGroups.flatMap(\.vocabs),
-                        config: config,
-                        context: context
-                    ),
-                    onClose: { dismiss() },
-                    // Gruppen-Fluss läuft in der Navigation weiter; ein Live-Activity-Tap
-                    // bringt die App in den Vordergrund (nicht wieder-präsentierbar).
-                    sessionStore: sessionStore,
-                    resumable: false
-                )
+                if bossMode {
+                    // Endgegner-Modus: eigenständiger, von den Lern-Statistiken getrennter
+                    // Kampf-Fluss (Folge zu #89) statt einer regulären Übungsrunde.
+                    BossBattleContainerView(
+                        session: BossSession(
+                            vocabs: pool,
+                            distractorPool: resolvedGroups.flatMap(\.vocabs),
+                            config: config,
+                            context: context
+                        ),
+                        onClose: { dismiss() }
+                    )
+                } else {
+                    PracticeContainerView(
+                        session: PracticeSession(
+                            vocabs: pool,
+                            distractorPool: resolvedGroups.flatMap(\.vocabs),
+                            config: config,
+                            context: context
+                        ),
+                        onClose: { dismiss() },
+                        // Gruppen-Fluss läuft in der Navigation weiter; ein Live-Activity-Tap
+                        // bringt die App in den Vordergrund (nicht wieder-präsentierbar).
+                        sessionStore: sessionStore,
+                        resumable: false
+                    )
+                }
             }
             .onAppear { presets = PracticePresetStore.all() }
             .alert(L("practice.config.savePreset"), isPresented: $showingSavePreset) {
