@@ -73,9 +73,6 @@ final class PracticeSession {
     var total: Int { items.count }
     var position: Int { min(index + 1, total) }
 
-    /// Läuft diese Session als Memory-Kartenfeld (statt Einzelkarten)?
-    var isMemory: Bool { config.isMemorySession }
-
     /// Reine Lückentext-Runde? (Steuert die Leer-Meldung, wenn kein Wort einen
     /// Beispielsatz hat.)
     var isClozeOnly: Bool { config.isClozeOnlySession }
@@ -96,9 +93,7 @@ final class PracticeSession {
     }
 
     /// Verbucht ein Ergebnis für ein bestimmtes Wort und rückt den Fortschritt vor.
-    /// Im Per-Karte-Fluss ist das Wort `currentItem.vocab` (via `submit`); das
-    /// Memory-Board matcht Paare in beliebiger Reihenfolge und übergibt das jeweils
-    /// gelöste Wort direkt – so bleibt die komplette SRS-/Achievement-Buchung geteilt.
+    /// Im Per-Karte-Fluss ist das Wort `currentItem.vocab` (via `submit`).
     func record(result correct: Bool, for vocab: Vocab) {
         let before = vocab.status
         // Zuvor falsch/zurückgesetzt? (geübt, aber Erfolgs-Counter auf 0) – für „Selbstkorrektur".
@@ -203,15 +198,7 @@ final class PracticeSession {
     /// Weist jedem Wort einen (zufälligen) Modus, eine aufgelöste Richtung und
     /// – für Auswahl-/Hör-Modi – vier Optionen zu.
     private static func buildItems(from vocabs: [Vocab], distractorPool: [Vocab], config: PracticeConfig) -> [PracticeItem] {
-        // Memory ist ein eigenständiges Kartenfeld: alle Wörter werden zu Paaren, ohne
-        // Einzelkarten-Optionen (das Board matcht Wort ↔ eigene Bedeutung).
-        if config.isMemorySession {
-            return vocabs.map {
-                PracticeItem(vocab: $0, mode: .memory, direction: .wordToMeaning, choices: [])
-            }
-        }
-        // Memory nie in den Per-Karte-Fluss (auch nicht ins „Mix" = leere Auswahl) mischen.
-        let perCardModes = config.resolvedModes.filter { $0 != .memory }
+        let perCardModes = config.resolvedModes
         // Session-weite Invarianten der Distraktor-Auswahl EINMAL vorberechnen (statt pro
         // Wort): die Session-IDs, den um sie bereinigten Pool und dessen Gruppierung. Das
         // Gruppieren fasst den teuren SwiftData-`group`-Relationship-Zugriff auf einen

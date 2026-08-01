@@ -25,9 +25,6 @@ struct PracticeContainerView: View {
                     onRetryWrong: { withAnimation { session.retryWrong() } },
                     onClose: handleClose
                 )
-            } else if session.isMemory {
-                // Memory ist ein eigenständiges Kartenfeld mit eigenem Fortschritts-Header.
-                MemoryBoardView(session: session)
             } else if let item = session.currentItem {
                 PracticeProgressHeader(session: session)
                 ScrollView {
@@ -106,15 +103,11 @@ struct PracticeContainerView: View {
             ListeningView(item: item, onAnswer: onAnswer)
         case .cloze:
             ClozeView(item: item, onAnswer: onAnswer)
-        case .memory:
-            // Memory läuft über `MemoryBoardView` (Sonderpfad im Body), nicht per Karte.
-            EmptyView()
         }
     }
 }
 
-/// Fortschrittsleiste eines Lernvorgangs (Position, Treffer/Fehler, Balken). Von
-/// Per-Karte-Modi (`PracticeContainerView`) und dem Memory-Board geteilt.
+/// Fortschrittsleiste eines Lernvorgangs (Position, Treffer/Fehler, Balken).
 struct PracticeProgressHeader: View {
     let session: PracticeSession
 

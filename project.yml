@@ -9,7 +9,7 @@ options:
 
 settings:
   base:
-    MARKETING_VERSION: "2.13.1"
+    MARKETING_VERSION: "2.13.2"
     CURRENT_PROJECT_VERSION: "77"
     SWIFT_VERSION: "5.0"
     CODE_SIGN_STYLE: Automatic

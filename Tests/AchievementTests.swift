@@ -161,8 +161,7 @@ final class AchievementTests: XCTestCase {
         XCTAssertTrue(p.doublePack) // 2× am selben Tag
 
         var all = AchievementProgress()
-        // Memory ist ein eigenständiges Spiel und zählt nicht mit (siehe
-        // `PracticeMode.dailyBadgeModeCount`) – alle übrigen Modi an einem Tag genügen.
+        // Alle Modi an einem Tag schaltet das Badge frei.
         all.recordSession(modes: [.review, .writing, .multipleChoice, .listening, .cloze],
                           date: date(2024, 2, 2, 9), isPerfect: false, calendar: cal)
         XCTAssertTrue(all.allModesOneDay)
