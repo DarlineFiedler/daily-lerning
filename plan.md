@@ -246,3 +246,109 @@ Den Rest (Projektstruktur, Code, `project.yml`, Commits) erledige ich.
 - **"Show meaning on tap"** auf dem Lock Screen = Deep-Link-Öffnen statt In-Place
   (iOS-Limit); AppIntent-Reveal nur experimenteller Stretch.
 - **Simulator-Runtime** muss ggf. erst geladen werden (Phase 0, Schritt 4).
+
+---
+
+# Nachtrag: Endgegner-Modus als eigenständiger Kampf-Modus (Folge zu #89 / PR #95)
+
+## Kontext & Abgrenzung
+
+PR #95 (`feat/89-boss-battle`) hat den Endgegner-Modus als **rein visuelle Schicht
+über einer normalen Übungsrunde** umgesetzt: Ein-Durchgang, „Sieg" = Runde überlebt.
+Dieser Nachtrag beschreibt den **Umbau zu einem echten, eigenständigen Kampf-Modus**,
+der von den Lern-Statistiken **komplett getrennt** ist – die Vokabeln dienen nur noch
+als „Kampf-Material", die Runde schreibt **nichts** in SRS/Streak/Wochenrückblick.
+
+Umsetzung als **eigener Folge-PR** auf frischem `main` (dieser Branch:
+`feat/boss-battle-standalone`), nachdem #95 gemergt ist.
+
+## Kampf-Mechanik
+
+- **Boss-HP = Anzahl der (distinkten) Wörter** der Runde.
+- **Richtige Antwort** = Treffer: das Wort ist „besiegt" und scheidet aus, HP −1.
+- **Falsche Antwort** = ein **Leben** verloren; das Wort **kommt zurück** in die
+  Warteschlange (wird später erneut gefragt).
+- **Leben** skalieren mit der Rundengröße (`max(3, ceil(total * 0.34))`), wie in #95.
+- **Wiederholungs-Reihenfolge:** Durchgang 1 = alle Wörter in Ausgangsreihenfolge.
+  Ab Durchgang 2 werden **nur die noch nicht besiegten (= zuvor falschen)** Wörter
+  erneut gefragt – zuerst die zuletzt falschen, dann der Rest der offenen. Bereits
+  besiegte Wörter tauchen **nicht** wieder auf.
+- **Ende-Bedingungen:**
+  - **Sieg:** alle Wörter besiegt → HP = 0 (Leiste wirklich leer, kein Rest-HP mehr).
+  - **Niederlage:** Leben = 0 (K.o.).
+  - **Aufgeben-Button:** bricht den Kampf ab → zählt als Abbruch/Niederlage
+    (kein Achievement).
+
+> Damit löst sich der Review-Punkt aus #95 („Sieg trotz Rest-HP"): Ein Sieg heißt
+> jetzt *wirklich* Boss auf 0.
+
+## Trennung von den Lern-Statistiken
+
+Der Kampf-Modus ruft den Lern-Schreibpfad **gar nicht** auf. Konkret **nicht**
+ausgeführt werden:
+
+- `Vocab.registerResult(...)` (kein Counter/Status-Aufstieg, kein SRS)
+- `StreakStore.registerActivity()` (kein Streak)
+- `WeeklyReviewStore` / Wochenrückblick
+- „neu gelernt"-Zählung, `PracticeProgress`-Session-Verbuchung
+
+**Ausnahme (bewusst):** Bei **Sieg** wird das Achievement **„Boss-Bezwinger"**
+(`bossDefeated`, ⚔️) vergeben – das ist das Badge-System, nicht die Lern-Statistik.
+
+## Architektur
+
+Eigene, testbare Session-Klasse statt eines „neutralen Pfades" in `PracticeSession`
+(die ist tief mit der SRS-Schreiblogik verdrahtet – eine separate Klasse garantiert
+die Trennung schon per Konstruktion, weil sie den Schreibpfad nie kennt):
+
+- **Neu: `BossSession`** (`@Observable`) – eigene Warteschlange (Queue) der offenen
+  Wörter, HP, Leben, aktueller Durchgang. Antwort-API (`answer(correct:)`) aktualisiert
+  nur den Kampfzustand und re-queued falsche Wörter; **kein** Lern-Schreibzugriff.
+- **Wiederverwenden:** `BossBattle` (reine Rechen-Logik aus #95, ggf. leicht angepasst),
+  `modeView(for:)`-Kartendarstellung (alle 5 Modi inkl. `listening`),
+  `BossBattleHeader` (HP-Leiste + Herzen).
+- **Neu: `BossBattleContainerView`** – eigener Screen-Flow (Header + Karte +
+  Aufgeben-Button + Screen-Shake), analog zu `PracticeContainerView`, aber ohne
+  Lern-Header/Restart-Retry-Logik.
+- **Neu: Kampf-Ergebnis-Screen** – Sieg/Niederlage-Hero, Kennzahlen passend zum
+  Kampf (Treffer, benötigte Durchgänge, verbrauchte Leben) statt „aufgestiegene
+  Wörter". Ggf. `PracticeSummaryView` aufteilen oder eine schlanke eigene View.
+- **Einstieg:** Der bestehende Toggle in `PracticeConfigView` bleibt; bei aktivem
+  Boss-Modus wird statt `PracticeSession` eine `BossSession` gestartet.
+
+## Betroffene Dateien (Skizze)
+
+- **Neu:** `App/Features/Practice/BossSession.swift`,
+  `App/Features/Practice/BossBattleContainerView.swift`,
+  `Tests/BossSessionTests.swift`
+- **Geändert:** `PracticeConfigView`/Einstieg (Routing zu `BossSession`),
+  `BossBattle.swift` (Queue-/Durchgangs-Helfer bei Bedarf),
+  `PracticeContainerView`/`PracticeSummaryView` (Boss-Teil entkoppeln),
+  Localizable (`practice.boss.giveUp`, Kampf-Kennzahlen, ggf. Sieg/Niederlage-Texte),
+  `project.yml` (Versionsbump, s. u.).
+
+## Tests
+
+- `BossSessionTests`: Queue-Reihenfolge (falsche zuerst wieder), HP sinkt nur bei
+  Erst-Treffer, Wiederholung bis Sieg, Niederlage bei 0 Leben, Aufgeben → kein Badge,
+  **Nachweis der Statistik-Neutralität** (Vocab-Status/Counter unverändert nach einer
+  Kampf-Runde), Achievement nur bei echtem Sieg.
+- Bestehende `BossBattleTests` weiterführen.
+
+## Offene Punkte / Risiken
+
+- Kartendarstellung (`modeView`) hängt aktuell an `PracticeSession`; für die
+  Wiederverwendung ggf. auf ein schlankes Protokoll/Item-Modell abstrahieren.
+- Distraktoren (Multiple Choice) müssen auch im Kampf-Modus bereitstehen.
+- Versionsbump: nächste freie Version nach #95 (2.14.0) → **2.15.0 / 81** bei der
+  Implementierung setzen (Projekt-Regel: Version pro Änderung erhöhen).
+
+## Umsetzungs-Schritte
+
+1. `BossSession` + Queue/Wiederholungslogik (reine Logik, testgetrieben)
+2. Statistik-Neutralität sicherstellen (kein Aufruf des Lern-Schreibpfads) + Test
+3. `BossBattleContainerView` + Aufgeben-Button + Screen-Shake
+4. Kampf-Ergebnis-Screen (Sieg/Niederlage, Kampf-Kennzahlen)
+5. Routing in `PracticeConfigView` (Toggle → `BossSession`)
+6. Achievement „Boss-Bezwinger" nur bei echtem Sieg
+7. Lokalisierung (de/en/ko), Versionsbump, Lint/Format/Tests grün

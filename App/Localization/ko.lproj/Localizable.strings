@@ -146,6 +146,12 @@
 "practice.boss.hp" = "%d / %d HP";
 "practice.boss.victory" = "보스 격파!";
 "practice.boss.defeat" = "보스에게 패배";
+"practice.boss.giveUp" = "포기";
+"practice.boss.giveUp.confirm" = "정말 포기할까요?";
+"practice.boss.stat.hits" = "명중";
+"practice.boss.stat.rounds" = "라운드";
+"practice.boss.stat.misses" = "실수";
+"practice.boss.a11y.status" = "보스 %1$@: HP %2$d/%3$d, 남은 목숨 %4$d";
 
 /* Statistics */
 "stats.title" = "통계";
