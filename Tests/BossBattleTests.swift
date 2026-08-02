@@ -20,7 +20,6 @@ final class BossBattleTests: XCTestCase {
         XCTAssertEqual(battle.currentHP, 0)
         XCTAssertEqual(battle.hpFraction, 0)
         XCTAssertFalse(battle.isPlayerDefeated) // kein Kampf → keine Niederlage
-        XCTAssertTrue(battle.playerWon)
     }
 
     func testBossHPDropsWithCorrectAnswers() {
@@ -41,9 +40,7 @@ final class BossBattleTests: XCTestCase {
         let battle = BossBattle(total: 10, correct: 3, wrong: 2) // maxLives 4
         XCTAssertEqual(battle.maxLives, 4)
         XCTAssertEqual(battle.livesRemaining, 2)
-        XCTAssertEqual(battle.livesFraction, 0.5, accuracy: 0.0001)
         XCTAssertFalse(battle.isPlayerDefeated)
-        XCTAssertTrue(battle.playerWon)
     }
 
     func testPlayerDefeatedWhenLivesExhausted() {
@@ -51,7 +48,6 @@ final class BossBattleTests: XCTestCase {
         let defeated = BossBattle(total: 10, correct: 2, wrong: 4)
         XCTAssertEqual(defeated.livesRemaining, 0)
         XCTAssertTrue(defeated.isPlayerDefeated)
-        XCTAssertFalse(defeated.playerWon)
     }
 
     func testNegativeInputsAreClampedToZero() {

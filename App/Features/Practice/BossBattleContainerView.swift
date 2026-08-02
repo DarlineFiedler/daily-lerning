@@ -184,6 +184,10 @@ struct BossBattleHeader: View {
         }
         .padding(.horizontal, Theme.Spacing.m)
         .padding(.top, Theme.Spacing.s)
+        // Kampf-Status als ein VoiceOver-Element (statt loser Emoji/Balken/Herzen).
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(L("practice.boss.a11y.status", bossName,
+                               battle.currentHP, battle.maxHP, battle.livesRemaining))
     }
 
     /// Verbleibende Leben – einzelne Herzen bei kleinen Runden, sonst kompakt.

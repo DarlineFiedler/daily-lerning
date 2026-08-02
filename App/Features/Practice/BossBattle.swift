@@ -1,7 +1,7 @@
 import Foundation
 
 /// Reine, testbare Kampf-Logik für den „Endgegner"-Modus (Issue #89). Kein eigener
-/// Zustand: alle Werte leiten sich aus der laufenden `PracticeSession` ab
+/// Zustand: alle Werte leiten sich aus den Kampf-Zählern der `BossSession` ab
 /// (`total`, `correctCount`, `wrongCount`). Der Boss hat so viele Trefferpunkte wie
 /// die Runde Wörter hat; jede richtige Antwort ist ein Treffer, jede falsche kostet
 /// die Spielerin ein Leben. Gehen die Leben aus, gewinnt der Boss.
@@ -40,16 +40,7 @@ struct BossBattle: Equatable {
     /// Verbleibende Leben der Spielerin.
     var livesRemaining: Int { max(0, maxLives - wrong) }
 
-    /// Leben als Anteil 0…1 (für die Herz-/Leben-Anzeige).
-    var livesFraction: Double {
-        maxLives == 0 ? 0 : Double(livesRemaining) / Double(maxLives)
-    }
-
     /// Zu viele Fehler → Spielerin k.o., der Boss gewinnt. In einer leeren Runde
     /// (0 Leben) gibt es keinen Kampf und damit keine Niederlage.
     var isPlayerDefeated: Bool { maxLives > 0 && livesRemaining == 0 }
-
-    /// Am Rundenende: hat die Spielerin gewonnen? (Runde durchgestanden, ohne k.o.
-    /// zu gehen.) Nur nach Abschluss der Runde aussagekräftig.
-    var playerWon: Bool { !isPlayerDefeated }
 }

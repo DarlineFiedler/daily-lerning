@@ -236,8 +236,9 @@ struct PracticeConfigView: View {
         }
     }
 
-    /// Optionaler „Endgegner"-Modus: rahmt die Runde als Kampf gegen einen Boss
-    /// (HP-Leiste, Sieg/Niederlage). Rein visuell – ändert Modi/Statistiken nicht.
+    /// Optionaler „Endgegner"-Modus: startet statt einer regulären Übungsrunde einen
+    /// eigenständigen Kampf gegen einen Boss (HP-Leiste, Sieg/Niederlage, Aufgeben).
+    /// Von den Lern-Statistiken vollständig getrennt – ändert weder SRS noch Streak.
     private var bossSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             SectionHeader(L("practice.config.boss"))
