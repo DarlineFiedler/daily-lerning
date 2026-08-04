@@ -229,6 +229,24 @@
 "home.goal.progress" = "%d / %d";
 "home.goal.reached" = "목표 달성 🏁";
 "home.goal.edit.hint" = "목표를 조정하려면 탭하세요";
+"home.goal.stats.hint" = "목표 통계를 보려면 탭하세요";
+/* 목표 통계 화면 */
+"goalstats.title" = "목표 통계";
+"goalstats.settings.open" = "목표 설정";
+"goalstats.overview" = "개요";
+"goalstats.streak" = "연속 일수";
+"goalstats.streak.best" = "최고 기록";
+"goalstats.rate" = "달성률 (월)";
+"goalstats.weekly.reached" = "주간 목표";
+"goalstats.practiced" = "연습 (기록)";
+"goalstats.accuracy" = "정답률";
+"goalstats.calendar.title" = "목표 캘린더";
+"goalstats.calendar.legend.reached" = "달성";
+"goalstats.calendar.legend.partial" = "부분";
+"goalstats.calendar.legend.missed" = "놓침";
+"goalstats.calendar.legend.star" = "주간 목표";
+"goalstats.calendar.detail" = "%1$@ · %3$d개 중 %2$d개 달성";
+"goalstats.calendar.detail.noGoal" = "%1$@ · %2$d개 연습 · 목표 없음";
 /* 오늘의 미니 도전 (home.challenge.streak → Localizable.stringsdict의 복수형) */
 "home.challenge.title" = "오늘의 도전";
 "home.challenge.done" = "완료! 🎉";

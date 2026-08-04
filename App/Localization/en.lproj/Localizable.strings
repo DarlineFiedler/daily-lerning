@@ -229,6 +229,24 @@
 "home.goal.progress" = "%d / %d";
 "home.goal.reached" = "Goal reached 🏁";
 "home.goal.edit.hint" = "Tap to adjust your goal";
+"home.goal.stats.hint" = "Tap to see your goal statistics";
+/* Goal statistics screen */
+"goalstats.title" = "Goal Stats";
+"goalstats.settings.open" = "Goal Settings";
+"goalstats.overview" = "Overview";
+"goalstats.streak" = "Day streak";
+"goalstats.streak.best" = "Best";
+"goalstats.rate" = "Rate (month)";
+"goalstats.weekly.reached" = "Weekly goals";
+"goalstats.practiced" = "Practiced (history)";
+"goalstats.accuracy" = "Accuracy";
+"goalstats.calendar.title" = "Goal Calendar";
+"goalstats.calendar.legend.reached" = "Reached";
+"goalstats.calendar.legend.partial" = "Partial";
+"goalstats.calendar.legend.missed" = "Missed";
+"goalstats.calendar.legend.star" = "Weekly goal";
+"goalstats.calendar.detail" = "%1$@ · %2$d of %3$d reached";
+"goalstats.calendar.detail.noGoal" = "%1$@ · %2$d practiced · no goal";
 /* Daily mini-challenge (home.challenge.streak → plural in Localizable.stringsdict) */
 "home.challenge.title" = "Daily challenge";
 "home.challenge.done" = "Completed! 🎉";

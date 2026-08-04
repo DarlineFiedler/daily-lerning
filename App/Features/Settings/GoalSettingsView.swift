@@ -54,9 +54,9 @@ struct GoalSettingsView: View {
         .navigationTitle(L("settings.goal.section"))
         .navigationBarTitleDisplayMode(.inline)
         // Zieländerung wirkt sich direkt auf den Ring des Streak-Widgets aus.
-        .onChange(of: goalMetricRaw) { reloadStreakWidget() }
-        .onChange(of: weeklyGoal) { reloadStreakWidget() }
-        .onChange(of: dailyGoal) { reloadStreakWidget() }
+        .onChange(of: goalMetricRaw) { goalDidChange() }
+        .onChange(of: weeklyGoal) { goalDidChange() }
+        .onChange(of: dailyGoal) { goalDidChange() }
         .alert(L("settings.goal.customPrompt"), isPresented: customAlertPresented) {
             TextField(L("settings.goal.customPlaceholder"), text: $customText)
                 #if os(iOS)
@@ -111,6 +111,13 @@ struct GoalSettingsView: View {
         case .daily: dailyGoal = clamped
         case nil: break
         }
+    }
+
+    /// Reaktion auf eine Ziel-Änderung: hält den heutigen Ziel-Snapshot (für den
+    /// Statistik-Kalender) aktuell und lädt das Streak-Widget neu.
+    private func goalDidChange() {
+        GoalHistoryStore.snapshotToday()
+        reloadStreakWidget()
     }
 
     private func reloadStreakWidget() {
