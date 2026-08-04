@@ -47,18 +47,25 @@ struct GoalHistory: Codable, Equatable {
 
     /// Schreibt den heute geltenden Ziel-Snapshot. Idempotent pro Kalendertag –
     /// mehrfache Aufrufe am selben Tag überschreiben den Eintrag, damit er den
-    /// aktuellen Endstand (z.B. nach einer Ziel-Änderung) widerspiegelt. Immutable +
-    /// selbst-prunend.
+    /// aktuellen Endstand (z.B. nach einer Ziel-Änderung) widerspiegelt. An Tagen ohne
+    /// aktives Ziel (weder Tages- noch Wochenziel) wird kein reiner Null-Eintrag
+    /// angelegt. Immutable + selbst-prunend.
     func recordingSnapshot(dailyTarget: Int, weeklyTarget: Int, metric: GoalMetric,
                            on date: Date, calendar: Calendar) -> GoalHistory {
         var copy = self
         let day = calendar.startOfDay(for: date)
-        let entry = Entry(day: day, dailyTarget: dailyTarget,
-                          weeklyTarget: weeklyTarget, metricRaw: metric.rawValue)
-        if let index = copy.days.firstIndex(where: { $0.day == day }) {
-            copy.days[index] = entry
-        } else {
-            copy.days.append(entry)
+        let existingIndex = copy.days.firstIndex { $0.day == day }
+        // Ohne aktives Ziel und ohne bestehenden Eintrag nichts aufzeichnen (spart reine
+        // Null-Einträge an ziel-losen Tagen). Ein vorhandener Eintrag wird dagegen weiter
+        // aktualisiert, damit ein auf 0 zurückgesetztes Ziel den Tag korrekt „ausschaltet".
+        if dailyTarget > 0 || weeklyTarget > 0 || existingIndex != nil {
+            let entry = Entry(day: day, dailyTarget: dailyTarget,
+                              weeklyTarget: weeklyTarget, metricRaw: metric.rawValue)
+            if let existingIndex {
+                copy.days[existingIndex] = entry
+            } else {
+                copy.days.append(entry)
+            }
         }
         copy.pruneHistory(before: date, calendar: calendar)
         return copy
@@ -203,7 +210,8 @@ struct GoalStats {
 
     /// Anteil der Tage mit gesetztem Tagesziel im Monat von `date`, an denen es erreicht
     /// wurde (`0…1`). `nil`, wenn es im betrachteten Zeitraum keinen Tag mit Ziel gab.
-    /// Zukünftige Tage bleiben unberücksichtigt.
+    /// Zukünftige Tage bleiben unberücksichtigt; der heutige Tag zählt erst mit, sobald
+    /// sein Ziel erreicht ist (solange „offen" weder Treffer noch Fehlschlag).
     func completionRate(inMonthOf date: Date, asOf today: Date = .now) -> Double? {
         guard let interval = calendar.dateInterval(of: .month, for: date) else { return nil }
         let end = calendar.startOfDay(for: today)
@@ -213,8 +221,14 @@ struct GoalStats {
         while day < interval.end {
             if day > end { break }
             if dailyTarget(on: day) > 0 {
-                withGoal += 1
-                if isReached(on: day) { reached += 1 }
+                let reachedDay = isReached(on: day)
+                // Der heutige Tag darf noch „offen" sein (analog zum Ziel-Streak): ein
+                // noch nicht erreichtes Ziel zählt heute weder als Treffer noch als
+                // Fehlschlag – sonst bräche die Monatsquote jeden Morgen ein.
+                if day != end || reachedDay {
+                    withGoal += 1
+                    if reachedDay { reached += 1 }
+                }
             }
             guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
             day = next

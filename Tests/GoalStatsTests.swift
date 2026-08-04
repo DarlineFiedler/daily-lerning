@@ -134,6 +134,26 @@ final class GoalStatsTests: XCTestCase {
         XCTAssertNil(s.completionRate(inMonthOf: today, asOf: today))
     }
 
+    func testCompletionRatePendingTodayIsNeutral() {
+        // Heute (23.) hat ein Ziel, ist aber noch nicht erreicht → zählt weder als
+        // Treffer noch als Fehlschlag. Gestern (22.) erreicht → Quote 1/1, nicht 1/2.
+        var a = WeeklyActivity()
+        a = practiced(a, count: 2, on: day(2026, 7, 22)) // erreicht (Ziel 2)
+        var h = GoalHistory()
+        h = snap(h, daily: 2, weekly: 0, on: day(2026, 7, 22))
+        h = snap(h, daily: 2, weekly: 0, on: day(2026, 7, 23)) // heute, keine Aktivität
+        let s = stats(activity: a, history: h, daily: 0)
+        XCTAssertEqual(s.completionRate(inMonthOf: today, asOf: today), 1.0)
+    }
+
+    func testCompletionRateCountsTodayOnceReached() {
+        // Sobald das heutige Ziel erreicht ist, zählt der Tag ganz normal mit.
+        let a = practiced(WeeklyActivity(), count: 2, on: day(2026, 7, 23))
+        let h = snap(GoalHistory(), daily: 2, weekly: 0, on: day(2026, 7, 23))
+        let s = stats(activity: a, history: h, daily: 0)
+        XCTAssertEqual(s.completionRate(inMonthOf: today, asOf: today), 1.0)
+    }
+
     // MARK: - Wochenziel / Stern
 
     func testWeekReachedWhenWeeklyTargetMet() {

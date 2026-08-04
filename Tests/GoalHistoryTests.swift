@@ -40,6 +40,23 @@ final class GoalHistoryTests: XCTestCase {
         XCTAssertEqual(h.entry(on: day(2026, 7, 23), calendar: cal)?.weeklyTarget, 50)
     }
 
+    func testSnapshotSkipsZeroGoalDayWithoutExistingEntry() {
+        // Kein aktives Ziel und noch kein Eintrag → kein reiner Null-Eintrag.
+        let h = snapshot(GoalHistory(), daily: 0, weekly: 0, on: day(2026, 7, 23))
+        XCTAssertTrue(h.days.isEmpty)
+        XCTAssertNil(h.entry(on: day(2026, 7, 23), calendar: cal))
+    }
+
+    func testSnapshotClearsExistingEntryWhenGoalRemoved() {
+        // Erst Ziel gesetzt, dann auf 0 zurück: der bestehende Eintrag wird auf 0
+        // aktualisiert (Tag „ausgeschaltet"), nicht gelöscht.
+        var h = snapshot(GoalHistory(), daily: 5, weekly: 30, on: day(2026, 7, 23))
+        h = snapshot(h, daily: 0, weekly: 0, on: day(2026, 7, 23))
+        XCTAssertEqual(h.days.count, 1)
+        XCTAssertEqual(h.entry(on: day(2026, 7, 23), calendar: cal)?.dailyTarget, 0)
+        XCTAssertEqual(h.entry(on: day(2026, 7, 23), calendar: cal)?.weeklyTarget, 0)
+    }
+
     func testEntryIsNilForDayWithoutSnapshot() {
         let h = snapshot(GoalHistory(), daily: 5, weekly: 30, on: day(2026, 7, 23))
         XCTAssertNil(h.entry(on: day(2026, 7, 22), calendar: cal))

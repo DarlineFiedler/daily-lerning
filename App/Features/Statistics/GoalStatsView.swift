@@ -10,11 +10,13 @@ struct GoalStatsView: View {
     var today: Date = .now
 
     @State private var showSettings = false
+    /// Beim Öffnen einmal aus den Stores geladen (statt bei jeder Body-Auswertung neu
+    /// zu dekodieren); der Screen ist ohnehin nur eine Momentaufnahme.
+    @State private var stats = GoalStats.current()
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                let stats = GoalStats.current()
                 VStack(alignment: .leading, spacing: Theme.Spacing.l) {
                     metricsSection(stats)
                     calendarSection(stats)
