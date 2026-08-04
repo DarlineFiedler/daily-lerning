@@ -8,7 +8,7 @@ struct WritingView: View {
 
     @State private var typed = ""
     @State private var checked = false
-    @State private var wasCorrect = false
+    @State private var match: AnswerChecker.AnswerMatch = .wrong
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -44,16 +44,46 @@ struct WritingView: View {
         .onAppear { focused = true }
     }
 
+    /// Akzentfarbe des Ergebnis-Banners je nach Bewertung.
+    private var bannerColor: Color {
+        switch match {
+        case .correct: LearningStatus.learned.color
+        case .synonym: Theme.statusLearning
+        case .wrong: Theme.wrong
+        }
+    }
+
+    private var bannerTitle: String {
+        switch match {
+        case .correct: L("practice.correct")
+        case .synonym: L("practice.almost")
+        case .wrong: L("practice.wrong")
+        }
+    }
+
+    private var bannerIcon: String {
+        switch match {
+        case .correct: "checkmark.circle.fill"
+        case .synonym: "checkmark.circle.trianglebadge.exclamationmark"
+        case .wrong: "xmark.circle.fill"
+        }
+    }
+
     private var resultBanner: some View {
         VStack(spacing: 6) {
-            Label(
-                wasCorrect ? L("practice.correct") : L("practice.wrong"),
-                systemImage: wasCorrect ? "checkmark.circle.fill" : "xmark.circle.fill"
-            )
-            .font(.appHeadline)
-            .foregroundStyle(wasCorrect ? LearningStatus.learned.color : Theme.wrong)
+            Label(bannerTitle, systemImage: bannerIcon)
+                .font(.appHeadline)
+                .foregroundStyle(bannerColor)
 
-            if !wasCorrect {
+            // „Fast richtig": erklärt, dass die Bedeutung stimmt, aber ein anderes Wort
+            // gefragt war. „Falsch": zeigt schlicht die gesuchte Antwort.
+            if match == .synonym {
+                Text(L("practice.almostHint", item.answer()))
+                    .font(.appSubheadline)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+            }
+            if match != .correct {
                 HStack(spacing: Theme.Spacing.s) {
                     Text(item.answer())
                         .font(.appTitle3)
@@ -65,13 +95,13 @@ struct WritingView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(Theme.Spacing.m)
-        .background((wasCorrect ? LearningStatus.learned.color : Theme.wrong).opacity(0.14),
+        .background(bannerColor.opacity(0.14),
                     in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
     }
 
     @ViewBuilder
     private var actionButtons: some View {
-        if wasCorrect {
+        if match == .correct {
             Button { onAnswer(true) } label: {
                 Label(L("common.next"), systemImage: "arrow.right")
             }
@@ -92,7 +122,8 @@ struct WritingView: View {
     }
 
     private func check() {
-        wasCorrect = AnswerChecker.isCorrect(typed: typed, expected: item.answer())
+        match = AnswerChecker.evaluate(typed: typed, expected: item.answer(),
+                                       synonyms: item.synonymWords)
         withAnimation { checked = true }
         focused = false
     }

@@ -230,6 +230,63 @@ final class PracticeSessionTests: XCTestCase {
         }
     }
 
+    // MARK: - „Fast richtig" / bedeutungsgleiche Wörter
+
+    /// Zwei Karten mit gleicher Bedeutung: in Richtung Bedeutung→Wort trägt jedes Item
+    /// das jeweils andere Wort als Synonym, damit eine inhaltlich richtige, aber andere
+    /// Übersetzung als „fast richtig" erkannt werden kann.
+    func testSynonymWordsPopulatedForMeaningToWord() throws {
+        let a = Vocab(word: "고맙습니다", meaning: "Danke")
+        let b = Vocab(word: "감사합니다", meaning: "Danke")
+        context.insert(a)
+        context.insert(b)
+        let all = [a, b]
+        let session = PracticeSession(
+            vocabs: all, distractorPool: all,
+            config: PracticeConfig(direction: .meaningToWord, modes: [.writing]), context: context
+        )
+        let itemA = try XCTUnwrap(session.items.first { $0.vocab.id == a.id })
+        XCTAssertEqual(itemA.synonymWords, ["감사합니다"])
+    }
+
+    /// In Richtung Wort→Bedeutung ist das Wort selbst der Prompt – Synonyme spielen keine
+    /// Rolle, die Liste bleibt leer.
+    func testSynonymWordsEmptyForWordToMeaning() {
+        let a = Vocab(word: "고맙습니다", meaning: "Danke")
+        let b = Vocab(word: "감사합니다", meaning: "Danke")
+        context.insert(a)
+        context.insert(b)
+        let all = [a, b]
+        let session = PracticeSession(
+            vocabs: all, distractorPool: all,
+            config: PracticeConfig(direction: .wordToMeaning, modes: [.writing]), context: context
+        )
+        XCTAssertTrue(session.items.allSatisfy { $0.synonymWords.isEmpty })
+    }
+
+    /// Auswahl-Modus: Ist eine bedeutungsgleiche Karte das Zielwort, darf die andere Karte
+    /// (gleiche Bedeutung ⇒ ebenfalls richtige Antwort) nicht als Distraktor auftauchen –
+    /// sonst wäre die Frage doppeldeutig. (Als bloße Distraktoren zu einem *dritten* Zielwort
+    /// dürfen beide dagegen erscheinen; dann ist nur das Ziel korrekt.)
+    func testChoicesExcludeSameMeaningDistractorWhenTargeted() {
+        let a = Vocab(word: "고맙습니다", meaning: "Danke")
+        let b = Vocab(word: "감사합니다", meaning: "Danke")
+        context.insert(a)
+        context.insert(b)
+        let fillers = makeVocabs(10, prefix: "x")
+        let all = [a, b] + fillers
+        let session = PracticeSession(
+            vocabs: all, distractorPool: all,
+            config: PracticeConfig(direction: .meaningToWord, modes: [.multipleChoice]),
+            context: context
+        )
+        for item in session.items {
+            let ids = Set(item.choices.map(\.id))
+            if item.vocab.id == a.id { XCTAssertFalse(ids.contains(b.id)) }
+            if item.vocab.id == b.id { XCTAssertFalse(ids.contains(a.id)) }
+        }
+    }
+
     func testResolvedModesUsesExplicitModesWhenSet() {
         let config = PracticeConfig(modes: [.review, .writing])
         XCTAssertEqual(Set(config.resolvedModes), [.review, .writing])
