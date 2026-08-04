@@ -133,6 +133,8 @@
 "practice.correct" = "Richtig!";
 "practice.wrong" = "Falsch";
 "practice.markCorrect" = "Trotzdem richtig";
+"practice.almost" = "Fast richtig";
+"practice.almostHint" = "Richtige Bedeutung – gefragt war %@";
 "practice.typeAnswer" = "Antwort eingeben";
 "practice.check" = "Prüfen";
 "practice.finished" = "Geschafft!";

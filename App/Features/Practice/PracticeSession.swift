@@ -10,6 +10,10 @@ struct PracticeItem: Identifiable {
     let direction: ResolvedDirection
     /// Für Multiple Choice: 4 gemischte Optionen (inkl. richtiger Antwort).
     let choices: [Vocab]
+    /// Andere Wörter mit gleicher Bedeutung (nur bei Richtung Bedeutung→Wort befüllt, sonst
+    /// leer). Erlaubt im Schreib-Modus die „fast richtig"-Erkennung, wenn statt des gefragten
+    /// Worts ein anderes Wort mit derselben Bedeutung getippt wird (siehe [[AnswerChecker]]).
+    let synonymWords: [String]
 
     func prompt() -> String {
         direction == .wordToMeaning ? vocab.word : vocab.meaning
@@ -224,7 +228,19 @@ final class PracticeSession {
                 for: vocab, sessionVocabs: vocabs,
                 remaining: remaining, remainingByGroup: remainingByGroup, direction: direction
             )
-            return PracticeItem(vocab: vocab, mode: mode, direction: direction, choices: choices)
+            // „Fast richtig"-Synonyme: nur wenn das Wort selbst die gesuchte Antwort ist
+            // (Bedeutung→Wort). Sammelt die Wörter aller anderen Karten mit gleicher
+            // Bedeutung – so zählt eine inhaltlich richtige, aber andere Übersetzung nicht
+            // stumpf als „falsch".
+            let synonymWords: [String] = direction == .meaningToWord
+                ? (vocabs + remaining).compactMap { other in
+                    other.id != vocab.id
+                        && AnswerChecker.isCorrect(typed: other.meaning, expected: vocab.meaning)
+                        ? other.word : nil
+                }
+                : []
+            return PracticeItem(vocab: vocab, mode: mode, direction: direction,
+                                choices: choices, synonymWords: synonymWords)
         }
     }
 
@@ -251,6 +267,12 @@ final class PracticeSession {
         let answerText: (Vocab) -> String = {
             direction == .wordToMeaning ? $0.meaning : $0.word
         }
+        // Die Prompt-Seite (Frage) des Zielworts – ein Distraktor mit gleicher Prompt-Seite
+        // wäre selbst eine gültige Antwort und machte die Frage doppeldeutig (z.B. zwei
+        // Karten „Danke" mit verschiedenen Wörtern).
+        let promptText: (Vocab) -> String = {
+            direction == .wordToMeaning ? $0.word : $0.meaning
+        }
         // Das Zielwort ist ausgeschlossen: gleiche ID wird übersprungen und sein
         // Antworttext liegt vorab in `seenAnswers` (kein Distraktor darf denselben
         // Antworttext tragen – sonst wäre die Frage mehrdeutig).
@@ -260,6 +282,10 @@ final class PracticeSession {
         func collect(_ candidates: [Vocab]) -> Bool {
             for candidate in candidates {
                 guard candidate.id != vocab.id else { continue }
+                // Bedeutungsgleiche Karten (gleiche Prompt-Seite) ausschließen – sie wären
+                // selbst richtig und dürfen nicht als Distraktor konkurrieren.
+                guard !AnswerChecker.isCorrect(typed: promptText(candidate),
+                                               expected: promptText(vocab)) else { continue }
                 guard seenAnswers.insert(answerText(candidate)).inserted else { continue }
                 distractors.append(candidate)
                 if distractors.count == 3 { return true }
@@ -291,10 +317,23 @@ final class PracticeSession {
 /// Sowohl die Eingabe als auch die erwartete Antwort werden in Varianten zerlegt,
 /// damit z.B. die Eingabe „gehen, laufen“ gegen „gehen / laufen“ matcht.
 enum AnswerChecker {
+    /// Bewertung einer Schreib-Antwort: exakt zur gefragten Lösung, nur zu einem
+    /// bedeutungsgleichen Wort („fast richtig") oder falsch.
+    enum AnswerMatch { case correct, synonym, wrong }
+
     static func isCorrect(typed: String, expected: String) -> Bool {
         let typedVariants = variants(of: typed)
         guard !typedVariants.isEmpty else { return false }
         return !typedVariants.isDisjoint(with: variants(of: expected))
+    }
+
+    /// Wie `isCorrect`, aber unterscheidet zusätzlich den „fast richtig"-Fall: passt die
+    /// Eingabe nicht zur gefragten Lösung, aber zu einem `synonyms`-Wort (anderes Wort mit
+    /// gleicher Bedeutung), ist das Ergebnis `.synonym`. Leere Eingabe ist nie richtig.
+    static func evaluate(typed: String, expected: String, synonyms: [String]) -> AnswerMatch {
+        if isCorrect(typed: typed, expected: expected) { return .correct }
+        if synonyms.contains(where: { isCorrect(typed: typed, expected: $0) }) { return .synonym }
+        return .wrong
     }
 
     /// Zerlegt einen String an „/“ „,“ „;“ in normalisierte, nicht-leere Varianten.

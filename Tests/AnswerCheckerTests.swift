@@ -36,4 +36,35 @@ final class AnswerCheckerTests: XCTestCase {
         // Auch bei leerer erwarteter Antwort darf leere Eingabe nicht „richtig“ sein.
         XCTAssertFalse(AnswerChecker.isCorrect(typed: "", expected: ""))
     }
+
+    // MARK: - evaluate (fast richtig / Synonyme)
+
+    func testEvaluateExactMatchIsCorrect() {
+        XCTAssertEqual(
+            AnswerChecker.evaluate(typed: "고맙습니다", expected: "고맙습니다", synonyms: ["감사합니다"]),
+            .correct
+        )
+    }
+
+    func testEvaluateSynonymIsAlmost() {
+        // Gefragt war 고맙습니다, getippt das andere Wort für „Danke“ ⇒ fast richtig.
+        XCTAssertEqual(
+            AnswerChecker.evaluate(typed: "감사합니다", expected: "고맙습니다", synonyms: ["감사합니다"]),
+            .synonym
+        )
+    }
+
+    func testEvaluateUnknownWordIsWrong() {
+        XCTAssertEqual(
+            AnswerChecker.evaluate(typed: "안녕하세요", expected: "고맙습니다", synonyms: ["감사합니다"]),
+            .wrong
+        )
+    }
+
+    func testEvaluateEmptyIsWrongEvenWithSynonyms() {
+        XCTAssertEqual(
+            AnswerChecker.evaluate(typed: "  ", expected: "고맙습니다", synonyms: ["감사합니다"]),
+            .wrong
+        )
+    }
 }
