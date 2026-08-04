@@ -13,8 +13,8 @@ struct HomeView: View {
     @State private var showingNewGroup = false
     @State private var showReview = false
     @State private var showStreakDetail = false
-    /// Blendet den Ziel-Einstellungs-Screen ein (Tippen auf die Ziel-Karte).
-    @State private var showGoalSettings = false
+    /// Blendet den Ziel-Statistik-Screen ein (Tippen auf die Ziel-Karte).
+    @State private var showGoalStats = false
     /// Beim Erreichen des Wochenziels neu freigeschaltete Badges (fürs Banner).
     @State private var goalUnlocked: [Achievement] = []
 
@@ -64,21 +64,15 @@ struct HomeView: View {
             }
             .onAppear {
                 StreakStore.settle()
+                GoalHistoryStore.snapshotToday()
                 checkWeeklyGoal()
             }
             .sheet(item: $revealWord) { WordRevealSheet(wordID: $0.id) }
             .sheet(item: $practiceGroup) { _ in PracticeConfigView() }
             .sheet(isPresented: $showingNewGroup) { GroupEditView(group: nil) }
             .sheet(isPresented: $showReview) { ReviewSessionView() }
-            .sheet(isPresented: $showGoalSettings) {
-                NavigationStack {
-                    GoalSettingsView()
-                        .toolbar {
-                            ToolbarItem(placement: .confirmationAction) {
-                                Button(L("common.done")) { showGoalSettings = false }
-                            }
-                        }
-                }
+            .sheet(isPresented: $showGoalStats) {
+                GoalStatsView()
             }
             .sheet(isPresented: $showStreakDetail) {
                 StreakDetailView(streak: streak, longest: StreakStore.longest,
@@ -446,7 +440,7 @@ extension HomeView {
     /// laufende Woche bzw. den heutigen Tag. Zeigt nur die aktiven Ziel-Ebenen (Wert > 0).
     private var goalCard: some View {
         Button {
-            showGoalSettings = true
+            showGoalStats = true
         } label: {
             VStack(alignment: .leading, spacing: Theme.Spacing.s) {
                 HStack {
@@ -454,7 +448,7 @@ extension HomeView {
                         .font(.appCaption.weight(.semibold))
                         .foregroundStyle(Theme.brandStart)
                     Spacer()
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chart.bar.xaxis")
                         .font(.appCaption.weight(.semibold))
                         .foregroundStyle(.secondary)
                 }
@@ -471,7 +465,7 @@ extension HomeView {
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
-        .accessibilityHint(L("home.goal.edit.hint"))
+        .accessibilityHint(L("home.goal.stats.hint"))
     }
 
     /// Eine Ziel-Ebene (Tag oder Woche): Label, Zähler „6 / 10" bzw. „erreicht"-Häkchen
