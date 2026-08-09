@@ -123,6 +123,8 @@
 "practice.retryWrong" = "Practice mistakes";
 "practice.summary.accuracy" = "Accuracy";
 "practice.summary.streak" = "Streak";
+"practice.summary.combo" = "Best combo";
+"practice.combo" = "×%d combo";
 "practice.summary.missed" = "Practice these again";
 "practice.summary.leveledUp" = "Leveled up";
 "practice.noWords" = "No words match this selection.";
@@ -423,6 +425,8 @@
 "ach.perfektionist.detail" = "Finish 10 flawless rounds";
 "ach.nightStreak.title" = "Night Shift";
 "ach.nightStreak.detail" = "Practice after midnight 3 nights in a row";
+"ach.comboMaster.title" = "Combo Master";
+"ach.comboMaster.detail" = "10 correct answers in a row in one round";
 "ach.ghostHour.title" = "Witching Hour";
 "ach.ghostHour.detail" = "Finish a round exactly at midnight";
 "ach.friday13.title" = "Friday the 13th";

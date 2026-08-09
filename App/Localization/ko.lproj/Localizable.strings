@@ -123,6 +123,8 @@
 "practice.retryWrong" = "틀린 단어 다시";
 "practice.summary.accuracy" = "정확도";
 "practice.summary.streak" = "연속";
+"practice.summary.combo" = "최고 콤보";
+"practice.combo" = "×%d 콤보";
 "practice.summary.missed" = "다시 연습할 단어";
 "practice.summary.leveledUp" = "레벨 업";
 "practice.noWords" = "조건에 맞는 단어가 없습니다.";
@@ -423,6 +425,8 @@
 "ach.perfektionist.detail" = "완벽한 라운드 10회 완료";
 "ach.nightStreak.title" = "야간 근무";
 "ach.nightStreak.detail" = "3일 밤 연속 자정 이후 학습";
+"ach.comboMaster.title" = "콤보 마스터";
+"ach.comboMaster.detail" = "한 라운드에서 연속 10개 정답";
 "ach.ghostHour.title" = "귀신의 시간";
 "ach.ghostHour.detail" = "정확히 자정에 라운드 완료";
 "ach.friday13.title" = "13일의 금요일";

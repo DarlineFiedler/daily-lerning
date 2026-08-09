@@ -506,3 +506,47 @@ final class AchievementTests: XCTestCase {
         }
     }
 }
+
+// MARK: - Live-Kombo (#90)
+
+/// Als Extension ausgelagert, damit die Haupt-Klasse unter der `type_body_length`-Grenze bleibt.
+extension AchievementTests {
+
+    /// `recordSession(maxCombo:)` merkt sich das je höchste Kombo-Maximum – auch über
+    /// mehrere Runden hinweg fällt es nie unter einen bereits erreichten Wert.
+    func testRecordSessionTracksBestCombo() {
+        let cal = Self.utc
+        var p = AchievementProgress()
+        p.recordSession(modes: [.review], date: date(2024, 1, 15, 14), isPerfect: false,
+                        maxCombo: 4, calendar: cal)
+        XCTAssertEqual(p.bestCombo, 4)
+        // Höhere Kombo hebt das Maximum.
+        p.recordSession(modes: [.review], date: date(2024, 1, 16, 14), isPerfect: false,
+                        maxCombo: 12, calendar: cal)
+        XCTAssertEqual(p.bestCombo, 12)
+        // Niedrigere Kombo lässt das Maximum unberührt.
+        p.recordSession(modes: [.review], date: date(2024, 1, 17, 14), isPerfect: false,
+                        maxCombo: 3, calendar: cal)
+        XCTAssertEqual(p.bestCombo, 12)
+    }
+
+    /// Eine Runde mit einer Kombo von ≥10 schaltet das „Kombo-Meister"-Badge frei.
+    func testComboMasterUnlocksAtTen() {
+        let master = Achievement(id: "comboMaster", category: .fun, emoji: "⚡️",
+                                 requirement: .count(\.bestCombo, 10))
+        XCTAssertFalse(master.isUnlocked(AchievementMetrics(bestCombo: 9)))
+        XCTAssertTrue(master.isUnlocked(AchievementMetrics(bestCombo: 10)))
+    }
+
+    /// `bestCombo` übersteht den JSON-Round-Trip durch die Defaults.
+    func testBestComboRoundTripsThroughDefaults() {
+        withCleanStore {
+            let cal = Self.utc
+            var p = AchievementProgress()
+            p.recordSession(modes: [.review], date: date(2024, 1, 10, 14), isPerfect: false,
+                            maxCombo: 7, calendar: cal)
+            AchievementStore.progress = p
+            XCTAssertEqual(AchievementStore.progress.bestCombo, 7)
+        }
+    }
+}

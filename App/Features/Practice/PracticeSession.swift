@@ -42,6 +42,14 @@ final class PracticeSession {
     var correctCount = 0
     var wrongCount = 0
 
+    /// Flüchtiger Kombo-Zähler der laufenden Runde: aufeinanderfolgende richtige
+    /// Antworten. Steigt bei jedem Treffer, fällt bei einem Fehler auf 0 zurück.
+    /// Rein transient (kein neues Feld in `Vocab`, keine Persistenz).
+    private(set) var currentCombo = 0
+    /// Höchste in dieser Runde erreichte Kombo – fließt am Rundenende ins
+    /// „Kombo-Meister"-Badge und in die Zusammenfassung.
+    private(set) var maxCombo = 0
+
     /// Falsch beantwortete Wörter (für Zusammenfassung + „Falsche wiederholen").
     private(set) var missedVocabs: [Vocab] = []
     /// Wörter, deren Status in dieser Session aufgestiegen ist.
@@ -87,6 +95,16 @@ final class PracticeSession {
         return answered == 0 ? 0 : Int(round(Double(correctCount) / Double(answered) * 100))
     }
 
+    /// Ab welcher Kombo das Live-Badge sichtbar wird (schon zwei Treffer in Folge
+    /// fühlen sich wie ein Lauf an, ohne bei jeder Antwort aufzupoppen).
+    static let comboBadgeMin = 2
+
+    /// Kombo-Schwelle, an der verstärktes Feedback (Haptik/Sound) ausgelöst wird:
+    /// jede fünfte Kombo (5, 10, 15 …).
+    static func isComboMilestone(_ combo: Int) -> Bool {
+        combo >= 5 && combo.isMultiple(of: 5)
+    }
+
     /// Verbucht das Ergebnis für das aktuelle Wort und geht zum nächsten.
     /// Kein Widget-Refresh: Üben ändert nur Status/Counter, nie die im Widget
     /// gezeigten Wörter (word/meaning/includeInWidget). Der Snapshot wird beim
@@ -105,6 +123,8 @@ final class PracticeSession {
         vocab.registerResult(correct: correct)
         if correct {
             correctCount += 1
+            currentCombo += 1
+            maxCombo = max(maxCombo, currentCombo)
             if wasPreviouslyWrong { didSelfCorrect = true }
             // Aufstieg? (rawValue steigt mit dem Lernfortschritt).
             if vocab.status.rawValue > before.rawValue {
@@ -113,6 +133,7 @@ final class PracticeSession {
             }
         } else {
             wrongCount += 1
+            currentCombo = 0 // ein Fehler reißt die laufende Kombo ab
             missedVocabs.append(vocab)
         }
         // Streak nur einmal je Session verbuchen; die Idempotenz pro Kalendertag macht
@@ -153,6 +174,7 @@ final class PracticeSession {
             newlyLearned: newlyLearnedCount,
             currentStreak: StreakStore.current,
             groups: Set(items.compactMap { $0.vocab.group?.id.uuidString }),
+            maxCombo: maxCombo,
             context: context
         )
         // Üben ändert den Fälligkeitsstand (nextReviewAt/lastPracticedAt) → App-Icon-Badge
@@ -189,6 +211,8 @@ final class PracticeSession {
         index = 0
         correctCount = 0
         wrongCount = 0
+        currentCombo = 0
+        maxCombo = 0
         missedVocabs = []
         leveledUpVocabs = []
         newlyUnlocked = []

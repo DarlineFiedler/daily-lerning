@@ -36,6 +36,66 @@ final class PracticeSessionTests: XCTestCase {
         return g
     }
 
+    // MARK: - Live-Kombo (#90)
+
+    /// Aufeinanderfolgende richtige Antworten erhöhen die Kombo; ein Fehler reißt sie ab.
+    func testComboCountsUpAndResetsOnWrong() {
+        let vocabs = makeVocabs(4)
+        let session = PracticeSession(
+            vocabs: vocabs, distractorPool: vocabs,
+            config: PracticeConfig(modes: [.review]), context: context
+        )
+        XCTAssertEqual(session.currentCombo, 0)
+        session.submit(correct: true)
+        session.submit(correct: true)
+        XCTAssertEqual(session.currentCombo, 2)
+        session.submit(correct: false)
+        XCTAssertEqual(session.currentCombo, 0) // Fehler → Kombo abgerissen
+        session.submit(correct: true)
+        XCTAssertEqual(session.currentCombo, 1)
+    }
+
+    /// `maxCombo` hält das je erreichte Kombo-Maximum, auch nachdem die laufende Kombo
+    /// durch einen Fehler zurückgesetzt wurde.
+    func testMaxComboTracksHighest() {
+        let vocabs = makeVocabs(5)
+        let session = PracticeSession(
+            vocabs: vocabs, distractorPool: vocabs,
+            config: PracticeConfig(modes: [.review]), context: context
+        )
+        session.submit(correct: true)
+        session.submit(correct: true)
+        session.submit(correct: true) // Kombo 3
+        session.submit(correct: false) // Reset
+        session.submit(correct: true) // Kombo 1
+        XCTAssertEqual(session.currentCombo, 1)
+        XCTAssertEqual(session.maxCombo, 3)
+    }
+
+    /// `restart()` beginnt die Runde frisch – Kombo und Maximum werden zurückgesetzt.
+    func testRestartResetsCombo() {
+        let vocabs = makeVocabs(2)
+        let session = PracticeSession(
+            vocabs: vocabs, distractorPool: vocabs,
+            config: PracticeConfig(modes: [.review]), context: context
+        )
+        session.submit(correct: true)
+        session.submit(correct: true)
+        XCTAssertEqual(session.maxCombo, 2)
+        session.restart()
+        XCTAssertEqual(session.currentCombo, 0)
+        XCTAssertEqual(session.maxCombo, 0)
+    }
+
+    /// Die Meilenstein-Schwelle greift bei jeder fünften Kombo (5, 10, 15 …).
+    func testComboMilestoneDetection() {
+        XCTAssertFalse(PracticeSession.isComboMilestone(0))
+        XCTAssertFalse(PracticeSession.isComboMilestone(4))
+        XCTAssertTrue(PracticeSession.isComboMilestone(5))
+        XCTAssertFalse(PracticeSession.isComboMilestone(6))
+        XCTAssertTrue(PracticeSession.isComboMilestone(10))
+    }
+
     func testWordLimitCapsItemCount() {
         let vocabs = makeVocabs(5)
         let session = PracticeSession(

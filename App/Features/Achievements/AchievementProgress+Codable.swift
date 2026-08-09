@@ -43,6 +43,7 @@ extension AchievementProgress {
         bossDefeated = try c.decodeIfPresent(Bool.self, forKey: .bossDefeated) ?? bossDefeated
 
         comebackCount = try c.decodeIfPresent(Int.self, forKey: .comebackCount) ?? comebackCount
+        bestCombo = try c.decodeIfPresent(Int.self, forKey: .bestCombo) ?? bestCombo
 
         searchUsed = try c.decodeIfPresent(Bool.self, forKey: .searchUsed) ?? searchUsed
         languageChanged = try c.decodeIfPresent(Bool.self, forKey: .languageChanged) ?? languageChanged

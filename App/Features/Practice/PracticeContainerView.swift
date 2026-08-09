@@ -45,6 +45,23 @@ struct PracticeContainerView: View {
         // Haptik für die wichtigsten Lern-Momente (richtig/falsch).
         .sensoryFeedback(.success, trigger: session.correctCount)
         .sensoryFeedback(.error, trigger: session.wrongCount)
+        // Verstärktes Feedback an Kombo-Schwellen (5/10/…) – über die vorhandene
+        // SwiftUI-API, kein neues UIKit. Haptik + kurzer System-Sound.
+        .sensoryFeedback(trigger: session.currentCombo) { _, combo in
+            PracticeSession.isComboMilestone(combo) ? .impact(weight: .medium) : nil
+        }
+        .onChange(of: session.currentCombo) { _, combo in
+            if PracticeSession.isComboMilestone(combo) { SoundService.playComboMilestone() }
+        }
+        // Live-Kombo-Badge: nur während einer laufenden Karte, nicht-interaktiv, unter
+        // dem Fortschritts-Header schwebend (stört den Lernfluss nicht).
+        .overlay(alignment: .top) {
+            if session.currentItem != nil {
+                ComboBadge(combo: session.currentCombo)
+                    .padding(.top, 72)
+                    .allowsHitTesting(false)
+            }
+        }
         .overlay(alignment: .top) {
             AchievementUnlockBanner(achievements: session.newlyUnlocked)
         }
@@ -198,6 +215,10 @@ struct PracticeSummaryView: View {
                      systemImage: "target", tint: Theme.brandStart)
             StatTile(value: "\(session.correctCount)", label: L("home.stat.learned"),
                      systemImage: "checkmark", tint: LearningStatus.learned.color)
+            if session.maxCombo >= PracticeSession.comboBadgeMin {
+                StatTile(value: "×\(session.maxCombo)", label: L("practice.summary.combo"),
+                         systemImage: "bolt.fill", tint: Theme.brandMid)
+            }
             if streak > 0 {
                 StatTile(value: "\(streak)", label: L("practice.summary.streak"),
                          systemImage: "flame.fill", tint: Theme.brandEnd)
