@@ -133,6 +133,8 @@
 "practice.correct" = "Correct!";
 "practice.wrong" = "Wrong";
 "practice.markCorrect" = "Mark as correct";
+"practice.almost" = "Almost right";
+"practice.almostHint" = "Right meaning – the asked word was %@";
 "practice.typeAnswer" = "Type your answer";
 "practice.check" = "Check";
 "practice.finished" = "Done!";

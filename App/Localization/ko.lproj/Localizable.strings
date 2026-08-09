@@ -133,6 +133,8 @@
 "practice.correct" = "정답!";
 "practice.wrong" = "오답";
 "practice.markCorrect" = "정답 처리";
+"practice.almost" = "거의 정답";
+"practice.almostHint" = "뜻은 맞아요 – 물어본 단어는 %@";
 "practice.typeAnswer" = "정답 입력";
 "practice.check" = "확인";
 "practice.finished" = "완료!";
