@@ -32,6 +32,9 @@ struct ComboBadge: View {
             .id(combo)
             .transition(.scale(scale: 0.5).combined(with: .opacity))
             .animation(.spring(response: 0.35, dampingFraction: 0.55), value: combo)
+            // Rein dekorativ – doppelt die Kombo-Ansage bei jeder Karte vor VoiceOver
+            // verbergen (der Lernstand wird ohnehin über die Modus-Views vermittelt).
+            .accessibilityHidden(true)
         }
     }
 }

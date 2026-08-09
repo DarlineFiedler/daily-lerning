@@ -54,9 +54,11 @@ struct PracticeContainerView: View {
             if PracticeSession.isComboMilestone(combo) { SoundService.playComboMilestone() }
         }
         // Live-Kombo-Badge: nur während einer laufenden Karte, nicht-interaktiv, unter
-        // dem Fortschritts-Header schwebend (stört den Lernfluss nicht).
+        // dem Fortschritts-Header schwebend (stört den Lernfluss nicht). Weicht dem
+        // Freischalt-Banner, das denselben oberen Bereich belegt, damit sich beide
+        // nicht überlagern.
         .overlay(alignment: .top) {
-            if session.currentItem != nil {
+            if session.currentItem != nil, session.newlyUnlocked.isEmpty {
                 ComboBadge(combo: session.currentCombo)
                     .padding(.top, 72)
                     .allowsHitTesting(false)
