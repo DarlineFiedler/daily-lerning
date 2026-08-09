@@ -123,6 +123,8 @@
 "practice.retryWrong" = "Falsche wiederholen";
 "practice.summary.accuracy" = "Genauigkeit";
 "practice.summary.streak" = "Streak";
+"practice.summary.combo" = "Beste Kombo";
+"practice.combo" = "×%d Kombo";
 "practice.summary.missed" = "Diese nochmal üben";
 "practice.summary.leveledUp" = "Aufgestiegen";
 "practice.noWords" = "Keine Wörter für diese Auswahl.";
@@ -423,6 +425,8 @@
 "ach.perfektionist.detail" = "10 makellose Runden abgeschlossen";
 "ach.nightStreak.title" = "Nachtschicht-Serie";
 "ach.nightStreak.detail" = "3 Nächte in Folge nach Mitternacht geübt";
+"ach.comboMaster.title" = "Kombo-Meister";
+"ach.comboMaster.detail" = "10 richtige Antworten in Folge in einer Runde";
 "ach.ghostHour.title" = "Geisterstunde";
 "ach.ghostHour.detail" = "Eine Runde exakt um Mitternacht beendet";
 "ach.friday13.title" = "Freitag der 13.";

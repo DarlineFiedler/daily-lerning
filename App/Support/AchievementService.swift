@@ -78,6 +78,7 @@ enum AchievementService {
                                 currentStreak: Int = 0,
                                 groups: Set<String> = [],
                                 bossDefeated: Bool = false,
+                                maxCombo: Int = 0,
                                 context: ModelContext) -> [Achievement] {
         var progress = AchievementStore.progress
         progress.recordSession(modes: modes,
@@ -88,7 +89,8 @@ enum AchievementService {
                                newlyLearned: newlyLearned,
                                currentStreak: currentStreak,
                                groups: groups,
-                               bossDefeated: bossDefeated)
+                               bossDefeated: bossDefeated,
+                               maxCombo: maxCombo)
         AchievementStore.progress = progress
         // Tages-Challenge gegen den frischen Tagespuffer prüfen und ggf. verbuchen –
         // vor der Auswertung, damit das Meta-Badge im selben Aufruf freischalten kann.

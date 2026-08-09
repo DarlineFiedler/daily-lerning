@@ -116,6 +116,8 @@ struct AchievementMetrics: Equatable {
     var groupMastered = false
     var allGroupsMastered = false
     var everUsedJoker = false
+    // Höchste je erreichte Kombo (Live-Kombo, Issue #90).
+    var bestCombo = 0
     // Zählbare Serien/Vielfalt.
     var distinctSeasons = 0
     var sameModeDayStreak = 0
@@ -176,6 +178,7 @@ struct AchievementMetrics: Equatable {
             groupMastered: groupMastered,
             allGroupsMastered: allGroupsMastered,
             everUsedJoker: everUsedJoker,
+            bestCombo: progress.bestCombo,
             distinctSeasons: progress.seasons.count,
             sameModeDayStreak: progress.sameMode.best,
             nightDayStreak: progress.nightNights.best,
@@ -256,6 +259,9 @@ struct AchievementProgress: Equatable, Codable {
     // Zähler für mehrfache Comebacks (nach je ≥3 Tagen Pause wieder geübt).
     var comebackCount = 0
 
+    // Höchste je in einer Runde erreichte Live-Kombo (Issue #90).
+    var bestCombo = 0
+
     // Ereignis-Flags aus der App-Nutzung (außerhalb der Übungsrunde gesetzt).
     var searchUsed = false // die Suche einmal benutzt
     var languageChanged = false // Sprache in den Einstellungen gewechselt
@@ -299,6 +305,7 @@ struct AchievementProgress: Equatable, Codable {
         case afterWork, weekend, comeback, selfCorrection, ghostHour, fridayThe13th
         case newYearsEve, allModesOneDay, doublePack, serienComeback, hangulDay, fullMoon, sprachmix, bossDefeated
         case comebackCount, searchUsed, languageChanged, widgetUsed, groupCreated, weeklyGoalReached
+        case bestCombo
         case seasons, sameMode, sameModeMode, nightNights, oneWordDays, flawlessRun
         case currentDay, modesToday, sessionsToday, newWordsToday, groupsToday, flawlessToday
         case oneWordCountedToday, oneWordPreRun, oneWordPreLastDay
@@ -324,6 +331,7 @@ struct AchievementProgress: Equatable, Codable {
     ///   - selfCorrected: ein zuvor falsch beantwortetes Wort wurde diesmal richtig.
     ///   - newlyLearned: Anzahl in dieser Runde neu auf „gelernt" gestiegener Wörter.
     ///   - currentStreak: aktueller Tages-Streak (für das Serien-Comeback).
+    ///   - maxCombo: höchste in der Runde erreichte Live-Kombo (für das „Kombo-Meister"-Badge).
     mutating func recordSession(modes: Set<PracticeMode>,
                                 date: Date,
                                 isPerfect: Bool,
@@ -333,8 +341,10 @@ struct AchievementProgress: Equatable, Codable {
                                 currentStreak: Int = 0,
                                 groups: Set<String> = [],
                                 bossDefeated: Bool = false,
+                                maxCombo: Int = 0,
                                 calendar: Calendar = .current) {
         if bossDefeated { self.bossDefeated = true }
+        bestCombo = Swift.max(bestCombo, maxCombo)
         let modeRaws = Set(modes.map(\.rawValue))
         let day = calendar.startOfDay(for: date)
         let comps = calendar.dateComponents([.weekday, .hour, .minute, .year, .month, .day], from: date)
@@ -524,6 +534,7 @@ enum AchievementCatalog {
         Achievement(id: "streak365", category: .streak, emoji: "🎆", requirement: .count(\.longestStreak, 365)),
         Achievement(id: "perfektionist", category: .fun, emoji: "🌟", requirement: .count(\.perfectRounds, 10)),
         Achievement(id: "nightStreak", category: .fun, emoji: "🌃", requirement: .count(\.nightDayStreak, 3)),
+        Achievement(id: "comboMaster", category: .fun, emoji: "⚡️", requirement: .count(\.bestCombo, 10)),
 
         // --- Erweiterung: Spaßig ---
         Achievement(id: "ghostHour", category: .fun, emoji: "👻", requirement: .flag(\.ghostHour)),
