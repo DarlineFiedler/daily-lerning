@@ -223,7 +223,7 @@ struct PracticeSummaryView: View {
             StatTile(value: "\(session.accuracy)%", label: L("practice.summary.accuracy"),
                      systemImage: "target", tint: Theme.brandStart),
             StatTile(value: "\(session.correctCount)", label: L("home.stat.learned"),
-                     systemImage: "checkmark", tint: LearningStatus.learned.color),
+                     systemImage: "checkmark", tint: LearningStatus.learned.color)
         ]
         if session.xpEarned > 0 {
             tiles.append(StatTile(value: "+\(session.xpEarned)", label: L("practice.summary.xp"),

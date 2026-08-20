@@ -25,11 +25,7 @@ struct HomeView: View {
     private var weeklyGoal = GoalOptions.defaultWeekly
     @AppStorage(GoalKeys.daily, store: AppGroup.defaults)
     private var dailyGoal = GoalOptions.defaultDaily
-    /// Beobachtet den rohen XP-Stand nur, damit sich die Level-Badge nach einer Runde
-    /// reaktiv aktualisiert. Der angezeigte Wert kommt aus `XPStore.level` (eine Quelle
-    /// der Wahrheit) – dieser Wrapper liefert lediglich die Invalidierung.
-    @AppStorage(XPKeys.state, store: AppGroup.defaults)
-    private var xpStateData = Data()
+    @AppStorage(XPKeys.state, store: AppGroup.defaults) private var xpStateData = Data()
 
     // MARK: Abgeleitete Werte
 
@@ -88,10 +84,8 @@ struct HomeView: View {
         }
     }
 
-    /// Dashboard-Inhalt. Die teuren Werte (aktive Wörter, Status-Verteilung,
-    /// Tagesplan, Wochenrückblick, Streak/Joker) werden hier **einmal** je Render
-    /// berechnet und in die Teil-Views durchgereicht – statt sie in mehreren
-    /// computed properties erneut zu filtern/dekodieren.
+    /// Dashboard-Inhalt. Teure Werte (aktive Wörter, Status-Verteilung, Tagesplan,
+    /// Wochenrückblick, Streak/Joker, Level) werden hier einmal je Render berechnet.
     private var scrollContent: some View {
         let active = activeVocabs
         let streak = StreakStore.displayStreak()
@@ -146,8 +140,7 @@ struct HomeView: View {
         .padding(.top, Theme.Spacing.m)
     }
 
-    /// Persistente Fortschrittsanzeige: aktuelles Level und thematischer Rangname.
-    /// Rein informativ (kein Button) – XP wächst mit jeder geübten Vokabel.
+    /// Persistente Fortschrittsanzeige (informativ, kein Button): Level + Rangname.
     private func levelBadge(_ level: XPLevel) -> some View {
         Label("\(L("home.level", level.level)) · \(L(level.rankKey))", systemImage: "star.fill")
             .font(.appCaption.weight(.bold))
