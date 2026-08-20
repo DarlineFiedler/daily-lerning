@@ -37,8 +37,6 @@ struct TranslatorView: View {
 private struct TranslatorContentView: View {
     @State private var sourceText = ""
     @State private var translatedText = ""
-    /// Kehrt die automatisch erkannte Richtung um (Tausch-Button).
-    @State private var swapped = false
     @State private var isTranslating = false
     @State private var errorText: String?
     @State private var copied = false
@@ -46,16 +44,15 @@ private struct TranslatorContentView: View {
     /// Löst die Übersetzung aus; wird bei jeder (Neu-)Anforderung gesetzt bzw. invalidiert.
     @State private var configuration: TranslationSession.Configuration?
 
-    /// Nicht-korenische Gegenseite, abgeleitet aus der UI-/System-Sprache.
-    private var appLang: String {
-        TranslationDirection.resolvedAppLang(
-            language: LocalizationManager.shared.language,
-            deviceCode: Locale.preferredLanguages.first
-                .flatMap { Locale(identifier: $0).language.languageCode?.identifier } ?? "en")
-    }
+    /// Nicht-korenische Gegenseite, abgeleitet aus der UI-/System-Sprache. Ändert sich
+    /// während der Lebensdauer des Sheets nicht – daher einmalig bei Init berechnet.
+    private let appLang = TranslationDirection.resolvedAppLang(
+        language: LocalizationManager.shared.language,
+        deviceCode: Locale.preferredLanguages.first
+            .flatMap { Locale(identifier: $0).language.languageCode?.identifier } ?? "en")
 
     private var pair: TranslationDirection.LanguagePair {
-        TranslationDirection.pair(for: sourceText, appLang: appLang, manualOverride: swapped)
+        TranslationDirection.pair(for: sourceText, appLang: appLang)
     }
 
     private var trimmedInput: String {
@@ -78,9 +75,6 @@ private struct TranslatorContentView: View {
         .translationTask(configuration) { session in
             await runTranslation(with: session)
         }
-        .onChange(of: swapped) { _, _ in
-            if !trimmedInput.isEmpty { translate() }
-        }
     }
 
     // MARK: - Kopfleiste mit Sprachen + Tausch
@@ -90,13 +84,14 @@ private struct TranslatorContentView: View {
             Text(TranslationDirection.label(for: pair.source))
                 .frame(maxWidth: .infinity)
             Button {
-                swapped.toggle()
+                swap()
             } label: {
                 Image(systemName: "arrow.left.arrow.right")
                     .font(.appHeadline)
             }
             .buttonStyle(.plain)
-            .foregroundStyle(Theme.brandStart)
+            .foregroundStyle(translatedText.isEmpty ? Color.secondary : Theme.brandStart)
+            .disabled(translatedText.isEmpty)
             .accessibilityLabel(L("translator.swap.a11y"))
             Text(TranslationDirection.label(for: pair.target))
                 .frame(maxWidth: .infinity)
@@ -190,11 +185,26 @@ private struct TranslatorContentView: View {
 
     // MARK: - Übersetzung
 
+    /// Tauscht Eingabe und Ergebnis (DeepL-artig) und übersetzt neu. Da die Richtung
+    /// stets aus dem Eingabetext erkannt wird, folgt sie automatisch dem vertauschten
+    /// Inhalt – kein separater Zustand, der aus dem Tritt geraten kann.
+    private func swap() {
+        guard !translatedText.isEmpty else { return }
+        let previousInput = sourceText
+        sourceText = translatedText
+        translatedText = previousInput
+        errorText = nil
+        translate()
+    }
+
     private func translate() {
         guard !trimmedInput.isEmpty else { return }
         errorText = nil
-        let source = Locale.Language(identifier: pair.source)
-        let target = Locale.Language(identifier: pair.target)
+        // Bei Hangul explizit Koreanisch als Quelle; sonst Quelle automatisch erkennen
+        // lassen (nil), damit auch andere Eingabesprachen korrekt nach Ko übersetzt werden.
+        let koreanIsSource = TranslationDirection.containsHangul(trimmedInput)
+        let source: Locale.Language? = koreanIsSource ? Locale.Language(identifier: "ko") : nil
+        let target = Locale.Language(identifier: koreanIsSource ? appLang : "ko")
         // Gleiches Sprachpaar wie zuletzt? Dann nur neu anstoßen statt neu konfigurieren.
         if var config = configuration, config.source == source, config.target == target {
             config.invalidate()

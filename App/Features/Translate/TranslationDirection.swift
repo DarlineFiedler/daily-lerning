@@ -18,25 +18,27 @@ enum TranslationDirection {
     }
 
     /// Enthält der Text mindestens ein koreanisches (Hangul-)Zeichen?
-    /// Deckt Silbenblöcke, Jamo und die kompatiblen Jamo ab.
+    /// Deckt Silbenblöcke, alle Jamo-Blöcke (inkl. Extended-A/B) und die
+    /// Halbbreiten-Hangul ab.
     static func containsHangul(_ text: String) -> Bool {
         text.unicodeScalars.contains { scalar in
             (0xAC00 ... 0xD7A3).contains(scalar.value) // Hangul-Silben
                 || (0x1100 ... 0x11FF).contains(scalar.value) // Jamo
                 || (0x3130 ... 0x318F).contains(scalar.value) // kompatible Jamo
+                || (0xA960 ... 0xA97F).contains(scalar.value) // Jamo Extended-A
+                || (0xD7B0 ... 0xD7FF).contains(scalar.value) // Jamo Extended-B
+                || (0xFFA0 ... 0xFFDC).contains(scalar.value) // Halbbreite Hangul
         }
     }
 
-    /// Ermittelt Quell-/Zielsprache. Ohne `manualOverride` wird automatisch erkannt:
-    /// enthält der Text Hangul, wird von Koreanisch in die App-Sprache übersetzt,
-    /// sonst umgekehrt. `manualOverride` (Tausch-Button) kehrt das Ergebnis um.
-    static func pair(for input: String, appLang: String, manualOverride: Bool) -> LanguagePair {
+    /// Ermittelt Quell-/Zielsprache für Anzeige und Sprachausgabe: enthält der Text
+    /// Hangul, wird von Koreanisch in die App-Sprache übersetzt, sonst umgekehrt.
+    /// Die Richtung folgt damit immer dem tatsächlichen Eingabetext (kein separater
+    /// Override-Zustand, der aus dem Tritt geraten könnte).
+    static func pair(for input: String, appLang: String) -> LanguagePair {
         let koreanIsSource = containsHangul(input)
-        let source = koreanIsSource ? "ko" : appLang
-        let target = koreanIsSource ? appLang : "ko"
-        return manualOverride
-            ? LanguagePair(source: target, target: source)
-            : LanguagePair(source: source, target: target)
+        return LanguagePair(source: koreanIsSource ? "ko" : appLang,
+                            target: koreanIsSource ? appLang : "ko")
     }
 
     /// Konkrete App-Sprache (Nicht-Korea-Seite) für das Übersetzungspaar. Da Ko↔Ko

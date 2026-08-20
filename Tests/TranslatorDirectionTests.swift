@@ -10,6 +10,12 @@ final class TranslatorDirectionTests: XCTestCase {
         XCTAssertTrue(TranslationDirection.containsHangul("Hallo 사랑"))
     }
 
+    func testDetectsExtendedAndHalfwidthHangul() {
+        XCTAssertTrue(TranslationDirection.containsHangul("\u{A960}")) // Jamo Extended-A
+        XCTAssertTrue(TranslationDirection.containsHangul("\u{D7B0}")) // Jamo Extended-B
+        XCTAssertTrue(TranslationDirection.containsHangul("\u{FFA1}")) // Halbbreites Hangul
+    }
+
     func testNoHangulForLatinText() {
         XCTAssertFalse(TranslationDirection.containsHangul("Guten Morgen"))
         XCTAssertFalse(TranslationDirection.containsHangul("hello world 123"))
@@ -18,7 +24,7 @@ final class TranslatorDirectionTests: XCTestCase {
     // MARK: Richtung
 
     func testKoreanInputTranslatesToAppLang() {
-        let pair = TranslationDirection.pair(for: "사랑", appLang: "de", manualOverride: false)
+        let pair = TranslationDirection.pair(for: "사랑", appLang: "de")
         XCTAssertEqual(pair.source, "ko")
         XCTAssertEqual(pair.target, "de")
         XCTAssertEqual(pair.sourceTTS, "ko-KR")
@@ -26,16 +32,9 @@ final class TranslatorDirectionTests: XCTestCase {
     }
 
     func testLatinInputTranslatesToKorean() {
-        let pair = TranslationDirection.pair(for: "Liebe", appLang: "de", manualOverride: false)
+        let pair = TranslationDirection.pair(for: "Liebe", appLang: "de")
         XCTAssertEqual(pair.source, "de")
         XCTAssertEqual(pair.target, "ko")
-    }
-
-    func testManualOverrideSwapsDirection() {
-        let auto = TranslationDirection.pair(for: "Liebe", appLang: "en", manualOverride: false)
-        let swapped = TranslationDirection.pair(for: "Liebe", appLang: "en", manualOverride: true)
-        XCTAssertEqual(swapped.source, auto.target)
-        XCTAssertEqual(swapped.target, auto.source)
     }
 
     // MARK: App-Sprach-Auflösung
