@@ -486,3 +486,18 @@
 "ach.challengeMaster.detail" = "일일 도전 30회 완료";
 "ach.vollendung.title" = "완성";
 "ach.vollendung.detail" = "다른 모든 배지 획득";
+
+/* 번역기 */
+"home.translator.title" = "번역기";
+"home.translator.subtitle" = "단어와 문장을 번역하고 들어보세요";
+"translator.title" = "번역기";
+"translator.input.placeholder" = "텍스트 입력 …";
+"translator.output.placeholder" = "번역 결과가 여기에 표시됩니다";
+"translator.translate" = "번역";
+"translator.swap.a11y" = "언어 바꾸기";
+"translator.clear" = "지우기";
+"translator.copy" = "복사";
+"translator.copied" = "복사됨";
+"translator.error" = "번역에 실패했습니다. 다시 시도해 주세요.";
+"translator.unavailable" = "iOS 18부터 사용 가능";
+"translator.unavailable.detail" = "번역기는 iOS 18 이상이 필요한 온디바이스 번역을 사용합니다.";

@@ -486,3 +486,18 @@
 "ach.challengeMaster.detail" = "Completed 30 daily challenges";
 "ach.vollendung.title" = "Completion";
 "ach.vollendung.detail" = "Unlocked every other badge";
+
+/* Translator */
+"home.translator.title" = "Translator";
+"home.translator.subtitle" = "Translate words & sentences and listen";
+"translator.title" = "Translator";
+"translator.input.placeholder" = "Enter text …";
+"translator.output.placeholder" = "Translation appears here";
+"translator.translate" = "Translate";
+"translator.swap.a11y" = "Swap languages";
+"translator.clear" = "Clear";
+"translator.copy" = "Copy";
+"translator.copied" = "Copied";
+"translator.error" = "Translation failed. Please try again.";
+"translator.unavailable" = "Available from iOS 18";
+"translator.unavailable.detail" = "The translator uses on-device translation, which requires iOS 18 or newer.";
