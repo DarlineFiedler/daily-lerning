@@ -115,6 +115,8 @@ struct AchievementMetrics: Equatable {
     var schnapszahl = false
     var groupMastered = false
     var allGroupsMastered = false
+    /// Mindestens eine komplett gelernte Gruppe mit vielen Wörtern – „Voller Garten" (Issue #92).
+    var bigGardenBloomed = false
     var everUsedJoker = false
     // Höchste je erreichte Kombo (Live-Kombo, Issue #90).
     var bestCombo = 0
@@ -137,6 +139,7 @@ struct AchievementMetrics: Equatable {
                      longestStreak: Int,
                      groupMastered: Bool = false,
                      allGroupsMastered: Bool = false,
+                     bigGardenBloomed: Bool = false,
                      everUsedJoker: Bool = false,
                      dailyChallengesCompleted: Int = 0,
                      unlockedIDs: Set<String> = [],
@@ -177,6 +180,7 @@ struct AchievementMetrics: Equatable {
             schnapszahl: learnedWords == 111 || learnedWords == 222,
             groupMastered: groupMastered,
             allGroupsMastered: allGroupsMastered,
+            bigGardenBloomed: bigGardenBloomed,
             everUsedJoker: everUsedJoker,
             bestCombo: progress.bestCombo,
             distinctSeasons: progress.seasons.count,
@@ -545,6 +549,7 @@ enum AchievementCatalog {
 
         // --- Erweiterung: Themen ---
         Achievement(id: "themenMeister", category: .learned, emoji: "🗂️", requirement: .flag(\.groupMastered)),
+        Achievement(id: "vollerGarten", category: .learned, emoji: "🌷", requirement: .flag(\.bigGardenBloomed)),
 
         // --- Erweiterung: Meilensteine & App-Nutzung ---
         Achievement(id: "learned2000", category: .learned, emoji: "🏔️", requirement: .count(\.learnedWords, 2000)),

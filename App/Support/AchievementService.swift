@@ -1,6 +1,15 @@
 import Foundation
 import SwiftData
 
+/// Ergebnis der Gruppen-Meisterschafts-Auswertung (siehe `AchievementService.groupMastery`).
+/// `any` = eine ausreichend große Gruppe komplett gelernt, `all` = alle Gruppen gemeistert,
+/// `big` = ein „Voller Garten" (große Gruppe komplett gelernt, Issue #92).
+struct GroupMastery: Equatable {
+    let any: Bool
+    let all: Bool
+    let big: Bool
+}
+
 /// Verbindet die reine Achievement-Logik mit den lebenden Daten (Vokabel-Zähler,
 /// Streak) und der Persistenz. Wird nach relevanten Aktionen aufgerufen und gibt
 /// die *neu* freigeschalteten Badges zurück (für das Freischalt-Feedback).
@@ -9,6 +18,11 @@ enum AchievementService {
     /// Mindestgröße einer Gruppe, damit ihr vollständiges Lernen als „Themen-Meister"
     /// zählt – verhindert, dass eine winzige Gruppe das Badge trivial freischaltet.
     static let themenMeisterMinSize = 5
+
+    /// Mindestgröße für den „Voller Garten"-Prunk (Issue #92): eine komplett gelernte
+    /// Gruppe dieser Größe ergibt einen sichtbar üppigen, teilenswerten Garten – bewusst
+    /// höher als `themenMeisterMinSize`, damit das Badge etwas Besonderes bleibt.
+    static let gardenBloomMinSize = 15
 
     /// Baut die aktuellen Metriken aus dem Store + den Vokabeldaten.
     static func metrics(context: ModelContext, progress: AchievementProgress = AchievementStore.progress) -> AchievementMetrics {
@@ -29,6 +43,7 @@ enum AchievementService {
                                        longestStreak: StreakStore.longest,
                                        groupMastered: mastery.any,
                                        allGroupsMastered: mastery.all,
+                                       bigGardenBloomed: mastery.big,
                                        everUsedJoker: !StreakStore.jokerUses.isEmpty,
                                        dailyChallengesCompleted: DailyChallengeStore.totalCompleted,
                                        unlockedIDs: AchievementStore.unlockedIDs)
@@ -40,8 +55,11 @@ enum AchievementService {
     ///   gelernt („Themen-Meister").
     /// - `all`: alle nicht-leeren Gruppen komplett gelernt und insgesamt genug Wörter, damit
     ///   es nicht trivial ist (härtere Version).
-    static func groupMastery(from groups: [(count: Int, learned: Int)]) -> (any: Bool, all: Bool) {
+    /// - `big`: mindestens eine komplett gelernte Gruppe mit `>= gardenBloomMinSize` Wörtern
+    ///   („Voller Garten", Issue #92).
+    static func groupMastery(from groups: [(count: Int, learned: Int)]) -> GroupMastery {
         var anyMastered = false
+        var bigBloomed = false
         var allNonEmptyMastered = true
         var hasNonEmpty = false
         var totalNonEmptyVocabs = 0
@@ -50,10 +68,11 @@ enum AchievementService {
             totalNonEmptyVocabs += group.count
             let fullyLearned = group.learned == group.count
             if group.count >= themenMeisterMinSize, fullyLearned { anyMastered = true }
+            if group.count >= gardenBloomMinSize, fullyLearned { bigBloomed = true }
             if !fullyLearned { allNonEmptyMastered = false }
         }
         let all = hasNonEmpty && totalNonEmptyVocabs >= themenMeisterMinSize && allNonEmptyMastered
-        return (anyMastered, all)
+        return GroupMastery(any: anyMastered, all: all, big: bigBloomed)
     }
 
     /// Wertet den aktuellen Stand aus und schaltet neue Badges frei (persistiert).

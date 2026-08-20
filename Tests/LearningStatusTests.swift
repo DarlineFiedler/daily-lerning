@@ -123,4 +123,12 @@ final class LearningStatusTests: XCTestCase {
         XCTAssertEqual(vocab.successCounter, 0)
         XCTAssertNil(vocab.nextReviewAt) // Reset macht das Wort sofort fällig
     }
+
+    // MARK: - Garten-Wachstumsstufen (Issue #92)
+
+    func testGardenStageEmojiMapsEachStatusUniquely() {
+        let stages = LearningStatus.allCases.map(\.gardenStageEmoji)
+        XCTAssertEqual(stages, ["🌰", "🌱", "🌿", "🌸"]) // Samen → Sprössling → Grün → Blüte
+        XCTAssertEqual(Set(stages).count, LearningStatus.allCases.count) // jede Stufe eindeutig
+    }
 }

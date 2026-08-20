@@ -58,6 +58,9 @@
 "group.wordCount" = "%d Wörter";
 "group.deleteConfirm" = "Diese Gruppe und alle enthaltenen Vokabeln löschen?";
 "group.resetAll" = "Status aller zurücksetzen";
+"garden.list" = "Liste";
+"garden.garden" = "Garten";
+"garden.fullyBloomed" = "Voll erblüht – alles gelernt! 🌸";
 "group.resetAllConfirm" = "Alle Wörter dieser Gruppe auf „Neu“ zurücksetzen? Der Fortschritt geht verloren.";
 
 /* Vokabeln */
@@ -454,6 +457,8 @@
 "ach.oneWordDay.detail" = "7 Tage in Folge genau 1 neues Wort gelernt";
 "ach.themenMeister.title" = "Themen-Meister";
 "ach.themenMeister.detail" = "Alle Wörter einer Gruppe gelernt";
+"ach.vollerGarten.title" = "Voller Garten";
+"ach.vollerGarten.detail" = "Eine große Gruppe (ab 15 Wörtern) komplett zum Erblühen gebracht";
 "ach.learned2000.title" = "Wortschatz-Gipfel";
 "ach.learned2000.detail" = "2000 Wörter gelernt";
 "ach.firstGroup.title" = "Ordnungssinn";
