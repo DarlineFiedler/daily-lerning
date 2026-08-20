@@ -34,6 +34,7 @@ enum VocabCSV {
 
             let fields = splitFields(raw, delimiter: delimiter(for: raw))
                 .map { $0.trimmingCharacters(in: .whitespaces) }
+                .map(deneutralizeFormula)
 
             guard fields.count >= 2 else { return nil }
             let word = fields[0]
@@ -162,5 +163,17 @@ enum VocabCSV {
     private static func neutralizeFormula(_ field: String) -> String {
         guard let first = field.first, formulaTriggers.contains(first) else { return field }
         return "'" + field
+    }
+
+    /// Kehrt `neutralizeFormula` beim Import um: ein führendes `'`, das nur einem
+    /// Trigger-Zeichen vorangestellt wurde, wird wieder entfernt – so überlebt ein
+    /// exportiertes Feld (z.B. die Grammatik-Endung „-습니다") den Re-Import unverändert.
+    /// Ein echtes Apostroph (etwa „'cause") bleibt erhalten, weil danach kein
+    /// Trigger-Zeichen folgt.
+    private static func deneutralizeFormula(_ field: String) -> String {
+        guard field.first == "'" else { return field }
+        let rest = field.dropFirst()
+        guard let next = rest.first, formulaTriggers.contains(next) else { return field }
+        return String(rest)
     }
 }

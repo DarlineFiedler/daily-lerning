@@ -108,6 +108,27 @@ final class VocabCSVTests: XCTestCase {
         XCTAssertFalse(csv.contains("'사과"))
     }
 
+    func testRoundTripStripsFormulaNeutralization() {
+        // Export→Re-Import muss verlustfrei sein: das beim Export vorangestellte '
+        // wird beim Import wieder entfernt (auch bei gequoteten Feldern), sodass z.B.
+        // eine Grammatik-Endung „-습니다" den Zyklus unverändert übersteht.
+        let entries = [
+            Vocab(word: "-습니다", meaning: "@formell", example: "=a;b"),
+            Vocab(word: "사과", meaning: "Apfel", example: "Ein Beispiel")
+        ]
+        let rows = VocabCSV.parse(VocabCSV.export(entries))
+        XCTAssertEqual(rows, [
+            VocabCSV.Row(word: "-습니다", meaning: "@formell", example: "=a;b"),
+            VocabCSV.Row(word: "사과", meaning: "Apfel", example: "Ein Beispiel")
+        ])
+    }
+
+    func testImportKeepsGenuineLeadingApostrophe() {
+        // Ein echtes Apostroph (kein Trigger danach) darf beim Import erhalten bleiben.
+        let rows = VocabCSV.parse("'cause;weil")
+        XCTAssertEqual(rows, [VocabCSV.Row(word: "'cause", meaning: "weil", example: nil)])
+    }
+
     func testSkipsExportHeaderRow() {
         // Eine exportierte Kopfzeile darf beim Re-Import nicht als Vokabel landen.
         let rows = VocabCSV.parse("word;meaning;example;group;status\n가다;gehen")

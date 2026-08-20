@@ -246,6 +246,11 @@ final class PracticeSession {
         maxCombo = 0
         xpEarned = 0
         newLevel = nil
+        // XP-Buchführung ebenfalls zurücksetzen: gesammelte, noch nicht persistierte
+        // Punkte verwerfen und den persistierten Stand neu laden. Sonst würde beim
+        // nächsten Flush ein Rest aus der Vorrunde erneut vergeben.
+        pendingXP = 0
+        xpFlushedTotal = XPStore.totalXP
         missedVocabs = []
         leveledUpVocabs = []
         newlyUnlocked = []
