@@ -13,6 +13,7 @@ struct HomeView: View {
     @State private var showingNewGroup = false
     @State private var showReview = false
     @State private var showStreakDetail = false
+    @State private var showTranslator = false
     /// Blendet den Ziel-Statistik-Screen ein (Tippen auf die Ziel-Karte).
     @State private var showGoalStats = false
     /// Beim Erreichen des Wochenziels neu freigeschaltete Badges (fürs Banner).
@@ -72,9 +73,8 @@ struct HomeView: View {
             .sheet(item: $practiceGroup) { _ in PracticeConfigView() }
             .sheet(isPresented: $showingNewGroup) { GroupEditView(group: nil) }
             .sheet(isPresented: $showReview) { ReviewSessionView() }
-            .sheet(isPresented: $showGoalStats) {
-                GoalStatsView()
-            }
+            .sheet(isPresented: $showTranslator) { TranslatorView() }
+            .sheet(isPresented: $showGoalStats) { GoalStatsView() }
             .sheet(isPresented: $showStreakDetail) {
                 StreakDetailView(streak: streak, longest: StreakStore.longest,
                                  jokers: jokers, maxJokers: StreakStore.maxJokers,
@@ -95,6 +95,7 @@ struct HomeView: View {
         return ScrollView {
             VStack(spacing: Theme.Spacing.l) {
                 header(streak: streak, jokers: jokers, level: level)
+                TranslatorEntryCard { showTranslator = true }
                 if active.isEmpty {
                     emptyState
                 } else {
