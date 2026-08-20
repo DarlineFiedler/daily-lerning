@@ -124,6 +124,7 @@
 "practice.summary.accuracy" = "Accuracy";
 "practice.summary.streak" = "Streak";
 "practice.summary.combo" = "Best combo";
+"practice.summary.xp" = "XP";
 "practice.combo" = "×%d combo";
 "practice.summary.missed" = "Practice these again";
 "practice.summary.leveledUp" = "Leveled up";
@@ -221,6 +222,20 @@
 "home.today.a11y.hint" = "Starts today's round";
 "home.streak.detail.hint" = "Shows streak and freeze details";
 "home.jokers.a11y" = "%d streak freezes available";
+
+/* XP & rank (continuous progress layer) */
+"home.level" = "Level %d";
+"home.level.a11y" = "Level %d, %@";
+"xp.levelUp.title" = "Reached level %d!";
+"xp.levelUp.a11y" = "Reached level %d, %@";
+"xp.rank.0" = "Hangeul Beginner";
+"xp.rank.1" = "Syllable Collector";
+"xp.rank.2" = "Vocabulary Apprentice";
+"xp.rank.3" = "Sentence Tinkerer";
+"xp.rank.4" = "Grammar Journeyman";
+"xp.rank.5" = "Vocabulary Veteran";
+"xp.rank.6" = "Language Connoisseur";
+"xp.rank.7" = "TOPIK Master";
 "home.weekly.title" = "Weekly review";
 "home.weekly.practiced" = "words practiced";
 "home.weekly.learned" = "newly learned";

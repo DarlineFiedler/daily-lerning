@@ -124,6 +124,7 @@
 "practice.summary.accuracy" = "Genauigkeit";
 "practice.summary.streak" = "Streak";
 "practice.summary.combo" = "Beste Kombo";
+"practice.summary.xp" = "XP";
 "practice.combo" = "×%d Kombo";
 "practice.summary.missed" = "Diese nochmal üben";
 "practice.summary.leveledUp" = "Aufgestiegen";
@@ -221,6 +222,20 @@
 "home.today.a11y.hint" = "Startet die heutige Runde";
 "home.streak.detail.hint" = "Zeigt Streak- und Joker-Details";
 "home.jokers.a11y" = "%d Streak-Freeze-Joker verfügbar";
+
+/* XP & Rang (kontinuierliche Fortschrittsschicht) */
+"home.level" = "Level %d";
+"home.level.a11y" = "Level %d, %@";
+"xp.levelUp.title" = "Level %d erreicht!";
+"xp.levelUp.a11y" = "Level %d erreicht, %@";
+"xp.rank.0" = "한글-Anfänger";
+"xp.rank.1" = "Silben-Sammler";
+"xp.rank.2" = "Wortschatz-Lehrling";
+"xp.rank.3" = "Satz-Bastler";
+"xp.rank.4" = "Grammatik-Geselle";
+"xp.rank.5" = "Vokabel-Veteran";
+"xp.rank.6" = "Sprach-Kenner";
+"xp.rank.7" = "TOPIK-Meister";
 "home.weekly.title" = "Wochenrückblick";
 "home.weekly.practiced" = "Wörter geübt";
 "home.weekly.learned" = "neu gelernt";

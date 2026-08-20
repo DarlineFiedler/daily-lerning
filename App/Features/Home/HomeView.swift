@@ -25,6 +25,7 @@ struct HomeView: View {
     private var weeklyGoal = GoalOptions.defaultWeekly
     @AppStorage(GoalKeys.daily, store: AppGroup.defaults)
     private var dailyGoal = GoalOptions.defaultDaily
+    @AppStorage(XPKeys.state, store: AppGroup.defaults) private var xpStateData = Data()
 
     // MARK: Abgeleitete Werte
 
@@ -83,17 +84,17 @@ struct HomeView: View {
         }
     }
 
-    /// Dashboard-Inhalt. Die teuren Werte (aktive Wörter, Status-Verteilung,
-    /// Tagesplan, Wochenrückblick, Streak/Joker) werden hier **einmal** je Render
-    /// berechnet und in die Teil-Views durchgereicht – statt sie in mehreren
-    /// computed properties erneut zu filtern/dekodieren.
+    /// Dashboard-Inhalt. Teure Werte (aktive Wörter, Status-Verteilung, Tagesplan,
+    /// Wochenrückblick, Streak/Joker, Level) werden hier einmal je Render berechnet.
     private var scrollContent: some View {
         let active = activeVocabs
         let streak = StreakStore.displayStreak()
         let jokers = StreakStore.availableJokers()
+        _ = xpStateData // Abhängigkeit registrieren → Level-Badge aktualisiert sich reaktiv
+        let level = XPStore.level
         return ScrollView {
             VStack(spacing: Theme.Spacing.l) {
-                header(streak: streak, jokers: jokers)
+                header(streak: streak, jokers: jokers, level: level)
                 if active.isEmpty {
                     emptyState
                 } else {
@@ -117,7 +118,7 @@ struct HomeView: View {
 
     // MARK: - Header
 
-    private func header(streak: Int, jokers: Int) -> some View {
+    private func header(streak: Int, jokers: Int, level: XPLevel) -> some View {
         GradientCard(gradient: Theme.brandGradient, radius: 28, padding: Theme.Spacing.l) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .top) {
@@ -132,9 +133,23 @@ struct HomeView: View {
                 Text(L("home.subtitle"))
                     .font(.appBody)
                     .opacity(0.9)
+                levelBadge(level)
+                    .padding(.top, Theme.Spacing.xs)
             }
         }
         .padding(.top, Theme.Spacing.m)
+    }
+
+    /// Persistente Fortschrittsanzeige (informativ, kein Button): Level + Rangname.
+    private func levelBadge(_ level: XPLevel) -> some View {
+        Label("\(L("home.level", level.level)) · \(L(level.rankKey))", systemImage: "star.fill")
+            .font(.appCaption.weight(.bold))
+            .lineLimit(1)
+            .padding(.horizontal, Theme.Spacing.s)
+            .padding(.vertical, Theme.Spacing.xs)
+            .background(.white.opacity(0.22), in: Capsule())
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(L("home.level.a11y", level.level, L(level.rankKey)))
     }
 
     /// Tappbare Badge-Gruppe (Streak + Joker) – öffnet die Detailansicht.

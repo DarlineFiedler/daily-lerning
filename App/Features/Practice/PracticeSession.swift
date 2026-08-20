@@ -50,6 +50,20 @@ final class PracticeSession {
     /// „Kombo-Meister"-Badge und in die Zusammenfassung.
     private(set) var maxCombo = 0
 
+    /// In dieser Runde gesammelte XP (für die Zusammenfassung). XP fließt additiv in
+    /// den `XPStore`; die Achievement-/Streak-Logik bleibt davon unberührt.
+    private(set) var xpEarned = 0
+    /// Höchstes in dieser Runde neu erreichtes Level (für die Levelaufstiegs-Feier),
+    /// oder `nil`, wenn kein Levelaufstieg stattfand.
+    private(set) var newLevel: XPLevel?
+    /// Bereits im `XPStore` persistierter Gesamt-XP-Stand zum letzten Flush. Zusammen mit
+    /// `pendingXP` ergibt sich der aktuelle Gesamtstand, ohne je Karte von der Platte zu
+    /// lesen. Einmal beim Session-Start geladen, danach beim Flushen fortgeschrieben.
+    private var xpFlushedTotal = XPStore.totalXP
+    /// In dieser Session gesammelte, noch nicht persistierte XP. Gebündelt über
+    /// `flushProgress()` geschrieben (analog zum Wochen-Log) – nicht je Karte.
+    private var pendingXP = 0
+
     /// Falsch beantwortete Wörter (für Zusammenfassung + „Falsche wiederholen").
     private(set) var missedVocabs: [Vocab] = []
     /// Wörter, deren Status in dieser Session aufgestiegen ist.
@@ -126,6 +140,16 @@ final class PracticeSession {
             currentCombo += 1
             maxCombo = max(maxCombo, currentCombo)
             if wasPreviouslyWrong { didSelfCorrect = true }
+            // XP additiv vergeben: Basis + Bonus für Kombo und Wort-Schwierigkeit (Status
+            // VOR der Antwort). Im Speicher gesammelt und gebündelt über `flushProgress()`
+            // persistiert – nicht je Karte. Ein dabei überschrittenes Level wird für die
+            // Feier gemerkt (Level aus dem aktuellen Gesamtstand ohne Platten-Zugriff).
+            let points = XPRules.points(combo: currentCombo, status: before)
+            let beforeLevel = XPLevel.forXP(xpFlushedTotal + pendingXP)
+            pendingXP += points
+            xpEarned += points
+            let afterLevel = XPLevel.forXP(xpFlushedTotal + pendingXP)
+            if afterLevel.level > beforeLevel.level { newLevel = afterLevel }
             // Aufstieg? (rawValue steigt mit dem Lernfortschritt).
             if vocab.status.rawValue > before.rawValue {
                 leveledUpVocabs.append(vocab)
@@ -190,6 +214,13 @@ final class PracticeSession {
     /// Fortschritt auch einen früh abgebrochenen Durchgang übersteht. No-op, solange
     /// nichts gesammelt wurde; wiederholte Aufrufe schreiben nur denselben Stand.
     func flushProgress() {
+        // Gesammelte XP zuerst schreiben (ein load+save je Flush statt je Karte) und den
+        // persistierten Stand fortschreiben – wiederholte Aufrufe sind dadurch idempotent.
+        if pendingXP > 0 {
+            XPStore.award(pendingXP)
+            xpFlushedTotal += pendingXP
+            pendingXP = 0
+        }
         guard let weeklyActivity else { return }
         WeeklyReviewStore.saveActivity(weeklyActivity)
     }
@@ -213,6 +244,8 @@ final class PracticeSession {
         wrongCount = 0
         currentCombo = 0
         maxCombo = 0
+        xpEarned = 0
+        newLevel = nil
         missedVocabs = []
         leveledUpVocabs = []
         newlyUnlocked = []
