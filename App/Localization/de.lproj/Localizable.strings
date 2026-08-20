@@ -486,3 +486,18 @@
 "ach.challengeMaster.detail" = "30 Tages-Challenges erfüllt";
 "ach.vollendung.title" = "Vollendung";
 "ach.vollendung.detail" = "Alle anderen Badges freigeschaltet";
+
+/* Übersetzer */
+"home.translator.title" = "Übersetzer";
+"home.translator.subtitle" = "Wörter & Sätze übersetzen und anhören";
+"translator.title" = "Übersetzer";
+"translator.input.placeholder" = "Text eingeben …";
+"translator.output.placeholder" = "Übersetzung erscheint hier";
+"translator.translate" = "Übersetzen";
+"translator.swap.a11y" = "Sprachen tauschen";
+"translator.clear" = "Löschen";
+"translator.copy" = "Kopieren";
+"translator.copied" = "Kopiert";
+"translator.error" = "Übersetzung fehlgeschlagen. Bitte erneut versuchen.";
+"translator.unavailable" = "Ab iOS 18 verfügbar";
+"translator.unavailable.detail" = "Der Übersetzer nutzt die geräteinterne Übersetzung, die iOS 18 oder neuer benötigt.";
