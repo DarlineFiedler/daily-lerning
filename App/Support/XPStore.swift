@@ -125,6 +125,14 @@ enum XPStore {
     /// Aktueller Level-/Rang-Zustand.
     static var level: XPLevel { load().level }
 
+    /// Level-/Rang-Zustand aus bereits geladenen Rohdaten (z.B. `@AppStorage`), ohne
+    /// erneuten UserDefaults-Zugriff – für den Dashboard-Hot-Path. Leere/ungültige
+    /// Daten ergeben den Startzustand (Level 1), analog zu `load()`.
+    static func level(from data: Data) -> XPLevel {
+        let state = (try? JSONDecoder().decode(XPState.self, from: data)) ?? XPState()
+        return state.level
+    }
+
     /// Vergibt Punkte, persistiert den neuen Stand und meldet den Level-/Rang-Übergang.
     @discardableResult
     static func award(_ points: Int) -> XPAward {

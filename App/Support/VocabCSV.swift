@@ -34,6 +34,7 @@ enum VocabCSV {
 
             let fields = splitFields(raw, delimiter: delimiter(for: raw))
                 .map { $0.trimmingCharacters(in: .whitespaces) }
+                .map(deneutralizeFormula)
 
             guard fields.count >= 2 else { return nil }
             let word = fields[0]
@@ -142,9 +143,37 @@ enum VocabCSV {
         return fields
     }
 
-    /// Feld für CSV-Export absichern: bei Sonderzeichen in Anführungszeichen setzen.
+    /// Zeichen, die eine Zelle in Excel/Numbers/Google Sheets als Formel starten lassen.
+    /// Beginnt ein Feld damit, wird es beim Export entschärft (CSV-/Formula-Injection).
+    private static let formulaTriggers: Set<Character> = ["=", "+", "-", "@", "\t", "\r"]
+
+    /// Feld für CSV-Export absichern: erst gegen Formula-Injection neutralisieren,
+    /// dann bei Sonderzeichen in Anführungszeichen setzen.
     private static func escape(_ field: String) -> String {
-        guard field.contains(";") || field.contains("\"") || field.contains("\n") else { return field }
-        return "\"" + field.replacingOccurrences(of: "\"", with: "\"\"") + "\""
+        let safe = neutralizeFormula(field)
+        guard safe.contains(";") || safe.contains("\"") || safe.contains("\n") else { return safe }
+        return "\"" + safe.replacingOccurrences(of: "\"", with: "\"\"") + "\""
+    }
+
+    /// Verhindert CSV-/Formula-Injection: beginnt ein Feld mit einem Trigger-Zeichen
+    /// (`= + - @`, Tab, CR), wird ein führendes `'` vorangestellt, sodass Tabellen-
+    /// programme die Zelle als Text und nicht als Formel auswerten. Vokabeln können aus
+    /// fremden, geteilten CSVs stammen und landen unverändert im (zum Teilen gedachten)
+    /// Export – der Angriffsinhalt würde sonst mitreisen (siehe Issue #102).
+    private static func neutralizeFormula(_ field: String) -> String {
+        guard let first = field.first, formulaTriggers.contains(first) else { return field }
+        return "'" + field
+    }
+
+    /// Kehrt `neutralizeFormula` beim Import um: ein führendes `'`, das nur einem
+    /// Trigger-Zeichen vorangestellt wurde, wird wieder entfernt – so überlebt ein
+    /// exportiertes Feld (z.B. die Grammatik-Endung „-습니다") den Re-Import unverändert.
+    /// Ein echtes Apostroph (etwa „'cause") bleibt erhalten, weil danach kein
+    /// Trigger-Zeichen folgt.
+    private static func deneutralizeFormula(_ field: String) -> String {
+        guard field.first == "'" else { return field }
+        let rest = field.dropFirst()
+        guard let next = rest.first, formulaTriggers.contains(next) else { return field }
+        return String(rest)
     }
 }

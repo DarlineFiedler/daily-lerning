@@ -224,7 +224,9 @@ private struct TranslatorContentView: View {
             translatedText = response.targetText
             errorText = nil
         } catch {
-            translatedText = ""
+            // Vorhandenes Ergebnis nicht verwerfen: die Ausgabe zeigt bei gesetztem
+            // `errorText` ohnehin die Fehlermeldung. So geht z.B. nach einem Tausch die
+            // zuvor eingegebene Seite nicht verloren, wenn die Neu-Übersetzung scheitert.
             errorText = L("translator.error")
         }
     }

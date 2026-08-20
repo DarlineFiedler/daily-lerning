@@ -90,8 +90,8 @@ struct HomeView: View {
         let active = activeVocabs
         let streak = StreakStore.displayStreak()
         let jokers = StreakStore.availableJokers()
-        _ = xpStateData // Abhängigkeit registrieren → Level-Badge aktualisiert sich reaktiv
-        let level = XPStore.level
+        // Level aus den App-Storage-Rohdaten ableiten: registriert die reaktive Abhängigkeit (Badge) und spart den zweiten UserDefaults-Decode je Render.
+        let level = XPStore.level(from: xpStateData)
         return ScrollView {
             VStack(spacing: Theme.Spacing.l) {
                 header(streak: streak, jokers: jokers, level: level)
