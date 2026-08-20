@@ -9,16 +9,18 @@ struct VocabGardenView: View {
     let vocabs: [Vocab]
     let colorHex: String
 
-    private var garden: VocabGarden { VocabGarden(vocabs: vocabs) }
     private var tint: Color { Color(hex: colorHex) }
 
     private let columns = [GridItem(.adaptive(minimum: 56), spacing: Theme.Spacing.s)]
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.m) {
+        // Statusverteilung einmal je Render berechnen (statt bei jedem `garden.*`-Zugriff
+        // erneut über alle Vokabeln zu zählen).
+        let garden = VocabGarden(vocabs: vocabs)
+        return VStack(spacing: Theme.Spacing.m) {
             if garden.isFullyBloomed { bloomBanner }
             if garden.showsSummary {
-                summary
+                summary(garden)
             } else {
                 grid
             }
@@ -72,7 +74,7 @@ struct VocabGardenView: View {
     }
 
     /// Zusammenfassung für große Gruppen: Anzahl je Wachstumsstufe (blühend zuerst).
-    private var summary: some View {
+    private func summary(_ garden: VocabGarden) -> some View {
         VStack(spacing: Theme.Spacing.s) {
             ForEach(LearningStatus.allCases.reversed()) { status in
                 let count = garden.count(of: status)

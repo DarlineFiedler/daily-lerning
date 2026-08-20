@@ -62,22 +62,10 @@ struct VocabGarden {
     /// Farbton (0…360) und Sättigung (0…1) eines Hex-Strings. `nil`, wenn der Wert
     /// keine parsebaren 6/8 Hex-Stellen hat. Rein arithmetisch (ohne UIKit), damit testbar.
     static func hsv(fromHex hex: String) -> (hue: Double, saturation: Double)? {
-        let cleaned = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var value: UInt64 = 0
-        guard Scanner(string: cleaned).scanHexInt64(&value) else { return nil }
-        let r, g, b: Double
-        switch cleaned.count {
-        case 6:
-            r = Double((value & 0xFF0000) >> 16) / 255
-            g = Double((value & 0x00FF00) >> 8) / 255
-            b = Double(value & 0x0000FF) / 255
-        case 8:
-            r = Double((value & 0xFF00_0000) >> 24) / 255
-            g = Double((value & 0x00FF_0000) >> 16) / 255
-            b = Double((value & 0x0000_FF00) >> 8) / 255
-        default:
-            return nil
-        }
+        // Kanäle über den gemeinsamen Hex-Parser lesen (siehe [[HexColorComponents]]),
+        // damit die Blüten-Optik nie vom tatsächlich dargestellten `Color(hex:)` driftet.
+        guard let c = HexColorComponents.parse(hex) else { return nil }
+        let r = c.red, g = c.green, b = c.blue
         let maxC = max(r, g, b)
         let minC = min(r, g, b)
         let delta = maxC - minC

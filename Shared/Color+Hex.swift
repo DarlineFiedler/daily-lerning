@@ -3,26 +3,9 @@ import SwiftUI
 extension Color {
     /// Erstellt eine Farbe aus einem Hex-String (z.B. "#FF8800" oder "FF8800").
     init(hex: String) {
-        let cleaned = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var value: UInt64 = 0
-        Scanner(string: cleaned).scanHexInt64(&value)
-
-        let r, g, b, a: Double
-        switch cleaned.count {
-        case 6: // RRGGBB
-            r = Double((value & 0xFF0000) >> 16) / 255
-            g = Double((value & 0x00FF00) >> 8) / 255
-            b = Double(value & 0x0000FF) / 255
-            a = 1
-        case 8: // RRGGBBAA
-            r = Double((value & 0xFF000000) >> 24) / 255
-            g = Double((value & 0x00FF0000) >> 16) / 255
-            b = Double((value & 0x0000FF00) >> 8) / 255
-            a = Double(value & 0x000000FF) / 255
-        default:
-            r = 0.5; g = 0.5; b = 0.5; a = 1
-        }
-        self.init(.sRGB, red: r, green: g, blue: b, opacity: a)
+        // Gemeinsamer Hex-Parser (siehe [[HexColorComponents]]); unparsebar → neutrales Grau.
+        let c = HexColorComponents.parse(hex) ?? HexColorComponents.RGBA(red: 0.5, green: 0.5, blue: 0.5, alpha: 1)
+        self.init(.sRGB, red: c.red, green: c.green, blue: c.blue, opacity: c.alpha)
     }
 
     /// Liefert den Hex-String (#RRGGBB) der Farbe.

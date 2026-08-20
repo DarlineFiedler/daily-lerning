@@ -40,6 +40,10 @@ private struct TranslatorContentView: View {
     @State private var isTranslating = false
     @State private var errorText: String?
     @State private var copied = false
+    /// Getrimmte Eingabe, zu der `translatedText` gehört. Weicht sie von der aktuellen
+    /// Eingabe ab, ist das Ergebnis veraltet (Eingabe wurde ohne Neuübersetzung geändert)
+    /// – dann wird es weder angezeigt noch getauscht.
+    @State private var translatedFrom = ""
 
     /// Löst die Übersetzung aus; wird bei jeder (Neu-)Anforderung gesetzt bzw. invalidiert.
     @State private var configuration: TranslationSession.Configuration?
@@ -59,6 +63,12 @@ private struct TranslatorContentView: View {
         sourceText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Gehört `translatedText` zur aktuellen Eingabe? Nur dann ist das Ergebnis gültig
+    /// (anzeigbar, tauschbar).
+    private var hasFreshTranslation: Bool {
+        !translatedText.isEmpty && trimmedInput == translatedFrom
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.Spacing.m) {
@@ -75,6 +85,14 @@ private struct TranslatorContentView: View {
         .translationTask(configuration) { session in
             await runTranslation(with: session)
         }
+        .onChange(of: sourceText) {
+            // Eingabe geändert → altes Ergebnis passt nicht mehr dazu. Verwerfen, damit
+            // keine veraltete Übersetzung angezeigt oder (vertauscht) weitergetragen wird.
+            if trimmedInput != translatedFrom {
+                translatedText = ""
+                errorText = nil
+            }
+        }
     }
 
     // MARK: - Kopfleiste mit Sprachen + Tausch
@@ -90,8 +108,8 @@ private struct TranslatorContentView: View {
                     .font(.appHeadline)
             }
             .buttonStyle(.plain)
-            .foregroundStyle(translatedText.isEmpty ? Color.secondary : Theme.brandStart)
-            .disabled(translatedText.isEmpty)
+            .foregroundStyle(hasFreshTranslation ? Theme.brandStart : Color.secondary)
+            .disabled(!hasFreshTranslation)
             .accessibilityLabel(L("translator.swap.a11y"))
             Text(TranslationDirection.label(for: pair.target))
                 .frame(maxWidth: .infinity)
@@ -126,6 +144,7 @@ private struct TranslatorContentView: View {
                     Button(L("translator.clear")) {
                         sourceText = ""
                         translatedText = ""
+                        translatedFrom = ""
                         errorText = nil
                     }
                     .font(.appSubheadline)
@@ -148,7 +167,7 @@ private struct TranslatorContentView: View {
                 Text(errorText)
                     .font(.appBody)
                     .foregroundStyle(Theme.wrong)
-            } else if translatedText.isEmpty {
+            } else if !hasFreshTranslation {
                 Text(L("translator.output.placeholder"))
                     .font(.appBody)
                     .foregroundStyle(.tertiary)
@@ -189,11 +208,10 @@ private struct TranslatorContentView: View {
     /// stets aus dem Eingabetext erkannt wird, folgt sie automatisch dem vertauschten
     /// Inhalt – kein separater Zustand, der aus dem Tritt geraten kann.
     private func swap() {
-        guard !translatedText.isEmpty else { return }
-        let previousInput = sourceText
+        guard hasFreshTranslation else { return }
+        // Ergebnis wird zur neuen Eingabe; das alte Ergebnis räumt `onChange` weg und die
+        // Gegenrichtung wird sofort neu übersetzt (kein manuell durchgereichter Zwischenstand).
         sourceText = translatedText
-        translatedText = previousInput
-        errorText = nil
         translate()
     }
 
@@ -222,9 +240,11 @@ private struct TranslatorContentView: View {
         do {
             let response = try await session.translate(text)
             translatedText = response.targetText
+            translatedFrom = text // Ergebnis gehört zu genau dieser Eingabe
             errorText = nil
         } catch {
             translatedText = ""
+            translatedFrom = ""
             errorText = L("translator.error")
         }
     }
