@@ -243,8 +243,9 @@ private struct TranslatorContentView: View {
             translatedFrom = text // Ergebnis gehört zu genau dieser Eingabe
             errorText = nil
         } catch {
-            translatedText = ""
-            translatedFrom = ""
+            // Vorhandenes Ergebnis nicht verwerfen: die Ausgabe zeigt bei gesetztem
+            // `errorText` ohnehin die Fehlermeldung, und das letzte gültige
+            // (translatedText, translatedFrom)-Paar bleibt konsistent erhalten.
             errorText = L("translator.error")
         }
     }
