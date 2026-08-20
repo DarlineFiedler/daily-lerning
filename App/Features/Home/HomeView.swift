@@ -91,9 +91,10 @@ struct HomeView: View {
         let active = activeVocabs
         let streak = StreakStore.displayStreak()
         let jokers = StreakStore.availableJokers()
+        let level = XPStore.level
         return ScrollView {
             VStack(spacing: Theme.Spacing.l) {
-                header(streak: streak, jokers: jokers)
+                header(streak: streak, jokers: jokers, level: level)
                 if active.isEmpty {
                     emptyState
                 } else {
@@ -117,7 +118,7 @@ struct HomeView: View {
 
     // MARK: - Header
 
-    private func header(streak: Int, jokers: Int) -> some View {
+    private func header(streak: Int, jokers: Int, level: XPLevel) -> some View {
         GradientCard(gradient: Theme.brandGradient, radius: 28, padding: Theme.Spacing.l) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .top) {
@@ -132,9 +133,24 @@ struct HomeView: View {
                 Text(L("home.subtitle"))
                     .font(.appBody)
                     .opacity(0.9)
+                levelBadge(level)
+                    .padding(.top, Theme.Spacing.xs)
             }
         }
         .padding(.top, Theme.Spacing.m)
+    }
+
+    /// Persistente Fortschrittsanzeige: aktuelles Level und thematischer Rangname.
+    /// Rein informativ (kein Button) – XP wächst mit jeder geübten Vokabel.
+    private func levelBadge(_ level: XPLevel) -> some View {
+        Label("\(L("home.level", level.level)) · \(L(level.rankKey))", systemImage: "star.fill")
+            .font(.appCaption.weight(.bold))
+            .lineLimit(1)
+            .padding(.horizontal, Theme.Spacing.s)
+            .padding(.vertical, Theme.Spacing.xs)
+            .background(.white.opacity(0.22), in: Capsule())
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(L("home.level.a11y", level.level, L(level.rankKey)))
     }
 
     /// Tappbare Badge-Gruppe (Streak + Joker) – öffnet die Detailansicht.

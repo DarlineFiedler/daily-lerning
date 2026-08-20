@@ -50,6 +50,13 @@ final class PracticeSession {
     /// „Kombo-Meister"-Badge und in die Zusammenfassung.
     private(set) var maxCombo = 0
 
+    /// In dieser Runde gesammelte XP (für die Zusammenfassung). XP fließt additiv in
+    /// den `XPStore`; die Achievement-/Streak-Logik bleibt davon unberührt.
+    private(set) var xpEarned = 0
+    /// Höchstes in dieser Runde neu erreichtes Level (für die Levelaufstiegs-Feier),
+    /// oder `nil`, wenn kein Levelaufstieg stattfand.
+    private(set) var newLevel: XPLevel?
+
     /// Falsch beantwortete Wörter (für Zusammenfassung + „Falsche wiederholen").
     private(set) var missedVocabs: [Vocab] = []
     /// Wörter, deren Status in dieser Session aufgestiegen ist.
@@ -126,6 +133,11 @@ final class PracticeSession {
             currentCombo += 1
             maxCombo = max(maxCombo, currentCombo)
             if wasPreviouslyWrong { didSelfCorrect = true }
+            // XP additiv vergeben: Basis + Bonus für Kombo und Wort-Schwierigkeit (Status
+            // VOR der Antwort). Ein dabei überschrittenes Level wird für die Feier gemerkt.
+            let award = XPStore.award(XPRules.points(combo: currentCombo, status: before))
+            xpEarned += award.points
+            if award.didLevelUp { newLevel = award.after }
             // Aufstieg? (rawValue steigt mit dem Lernfortschritt).
             if vocab.status.rawValue > before.rawValue {
                 leveledUpVocabs.append(vocab)
@@ -213,6 +225,8 @@ final class PracticeSession {
         wrongCount = 0
         currentCombo = 0
         maxCombo = 0
+        xpEarned = 0
+        newLevel = nil
         missedVocabs = []
         leveledUpVocabs = []
         newlyUnlocked = []

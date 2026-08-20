@@ -184,6 +184,10 @@ struct PracticeSummaryView: View {
                 Text(L("practice.finished"))
                     .font(.appLargeTitle)
 
+                if let newLevel = session.newLevel {
+                    XPLevelUpBanner(level: newLevel)
+                }
+
                 statRow
                 Text(L("practice.finishedSummary", session.correctCount, session.wrongCount))
                     .font(.appSubheadline)
@@ -217,6 +221,10 @@ struct PracticeSummaryView: View {
                      systemImage: "target", tint: Theme.brandStart)
             StatTile(value: "\(session.correctCount)", label: L("home.stat.learned"),
                      systemImage: "checkmark", tint: LearningStatus.learned.color)
+            if session.xpEarned > 0 {
+                StatTile(value: "+\(session.xpEarned)", label: L("practice.summary.xp"),
+                         systemImage: "star.fill", tint: Theme.brandMid)
+            }
             if session.maxCombo >= PracticeSession.comboBadgeMin {
                 StatTile(value: "×\(session.maxCombo)", label: L("practice.summary.combo"),
                          systemImage: "bolt.fill", tint: Theme.brandMid)

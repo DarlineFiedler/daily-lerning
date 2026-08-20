@@ -124,6 +124,7 @@
 "practice.summary.accuracy" = "정확도";
 "practice.summary.streak" = "연속";
 "practice.summary.combo" = "최고 콤보";
+"practice.summary.xp" = "XP";
 "practice.combo" = "×%d 콤보";
 "practice.summary.missed" = "다시 연습할 단어";
 "practice.summary.leveledUp" = "레벨 업";
@@ -221,6 +222,20 @@
 "home.today.a11y.hint" = "오늘의 학습을 시작합니다";
 "home.streak.detail.hint" = "연속 학습과 프리즈 정보를 봅니다";
 "home.jokers.a11y" = "사용 가능한 스트릭 프리즈 %d개";
+
+/* XP & 랭크 (연속 진행 지표) */
+"home.level" = "레벨 %d";
+"home.level.a11y" = "레벨 %d, %@";
+"xp.levelUp.title" = "레벨 %d 달성!";
+"xp.levelUp.a11y" = "레벨 %d 달성, %@";
+"xp.rank.0" = "한글 새싹";
+"xp.rank.1" = "자모 수집가";
+"xp.rank.2" = "단어 견습생";
+"xp.rank.3" = "문장 조립가";
+"xp.rank.4" = "문법 수련생";
+"xp.rank.5" = "어휘 베테랑";
+"xp.rank.6" = "언어 달인";
+"xp.rank.7" = "토픽 마스터";
 "home.weekly.title" = "주간 리뷰";
 "home.weekly.practiced" = "학습한 단어";
 "home.weekly.learned" = "새로 익힘";
