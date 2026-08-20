@@ -215,23 +215,50 @@ struct PracticeSummaryView: View {
         }
     }
 
-    private var statRow: some View {
-        HStack(spacing: Theme.Spacing.s) {
+    /// Die je nach Rundenverlauf sichtbaren Kacheln (Genauigkeit & Treffer immer, XP/Kombo/
+    /// Streak nur wenn > 0). Als Liste gebaut, damit sie sich auf mehrere Reihen verteilen
+    /// lassen, statt bis zu fünf Kacheln in eine Reihe zu quetschen.
+    private var statTiles: [StatTile] {
+        var tiles = [
             StatTile(value: "\(session.accuracy)%", label: L("practice.summary.accuracy"),
-                     systemImage: "target", tint: Theme.brandStart)
+                     systemImage: "target", tint: Theme.brandStart),
             StatTile(value: "\(session.correctCount)", label: L("home.stat.learned"),
-                     systemImage: "checkmark", tint: LearningStatus.learned.color)
-            if session.xpEarned > 0 {
-                StatTile(value: "+\(session.xpEarned)", label: L("practice.summary.xp"),
-                         systemImage: "star.fill", tint: Theme.brandMid)
-            }
-            if session.maxCombo >= PracticeSession.comboBadgeMin {
-                StatTile(value: "×\(session.maxCombo)", label: L("practice.summary.combo"),
-                         systemImage: "bolt.fill", tint: Theme.brandMid)
-            }
-            if streak > 0 {
-                StatTile(value: "\(streak)", label: L("practice.summary.streak"),
-                         systemImage: "flame.fill", tint: Theme.brandEnd)
+                     systemImage: "checkmark", tint: LearningStatus.learned.color),
+        ]
+        if session.xpEarned > 0 {
+            tiles.append(StatTile(value: "+\(session.xpEarned)", label: L("practice.summary.xp"),
+                                  systemImage: "star.fill", tint: Theme.brandMid))
+        }
+        if session.maxCombo >= PracticeSession.comboBadgeMin {
+            tiles.append(StatTile(value: "×\(session.maxCombo)", label: L("practice.summary.combo"),
+                                  systemImage: "bolt.fill", tint: Theme.brandMid))
+        }
+        if streak > 0 {
+            tiles.append(StatTile(value: "\(streak)", label: L("practice.summary.streak"),
+                                  systemImage: "flame.fill", tint: Theme.brandEnd))
+        }
+        return tiles
+    }
+
+    /// Verteilt die Kacheln auf möglichst gleich große Reihen mit höchstens `maxPerRow`
+    /// Kacheln (2–5 Kacheln → 1–2 Reihen), damit keine Reihe überfüllt wird.
+    private func statTileRows(_ tiles: [StatTile], maxPerRow: Int = 3) -> [[StatTile]] {
+        guard tiles.count > maxPerRow else { return tiles.isEmpty ? [] : [tiles] }
+        let rowCount = Int((Double(tiles.count) / Double(maxPerRow)).rounded(.up))
+        let perRow = Int((Double(tiles.count) / Double(rowCount)).rounded(.up))
+        return stride(from: 0, to: tiles.count, by: perRow).map {
+            Array(tiles[$0 ..< Swift.min($0 + perRow, tiles.count)])
+        }
+    }
+
+    private var statRow: some View {
+        VStack(spacing: Theme.Spacing.s) {
+            ForEach(Array(statTileRows(statTiles).enumerated()), id: \.offset) { _, row in
+                HStack(spacing: Theme.Spacing.s) {
+                    ForEach(Array(row.enumerated()), id: \.offset) { _, tile in
+                        tile
+                    }
+                }
             }
         }
     }

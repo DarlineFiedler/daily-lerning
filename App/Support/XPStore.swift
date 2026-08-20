@@ -69,20 +69,6 @@ struct XPLevel: Equatable {
 
     /// Localization-Key des Rangnamens.
     var rankKey: String { "xp.rank.\(rankIndex)" }
-
-    /// XP-Schwelle, ab der dieses Level gilt.
-    var levelStartXP: Int { Self.threshold(forLevel: level) }
-    /// XP-Schwelle des nächsten Levels (immer vorhanden – Level sind unbegrenzt).
-    var nextLevelXP: Int { Self.threshold(forLevel: level + 1) }
-    /// Bereits im aktuellen Level gesammelte XP.
-    var xpIntoLevel: Int { totalXP - levelStartXP }
-    /// XP-Spanne des aktuellen Levels.
-    var xpForSpan: Int { nextLevelXP - levelStartXP }
-    /// Fortschritt innerhalb des aktuellen Levels, 0…1 (für einen Balken).
-    var fraction: Double {
-        guard xpForSpan > 0 else { return 0 }
-        return Swift.min(1, Swift.max(0, Double(xpIntoLevel) / Double(xpForSpan)))
-    }
 }
 
 /// XP-Formel: wie viele Punkte eine richtig beantwortete Vokabel bringt. Basis plus
@@ -124,7 +110,6 @@ struct XPAward: Equatable {
     let after: XPLevel
 
     var didLevelUp: Bool { after.level > before.level }
-    var didRankUp: Bool { after.rankIndex > before.rankIndex }
 }
 
 /// Persistiert den XP-Gesamtstand in den geteilten App-Group-Defaults (JSON, analog

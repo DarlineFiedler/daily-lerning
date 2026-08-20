@@ -59,19 +59,6 @@ final class XPTests: XCTestCase {
         XCTAssertEqual(XPLevel.forXP(0).rankKey, "xp.rank.0")
     }
 
-    // MARK: - Abgeleitete Anzeige-Werte
-
-    func testDerivedLevelValues() {
-        // 150 XP → Level 2 (Start 100, nächster 300).
-        let level = XPLevel.forXP(150)
-        XCTAssertEqual(level.level, 2)
-        XCTAssertEqual(level.levelStartXP, 100)
-        XCTAssertEqual(level.nextLevelXP, 300)
-        XCTAssertEqual(level.xpIntoLevel, 50)
-        XCTAssertEqual(level.xpForSpan, 200)
-        XCTAssertEqual(level.fraction, 0.25, accuracy: 0.0001)
-    }
-
     // MARK: - XP-Formel
 
     func testBasePoints() {
@@ -142,7 +129,7 @@ final class XPTests: XCTestCase {
         XCTAssertEqual(award.before.level, 1)
         XCTAssertEqual(award.after.level, 2)
         XCTAssertTrue(award.didLevelUp)
-        XCTAssertFalse(award.didRankUp)
+        XCTAssertEqual(award.after.rankIndex, award.before.rankIndex, "Levelaufstieg ohne Rangwechsel")
     }
 
     func testAwardReportsRankUp() {
@@ -153,7 +140,7 @@ final class XPTests: XCTestCase {
         let award = XPStore.award(300)
         XCTAssertEqual(award.after.level, 4)
         XCTAssertTrue(award.didLevelUp)
-        XCTAssertTrue(award.didRankUp)
+        XCTAssertGreaterThan(award.after.rankIndex, award.before.rankIndex, "erste Rang-Grenze überschritten")
         XCTAssertEqual(award.after.rankIndex, 1)
     }
 

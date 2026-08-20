@@ -25,6 +25,11 @@ struct HomeView: View {
     private var weeklyGoal = GoalOptions.defaultWeekly
     @AppStorage(GoalKeys.daily, store: AppGroup.defaults)
     private var dailyGoal = GoalOptions.defaultDaily
+    /// Beobachtet den rohen XP-Stand nur, damit sich die Level-Badge nach einer Runde
+    /// reaktiv aktualisiert. Der angezeigte Wert kommt aus `XPStore.level` (eine Quelle
+    /// der Wahrheit) – dieser Wrapper liefert lediglich die Invalidierung.
+    @AppStorage(XPKeys.state, store: AppGroup.defaults)
+    private var xpStateData = Data()
 
     // MARK: Abgeleitete Werte
 
@@ -91,6 +96,7 @@ struct HomeView: View {
         let active = activeVocabs
         let streak = StreakStore.displayStreak()
         let jokers = StreakStore.availableJokers()
+        _ = xpStateData // Abhängigkeit registrieren → Level-Badge aktualisiert sich reaktiv
         let level = XPStore.level
         return ScrollView {
             VStack(spacing: Theme.Spacing.l) {
