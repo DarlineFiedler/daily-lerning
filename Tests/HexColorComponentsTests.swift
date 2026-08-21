@@ -5,25 +5,25 @@ import XCTest
 /// und die abgeleitete Garten-Blütenoptik).
 final class HexColorComponentsTests: XCTestCase {
 
-    func testParsesSixDigitHex() {
-        let c = HexColorComponents.parse("#EF4444")
-        XCTAssertEqual(c?.red, 0xEF / 255, accuracy: 0.0001)
-        XCTAssertEqual(c?.green, 0x44 / 255, accuracy: 0.0001)
-        XCTAssertEqual(c?.blue, 0x44 / 255, accuracy: 0.0001)
-        XCTAssertEqual(c?.alpha, 1)
+    func testParsesSixDigitHex() throws {
+        let c = try XCTUnwrap(HexColorComponents.parse("#EF4444"))
+        XCTAssertEqual(c.red, Double(0xEF) / 255, accuracy: 0.0001)
+        XCTAssertEqual(c.green, Double(0x44) / 255, accuracy: 0.0001)
+        XCTAssertEqual(c.blue, Double(0x44) / 255, accuracy: 0.0001)
+        XCTAssertEqual(c.alpha, 1)
     }
 
     func testParsesSixDigitWithoutHash() {
         XCTAssertEqual(HexColorComponents.parse("22C55E"), HexColorComponents.parse("#22C55E"))
     }
 
-    func testParsesEightDigitHexAsRGBA() {
+    func testParsesEightDigitHexAsRGBA() throws {
         // RRGGBBAA – halbtransparentes Weiß.
-        let c = HexColorComponents.parse("#FFFFFF80")
-        XCTAssertEqual(c?.red, 1)
-        XCTAssertEqual(c?.green, 1)
-        XCTAssertEqual(c?.blue, 1)
-        XCTAssertEqual(c?.alpha ?? 0, 0x80 / 255, accuracy: 0.0001)
+        let c = try XCTUnwrap(HexColorComponents.parse("#FFFFFF80"))
+        XCTAssertEqual(c.red, 1)
+        XCTAssertEqual(c.green, 1)
+        XCTAssertEqual(c.blue, 1)
+        XCTAssertEqual(c.alpha, Double(0x80) / 255, accuracy: 0.0001)
     }
 
     func testReturnsNilForUnparsable() {
