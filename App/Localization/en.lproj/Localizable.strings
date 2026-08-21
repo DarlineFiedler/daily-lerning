@@ -58,6 +58,9 @@
 "group.wordCount" = "%d words";
 "group.deleteConfirm" = "Delete this group and all its vocabulary?";
 "group.resetAll" = "Reset all statuses";
+"garden.list" = "List";
+"garden.garden" = "Garden";
+"garden.fullyBloomed" = "Fully bloomed – all learned! 🌸";
 "group.resetAllConfirm" = "Reset all words in this group to “New”? Progress will be lost.";
 
 /* Vocabulary */
@@ -454,6 +457,8 @@
 "ach.oneWordDay.detail" = "Learn exactly 1 new word 7 days in a row";
 "ach.themenMeister.title" = "Topic Master";
 "ach.themenMeister.detail" = "Learn every word in a group";
+"ach.vollerGarten.title" = "Garden in Bloom";
+"ach.vollerGarten.detail" = "Bring a large group (15+ words) to full bloom";
 "ach.learned2000.title" = "Vocabulary Summit";
 "ach.learned2000.detail" = "Learned 2000 words";
 "ach.firstGroup.title" = "Getting Organized";

@@ -53,4 +53,17 @@ enum LearningStatus: Int, Codable, CaseIterable, Identifiable {
         case .learned: return "checkmark.circle.fill"
         }
     }
+
+    /// Wachstumsstufe für die Garten-Ansicht (Issue #92): jedes Wort ist eine Pflanze,
+    /// die mit dem Lernstatus wächst. Samen → Sprössling → Grünpflanze → Blüte.
+    /// Für „gelernt" ist dies nur die Fallback-Blüte – dort setzt die Garten-Ansicht
+    /// eine an die Gruppenfarbe gekoppelte Blüte ein (siehe [[VocabGarden]] `bloomEmoji`).
+    var gardenStageEmoji: String {
+        switch self {
+        case .new: return "🌰"
+        case .learning: return "🌱"
+        case .almostLearned: return "🌿"
+        case .learned: return "🌸"
+        }
+    }
 }

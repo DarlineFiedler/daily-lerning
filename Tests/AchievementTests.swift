@@ -404,6 +404,18 @@ final class AchievementTests: XCTestCase {
         XCTAssertTrue(result.all)
     }
 
+    @MainActor
+    func testGroupMasteryBigGardenNeedsSizeAndFullLearning() {
+        // „Voller Garten": erst ab gardenBloomMinSize komplett gelernt.
+        let big = AchievementService.gardenBloomMinSize
+        // Groß genug, aber nicht komplett gelernt → kein „big".
+        XCTAssertFalse(AchievementService.groupMastery(from: [(count: big, learned: big - 1)]).big)
+        // Komplett gelernt, aber zu klein → kein „big" (aber „any", da >= MinSize).
+        XCTAssertFalse(AchievementService.groupMastery(from: [(count: big - 1, learned: big - 1)]).big)
+        // Groß genug UND komplett gelernt → „big".
+        XCTAssertTrue(AchievementService.groupMastery(from: [(count: big, learned: big)]).big)
+    }
+
     // MARK: - Persistenz (AchievementStore)
 
     /// Sichert und leert die Achievement-Keys vor jedem Store-Test und stellt sie

@@ -19,6 +19,7 @@ struct GroupDetailView: View {
 
     @State private var isSelecting = false
     @State private var selection: Set<UUID> = []
+    @State private var showingGarden = false
     @State private var showingResetGroup = false
     @State private var pendingResetVocab: Vocab?
 
@@ -50,9 +51,14 @@ struct GroupDetailView: View {
                 if group.vocabs.isEmpty {
                     emptyState
                 } else {
-                    filterChips
-                    ForEach(vocabs) { vocab in
-                        row(vocab)
+                    viewModePicker
+                    if showingGarden {
+                        VocabGardenView(vocabs: group.vocabs, colorHex: group.colorHex)
+                    } else {
+                        filterChips
+                        ForEach(vocabs) { vocab in
+                            row(vocab)
+                        }
                     }
                 }
             }
@@ -278,6 +284,15 @@ struct GroupDetailView: View {
                 }
             }
         }
+    }
+
+    /// Umschalter zwischen klassischer Liste und der Garten-Ansicht (Issue #92).
+    private var viewModePicker: some View {
+        Picker("", selection: $showingGarden) {
+            Text(L("garden.list")).tag(false)
+            Text(L("garden.garden")).tag(true)
+        }
+        .pickerStyle(.segmented)
     }
 
     private var filterChips: some View {

@@ -58,6 +58,9 @@
 "group.wordCount" = "단어 %d개";
 "group.deleteConfirm" = "이 그룹과 모든 단어를 삭제할까요?";
 "group.resetAll" = "모든 상태 초기화";
+"garden.list" = "목록";
+"garden.garden" = "정원";
+"garden.fullyBloomed" = "완전히 만개 – 모두 학습 완료! 🌸";
 "group.resetAllConfirm" = "이 그룹의 모든 단어를 '새 단어'로 초기화할까요? 진행 상황이 사라집니다.";
 
 /* Vocabulary */
@@ -454,6 +457,8 @@
 "ach.oneWordDay.detail" = "7일 연속 매일 정확히 1개 단어 학습";
 "ach.themenMeister.title" = "주제 마스터";
 "ach.themenMeister.detail" = "한 그룹의 모든 단어 학습";
+"ach.vollerGarten.title" = "만개한 정원";
+"ach.vollerGarten.detail" = "큰 그룹(15개 이상)을 완전히 꽃피우기";
 "ach.learned2000.title" = "어휘의 정상";
 "ach.learned2000.detail" = "2000개 단어 학습";
 "ach.firstGroup.title" = "정리의 시작";
