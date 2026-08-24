@@ -20,6 +20,9 @@ final class BossSession {
     private let vocabs: [Vocab]
     private let distractorPool: [Vocab]
     private let config: PracticeConfig
+    /// Voller Wortschatz als Paare für den Verwechslungs-Hinweis im Schreib-Modus (siehe
+    /// `PracticeItem.confusables`). Einmal geladen, bei `restart` wiederverwendet.
+    private let confusionPool: [WordPair]
 
     /// Boss-Trefferpunkte zu Beginn = Anzahl der (distinkten) Wörter.
     let totalWords: Int
@@ -49,7 +52,11 @@ final class BossSession {
         self.config = config
         let picked = config.wordLimit.map { Array(vocabs.shuffled().prefix($0)) } ?? vocabs.shuffled()
         self.vocabs = picked
-        let built = PracticeSession.buildItems(from: picked, distractorPool: distractorPool, config: config)
+        let confusionPool = config.resolvedModes.contains(.writing)
+            ? PracticeSession.loadConfusionPool(context: context) : []
+        self.confusionPool = confusionPool
+        let built = PracticeSession.buildItems(from: picked, distractorPool: distractorPool, config: config,
+                                               confusionPool: confusionPool)
         queue = built
         totalWords = built.count
         bossGroup = Self.singleGroup(of: built)
@@ -102,7 +109,8 @@ final class BossSession {
 
     /// Startet denselben Satz Wörter als frischen Kampf (neu gemischt).
     func restart() {
-        queue = PracticeSession.buildItems(from: vocabs.shuffled(), distractorPool: distractorPool, config: config)
+        queue = PracticeSession.buildItems(from: vocabs.shuffled(), distractorPool: distractorPool,
+                                           config: config, confusionPool: confusionPool)
         pending = []
         correctCount = 0
         wrongCount = 0

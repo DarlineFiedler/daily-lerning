@@ -40,12 +40,24 @@ struct PracticeItem: Identifiable {
     /// entspricht – für den „Verwechslungs"-Hinweis bei falscher Schreib-Antwort.
     /// Überspringt Paare, die selbst die gesuchte Lösung oder ein bedeutungsgleiches Wort
     /// sind (das wäre keine Verwechslung, sondern richtig bzw. „fast richtig").
+    ///
+    /// Entspricht `AnswerChecker.evaluate(typed: side, …) == .wrong && isCorrect(typed, side)`
+    /// je Paar, zerlegt aber die schleifen-invarianten Strings (Eingabe, Lösung, Synonyme)
+    /// nur einmal statt für jeden der u.U. hunderten Kandidaten neu.
     func confusedPair(forTyped typed: String) -> WordPair? {
-        confusables.first { pair in
+        let typedVariants = AnswerChecker.variants(of: typed)
+        guard !typedVariants.isEmpty else { return nil }
+        let answerVariants = AnswerChecker.variants(of: answer())
+        let synonymVariants = synonymWords.map(AnswerChecker.variants(of:))
+        return confusables.first { pair in
             let side = direction == .wordToMeaning ? pair.meaning : pair.word
-            return AnswerChecker.evaluate(typed: side, expected: answer(),
-                                          synonyms: synonymWords) == .wrong
-                && AnswerChecker.isCorrect(typed: typed, expected: side)
+            let sideVariants = AnswerChecker.variants(of: side)
+            // Die Antwort-Seite selbst wäre richtig bzw. „fast richtig" → keine Verwechslung.
+            guard sideVariants.isDisjoint(with: answerVariants),
+                  !synonymVariants.contains(where: { !$0.isDisjoint(with: sideVariants) })
+            else { return false }
+            // Entspricht die Eingabe genau dieser Antwort-Seite?
+            return !typedVariants.isDisjoint(with: sideVariants)
         }
     }
 
@@ -63,6 +75,11 @@ final class PracticeSession {
     private let context: ModelContext
     private let distractorPool: [Vocab]
     private let config: PracticeConfig
+    /// Der gesamte Wortschatz als Paare für den Verwechslungs-Hinweis (siehe
+    /// `PracticeItem.confusables`) – bewusst NICHT auf den Übungs-Scope beschränkt, damit
+    /// auch ein Wort aus einer anderen Gruppe als Verwechslung erkannt wird. Einmal beim
+    /// Session-Start geladen und bei `retryWrong` wiederverwendet.
+    private let confusionPool: [WordPair]
 
     var index = 0
     var correctCount = 0
@@ -115,9 +132,25 @@ final class PracticeSession {
         self.context = context
         self.distractorPool = distractorPool
         self.config = config
+        // Verwechslungs-Pool nur laden, wenn die Session überhaupt Schreib-Karten enthält.
+        let confusionPool = config.resolvedModes.contains(.writing)
+            ? Self.loadConfusionPool(context: context) : []
+        self.confusionPool = confusionPool
         // Wortanzahl begrenzen (nil = alle), danach Aufgaben bauen.
         let picked = config.wordLimit.map { Array(vocabs.shuffled().prefix($0)) } ?? vocabs.shuffled()
-        self.items = Self.buildItems(from: picked, distractorPool: distractorPool, config: config)
+        self.items = Self.buildItems(from: picked, distractorPool: distractorPool, config: config,
+                                     confusionPool: confusionPool)
+    }
+
+    /// Lädt den gesamten Wortschatz als (deterministisch sortierte) Wort/Bedeutung-Paare
+    /// für den Verwechslungs-Hinweis. Die feste Sortierung macht die Auswahl bei mehreren
+    /// gleich getippten Wörtern (Homonyme) reproduzierbar.
+    static func loadConfusionPool(context: ModelContext) -> [WordPair] {
+        let descriptor = FetchDescriptor<Vocab>(
+            sortBy: [SortDescriptor(\.word), SortDescriptor(\.meaning)]
+        )
+        let all = (try? context.fetch(descriptor)) ?? []
+        return all.map { WordPair(word: $0.word, meaning: $0.meaning) }
     }
 
     var isFinished: Bool { index >= items.count }
@@ -260,7 +293,8 @@ final class PracticeSession {
     func retryWrong() {
         let wrong = missedVocabs
         guard !wrong.isEmpty else { return }
-        items = Self.buildItems(from: wrong.shuffled(), distractorPool: distractorPool, config: config)
+        items = Self.buildItems(from: wrong.shuffled(), distractorPool: distractorPool, config: config,
+                                confusionPool: confusionPool)
         resetProgress()
     }
 
@@ -290,7 +324,8 @@ final class PracticeSession {
     /// Weist jedem Wort einen (zufälligen) Modus, eine aufgelöste Richtung und
     /// – für Auswahl-/Hör-Modi – vier Optionen zu. `static` & wiederverwendbar, damit
     /// auch der eigenständige `BossSession`-Kampf identische Aufgaben bauen kann.
-    static func buildItems(from vocabs: [Vocab], distractorPool: [Vocab], config: PracticeConfig) -> [PracticeItem] {
+    static func buildItems(from vocabs: [Vocab], distractorPool: [Vocab], config: PracticeConfig,
+                           confusionPool: [WordPair] = []) -> [PracticeItem] {
         let perCardModes = config.resolvedModes
         // Session-weite Invarianten der Distraktor-Auswahl EINMAL vorberechnen (statt pro
         // Wort): die Session-IDs, den um sie bereinigten Pool und dessen Gruppierung. Das
@@ -300,11 +335,10 @@ final class PracticeSession {
         let sessionIDs = Set(vocabs.map(\.id))
         let remaining = distractorPool.filter { !sessionIDs.contains($0.id) }
         let remainingByGroup = Dictionary(grouping: remaining) { $0.group?.id }
-        // Verwechslungs-Nachschlage: der volle Wortschatz als Paare, einmal je Session
-        // gebaut und von allen Items geteilt (COW). Nur nötig, wenn Schreiben vorkommt.
-        let confusables: [WordPair] = perCardModes.contains(.writing)
-            ? (vocabs + remaining).map { WordPair(word: $0.word, meaning: $0.meaning) }
-            : []
+        // Verwechslungs-Nachschlage: der volle Wortschatz (vom Aufrufer geladen, siehe
+        // `loadConfusionPool`), von allen Items geteilt (COW). Nur nötig, wenn Schreiben
+        // vorkommt; sonst bleibt die Liste leer.
+        let confusables = perCardModes.contains(.writing) ? confusionPool : []
         return vocabs.compactMap { vocab in
             // Lückentext nur für Wörter mit brauchbarem Beispielsatz. Fehlt er, entfällt der
             // Modus für dieses Wort; bleibt dann keiner übrig (nur-Lückentext ohne Beispiel),
@@ -431,7 +465,9 @@ enum AnswerChecker {
     }
 
     /// Zerlegt einen String an „/“ „,“ „;“ in normalisierte, nicht-leere Varianten.
-    private static func variants(of s: String) -> Set<String> {
+    /// Nicht privat, damit Aufrufer, die dieselbe Eingabe gegen viele Kandidaten prüfen
+    /// (siehe `PracticeItem.confusedPair(forTyped:)`), die Zerlegung nur einmal machen.
+    static func variants(of s: String) -> Set<String> {
         Set(
             s.split(whereSeparator: { $0 == "/" || $0 == "," || $0 == ";" })
                 .map { normalize(String($0)) }

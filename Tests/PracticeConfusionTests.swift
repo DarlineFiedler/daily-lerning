@@ -85,6 +85,23 @@ final class PracticeConfusionTests: XCTestCase {
         XCTAssertNil(item.confusedPair(forTyped: "Deutschland"))
     }
 
+    /// Der Verwechslungs-Pool umfasst den *gesamten* Wortschatz, nicht nur den Übungs-Scope:
+    /// Ein Wort, das weder in der Session noch im Distraktor-Pool steckt, aber im Store
+    /// existiert, wird trotzdem als Verwechslung erkannt.
+    func testConfusedPairSpansWholeVocabularyNotJustSession() throws {
+        let germany = Vocab(word: "독일", meaning: "Deutschland")
+        let japan = Vocab(word: "일본", meaning: "Japan")
+        context.insert(germany)
+        context.insert(japan) // im Store, aber NICHT in Session/Distraktor-Pool
+        let session = PracticeSession(
+            vocabs: [germany], distractorPool: [germany],
+            config: PracticeConfig(direction: .meaningToWord, modes: [.writing]), context: context
+        )
+        let item = try XCTUnwrap(session.items.first { $0.vocab.id == germany.id })
+        XCTAssertEqual(item.confusedPair(forTyped: "일본"),
+                       WordPair(word: "일본", meaning: "Japan"))
+    }
+
     /// Ein bedeutungsgleiches Wort (Synonym) ist keine Verwechslung – es wird bereits als
     /// „fast richtig" behandelt und darf hier keinen Hinweis erzeugen.
     func testConfusedPairIgnoresSynonyms() throws {
