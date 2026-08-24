@@ -141,6 +141,7 @@
 "practice.markCorrect" = "Trotzdem richtig";
 "practice.almost" = "Fast richtig";
 "practice.almostHint" = "Richtige Bedeutung – gefragt war %@";
+"practice.confusedHint" = "Deine Eingabe gehört zu einem anderen Wort: %@ = %@";
 "practice.typeAnswer" = "Antwort eingeben";
 "practice.check" = "Prüfen";
 "practice.finished" = "Geschafft!";

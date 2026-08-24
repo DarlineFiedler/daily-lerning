@@ -9,6 +9,10 @@ struct WritingView: View {
     @State private var typed = ""
     @State private var checked = false
     @State private var match: AnswerChecker.AnswerMatch = .wrong
+    /// Bei falscher Eingabe: das (andere) Wort des Wortschatzes, das man stattdessen
+    /// getippt hat – für den zusätzlichen „Verwechslungs"-Hinweis. `nil`, wenn die Eingabe
+    /// keinem bekannten Wort entspricht.
+    @State private var confused: WordPair?
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -92,6 +96,13 @@ struct WritingView: View {
                     }
                 }
             }
+            // Verwechslungs-Hinweis: die Eingabe gehört zu einem anderen bekannten Wort.
+            if let confused {
+                Text(L("practice.confusedHint", confused.word, confused.meaning))
+                    .font(.appSubheadline)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(Theme.Spacing.m)
@@ -124,6 +135,9 @@ struct WritingView: View {
     private func check() {
         match = AnswerChecker.evaluate(typed: typed, expected: item.answer(),
                                        synonyms: item.synonymWords)
+        // Bei falscher Eingabe im Hintergrund prüfen, ob man ein anderes bekanntes Wort
+        // getippt hat – dann dessen Bedeutung als Zusatzinfo einblenden.
+        confused = match == .wrong ? item.confusedPair(forTyped: typed) : nil
         withAnimation { checked = true }
         focused = false
     }
