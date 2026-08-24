@@ -117,4 +117,20 @@ final class PracticeConfusionTests: XCTestCase {
         let item = try XCTUnwrap(session.items.first { $0.vocab.id == a.id })
         XCTAssertNil(item.confusedPair(forTyped: "감사합니다"))
     }
+
+    /// Ein sinngleiches Wort aus einer NICHT geübten Gruppe (im Store, aber weder in Session
+    /// noch Distraktor-Pool) ist eine gültige Synonym-Übersetzung, keine Verwechslung – und
+    /// darf keinen Hinweis erzeugen, obwohl der Verwechslungs-Pool den ganzen Store umfasst.
+    func testConfusedPairIgnoresOutOfScopeSynonyms() throws {
+        let germany = Vocab(word: "독일", meaning: "Deutschland")
+        let germanySynonym = Vocab(word: "도이칠란트", meaning: "Deutschland")
+        context.insert(germany)
+        context.insert(germanySynonym) // gleiche Bedeutung, außerhalb des Übungs-Scopes
+        let session = PracticeSession(
+            vocabs: [germany], distractorPool: [germany],
+            config: PracticeConfig(direction: .meaningToWord, modes: [.writing]), context: context
+        )
+        let item = try XCTUnwrap(session.items.first { $0.vocab.id == germany.id })
+        XCTAssertNil(item.confusedPair(forTyped: "도이칠란트"))
+    }
 }
