@@ -17,14 +17,11 @@ struct VocabDetailView: View {
                     header
                     if let example = vocab.example, !example.isEmpty {
                         infoCard(L("vocab.example")) {
-                            Text(example)
-                                .font(.appBody)
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Text(example).font(.appBody)
                         }
                     }
                     infoCard(L("vocab.status")) {
                         StatusBadge(status: vocab.status)
-                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     if let group = vocab.group {
                         infoCard(L("vocab.group")) {
@@ -32,13 +29,11 @@ struct VocabDetailView: View {
                                 GroupColorDot(colorHex: group.colorHex)
                                 Text(group.name).font(.appBody)
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     }
                     if vocab.topikLevel != nil {
                         infoCard(L("topik.level")) {
                             TopikBadge(level: vocab.topikLevel)
-                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     }
                 }
@@ -52,10 +47,10 @@ struct VocabDetailView: View {
                     Button(L("common.close")) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(L("common.edit")) {
-                        onEdit()
-                        dismiss()
-                    }
+                    // Kein `dismiss()` hier: Der Aufrufer schaltet dasselbe Sheet vom Ansehen-
+                    // auf den Editier-Fall um (ein Presentation-Controller). Ein zusätzliches
+                    // Schließen würde das Sheet zumachen, bevor der Editor erscheinen kann.
+                    Button(L("common.edit"), action: onEdit)
                 }
             }
         }
@@ -83,12 +78,8 @@ struct VocabDetailView: View {
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.5)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, Theme.Spacing.xl + 16)
-        .padding(.horizontal, Theme.Spacing.m)
-        .background(Theme.brandGradientSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .foregroundStyle(.white)
-        .shadow(color: Theme.brandStart.opacity(0.3), radius: 16, y: 8)
+        .heroCardStyle()
+        .accessibilityElement(children: .combine)
     }
 
     /// Eine beschriftete Info-Karte: kleines Label über dem Inhalt.
