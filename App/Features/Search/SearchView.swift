@@ -8,6 +8,7 @@ struct SearchView: View {
     @Query(sort: \VocabGroup.sortOrder) private var groups: [VocabGroup]
     @State private var query = ""
     @State private var editingVocab: Vocab?
+    @State private var viewingVocab: Vocab?
     @State private var pendingDelete: Vocab?
     /// Zusätzliche Filter (Mehrfachauswahl). Leere Menge = keine Einschränkung.
     /// Bewusst pro Öffnen zurückgesetzt (nicht persistiert).
@@ -51,6 +52,14 @@ struct SearchView: View {
                 // Erste echte Sucheingabe schaltet das „Spürnase"-Badge frei.
                 if !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     AchievementService.recordEvent(\.searchUsed, context: context)
+                }
+            }
+            .sheet(item: $viewingVocab) { vocab in
+                VocabDetailView(vocab: vocab) {
+                    // Die Detailansicht schließt sich selbst (`dismiss`), was die item-Bindung
+                    // auf nil zurücksetzt. Den Sprung in den Editor daher nachziehen, sobald das
+                    // Detail-Sheet zu ist – sonst wird der Sheet-Wechsel verschluckt.
+                    DispatchQueue.main.async { editingVocab = vocab }
                 }
             }
             .sheet(item: $editingVocab) { vocab in
@@ -170,7 +179,7 @@ struct SearchView: View {
             List {
                 ForEach(results) { vocab in
                     VocabRow(vocab: vocab, showGroup: true) {
-                        editingVocab = vocab
+                        viewingVocab = vocab
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) { pendingDelete = vocab } label: {
