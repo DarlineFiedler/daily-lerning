@@ -2,6 +2,13 @@ import Foundation
 import SwiftData
 import WidgetKit
 
+/// Ein Wort-/Bedeutungs-Paar des Wortschatzes für die Verwechslungs-Erkennung
+/// im Schreib-Modus.
+struct WordPair: Hashable {
+    let word: String
+    let meaning: String
+}
+
 /// Eine vorbereitete Lernaufgabe (Wort + zugewiesener Modus/Richtung/Optionen).
 struct PracticeItem: Identifiable {
     let id = UUID()
@@ -14,6 +21,12 @@ struct PracticeItem: Identifiable {
     /// leer). Erlaubt im Schreib-Modus die „fast richtig"-Erkennung, wenn statt des gefragten
     /// Worts ein anderes Wort mit derselben Bedeutung getippt wird (siehe [[AnswerChecker]]).
     let synonymWords: [String]
+    /// Der gesamte Wortschatz als Wort/Bedeutung-Paare (nur befüllt, wenn die Session
+    /// überhaupt Schreib-Karten enthält, sonst leer). Erlaubt im Schreib-Modus bei einer
+    /// falschen Eingabe den zusätzlichen „Verwechslungs"-Hinweis: hat man statt des
+    /// gesuchten ein *anderes* bekanntes Wort getippt, wird dessen Bedeutung angezeigt
+    /// (siehe `confusedPair(forTyped:)`). Alle Items teilen sich dieselbe Referenz (COW).
+    let confusables: [WordPair]
 
     func prompt() -> String {
         direction == .wordToMeaning ? vocab.word : vocab.meaning
@@ -21,6 +34,19 @@ struct PracticeItem: Identifiable {
 
     func answer() -> String {
         direction == .wordToMeaning ? vocab.meaning : vocab.word
+    }
+
+    /// Sucht ein *anderes* Wort des Wortschatzes, dessen Antwort-Seite der Eingabe
+    /// entspricht – für den „Verwechslungs"-Hinweis bei falscher Schreib-Antwort.
+    /// Überspringt Paare, die selbst die gesuchte Lösung oder ein bedeutungsgleiches Wort
+    /// sind (das wäre keine Verwechslung, sondern richtig bzw. „fast richtig").
+    func confusedPair(forTyped typed: String) -> WordPair? {
+        confusables.first { pair in
+            let side = direction == .wordToMeaning ? pair.meaning : pair.word
+            return AnswerChecker.evaluate(typed: side, expected: answer(),
+                                          synonyms: synonymWords) == .wrong
+                && AnswerChecker.isCorrect(typed: typed, expected: side)
+        }
     }
 
     /// Die anzuzeigende Seite einer Antwortoption (die „Antwort-Seite“).
@@ -274,6 +300,11 @@ final class PracticeSession {
         let sessionIDs = Set(vocabs.map(\.id))
         let remaining = distractorPool.filter { !sessionIDs.contains($0.id) }
         let remainingByGroup = Dictionary(grouping: remaining) { $0.group?.id }
+        // Verwechslungs-Nachschlage: der volle Wortschatz als Paare, einmal je Session
+        // gebaut und von allen Items geteilt (COW). Nur nötig, wenn Schreiben vorkommt.
+        let confusables: [WordPair] = perCardModes.contains(.writing)
+            ? (vocabs + remaining).map { WordPair(word: $0.word, meaning: $0.meaning) }
+            : []
         return vocabs.compactMap { vocab in
             // Lückentext nur für Wörter mit brauchbarem Beispielsatz. Fehlt er, entfällt der
             // Modus für dieses Wort; bleibt dann keiner übrig (nur-Lückentext ohne Beispiel),
@@ -302,7 +333,8 @@ final class PracticeSession {
                 }
                 : []
             return PracticeItem(vocab: vocab, mode: mode, direction: direction,
-                                choices: choices, synonymWords: synonymWords)
+                                choices: choices, synonymWords: synonymWords,
+                                confusables: confusables)
         }
     }
 
