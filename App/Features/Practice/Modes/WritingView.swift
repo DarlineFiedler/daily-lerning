@@ -135,8 +135,9 @@ struct WritingView: View {
     private func check() {
         match = AnswerChecker.evaluate(typed: typed, expected: item.answer(),
                                        synonyms: item.synonymWords)
-        // Bei falscher Eingabe im Hintergrund prüfen, ob man ein anderes bekanntes Wort
-        // getippt hat – dann dessen Bedeutung als Zusatzinfo einblenden.
+        // Bei falscher Eingabe prüfen, ob man ein anderes bekanntes Wort getippt hat – dann
+        // dessen Bedeutung als Zusatzinfo einblenden. Läuft synchron; die Kandidaten-Varianten
+        // sind vorberechnet (siehe `WordPair`), sodass der Abgleich günstig bleibt.
         confused = match == .wrong ? item.confusedPair(forTyped: typed) : nil
         withAnimation { checked = true }
         focused = false

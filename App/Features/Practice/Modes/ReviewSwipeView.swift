@@ -69,12 +69,7 @@ struct ReviewSwipeView: View {
                 }
             }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, Theme.Spacing.xl + 16)
-        .padding(.horizontal, Theme.Spacing.m)
-        .background(Theme.brandGradientSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .foregroundStyle(.white)
-        .shadow(color: Theme.brandStart.opacity(0.3), radius: 16, y: 8)
+        .heroCardStyle()
         .accessibilityElement(children: .combine)
         .accessibilityHint(revealed ? "" : L("practice.tapToReveal"))
     }
