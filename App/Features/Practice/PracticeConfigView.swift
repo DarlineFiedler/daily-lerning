@@ -16,6 +16,7 @@ struct PracticeConfigView: View {
     @State private var selectedModes: Set<PracticeMode> = []
     @State private var wordLimit: Int?
     @State private var bossMode = false
+    @State private var examMode = false
     @State private var startSession = false
 
     @State private var presets: [PracticePreset] = []
@@ -61,8 +62,20 @@ struct PracticeConfigView: View {
 
     private var config: PracticeConfig {
         PracticeConfig(statuses: selectedStatuses, direction: direction,
-                       modes: selectedModes, wordLimit: wordLimit, bossMode: bossMode)
+                       modes: selectedModes, wordLimit: wordLimit, bossMode: bossMode,
+                       examMode: examMode)
     }
+
+    /// Das für die Prüfung maßgebliche TOPIK-Niveau: nur eindeutig, wenn genau ein Level
+    /// gewählt ist (steuert Bestehensgrenze und Anzeige im Ergebnis). Bei mehreren/keinem
+    /// Level `nil` – der Start-Button verlangt im Prüfungsmodus ohnehin genau ein Level.
+    private var examLevel: TopikLevel? {
+        selectedTopikLevels.count == 1 ? selectedTopikLevels.first : nil
+    }
+
+    /// Im Prüfungsmodus fehlt die Voraussetzung, solange kein TOPIK-Niveau gewählt ist
+    /// (die Prüfung ist bewusst level-spezifisch). Steuert Start-Sperre und Hinweis.
+    private var examNeedsLevel: Bool { examMode && selectedTopikLevels.isEmpty }
 
     var body: some View {
         NavigationStack {
@@ -75,6 +88,7 @@ struct PracticeConfigView: View {
                     focusSection
                     DirectionModeSelection(direction: $direction, modes: $selectedModes)
                     WordLimitSelection(wordLimit: $wordLimit)
+                    examSection
                     bossSection
                 }
                 .padding(Theme.Spacing.m)
@@ -98,7 +112,20 @@ struct PracticeConfigView: View {
             }
             .safeAreaInset(edge: .bottom) { startBar }
             .navigationDestination(isPresented: $startSession) {
-                if bossMode {
+                if examMode {
+                    // Prüfungssimulation: reguläre Engine, aber mit Countdown und
+                    // Prüfungs-Auswertung. Zählt normal in SRS/XP/Streak.
+                    ExamContainerView(
+                        session: PracticeSession(
+                            vocabs: pool,
+                            distractorPool: resolvedGroups.flatMap(\.vocabs),
+                            config: config,
+                            context: context
+                        ),
+                        level: examLevel,
+                        onClose: { dismiss() }
+                    )
+                } else if bossMode {
                     // Endgegner-Modus: eigenständiger, von den Lern-Statistiken getrennter
                     // Kampf-Fluss (Folge zu #89) statt einer regulären Übungsrunde.
                     BossBattleContainerView(
@@ -236,6 +263,29 @@ struct PracticeConfigView: View {
         }
     }
 
+    /// Optionale „Prüfungssimulation": zeitlimitierte TOPIK-Runde mit Prüfungs-Auswertung
+    /// (Issue #94). Nutzt den vorhandenen TOPIK-Filter (gruppenübergreifend); zählt anders
+    /// als der Boss-Modus regulär in die Lern-Statistiken. Schließt den Boss-Modus aus.
+    private var examSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(L("practice.config.exam"))
+            FlowChips {
+                SelectableChip(
+                    title: L("practice.exam.toggle"),
+                    systemImage: "graduationcap.circle.fill",
+                    tint: Theme.brandMid,
+                    isSelected: examMode
+                ) {
+                    examMode.toggle()
+                    if examMode { bossMode = false } // schließen sich gegenseitig aus
+                }
+            }
+            Text(L("practice.exam.hint"))
+                .font(.appCaption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
     /// Optionaler „Endgegner"-Modus: startet statt einer regulären Übungsrunde einen
     /// eigenständigen Kampf gegen einen Boss (HP-Leiste, Sieg/Niederlage, Aufgeben).
     /// Von den Lern-Statistiken vollständig getrennt – ändert weder SRS noch Streak.
@@ -248,7 +298,10 @@ struct PracticeConfigView: View {
                     systemImage: "flame.fill",
                     tint: Theme.brandEnd,
                     isSelected: bossMode
-                ) { bossMode.toggle() }
+                ) {
+                    bossMode.toggle()
+                    if bossMode { examMode = false } // schließen sich gegenseitig aus
+                }
             }
             Text(L("practice.boss.hint"))
                 .font(.appCaption)
@@ -262,11 +315,19 @@ struct PracticeConfigView: View {
                 Label(L("common.start"), systemImage: "play.fill")
             }
             .buttonStyle(.primary)
-            .disabled(pool.isEmpty)
+            .disabled(pool.isEmpty || examNeedsLevel)
 
-            Text(L("group.wordCount", effectiveCount))
-                .font(.appCaption)
-                .foregroundStyle(pool.isEmpty ? Theme.wrong : .secondary)
+            // Im Prüfungsmodus ohne gewähltes Niveau zuerst dazu auffordern; sonst die
+            // (ggf. begrenzte) Wortanzahl zeigen – rot, wenn die Auswahl leer ist.
+            if examNeedsLevel {
+                Text(L("practice.exam.needLevel"))
+                    .font(.appCaption)
+                    .foregroundStyle(Theme.wrong)
+            } else {
+                Text(L("group.wordCount", effectiveCount))
+                    .font(.appCaption)
+                    .foregroundStyle(pool.isEmpty ? Theme.wrong : .secondary)
+            }
         }
         .padding(Theme.Spacing.m)
         .background(.ultraThinMaterial)

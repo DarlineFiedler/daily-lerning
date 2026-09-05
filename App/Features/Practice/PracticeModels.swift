@@ -128,6 +128,10 @@ struct PracticeConfig {
     /// „Endgegner"-Modus: rein visuelle Kampf-Schicht (HP-Leiste, Sieg/Niederlage)
     /// über der Runde (Issue #89). Ändert die Lern-Logik nicht.
     var bossMode = false
+    /// „Prüfungssimulation": zeitlimitierte TOPIK-Runde mit Prüfungs-Auswertung
+    /// (Issue #94). Läuft über dieselbe Engine und zählt regulär mit (SRS/XP/Streak);
+    /// nur Countdown und Ergebnis-Screen liegen darüber.
+    var examMode = false
 
     var resolvedModes: [PracticeMode] {
         modes.isEmpty ? PracticeMode.available : Array(modes)
