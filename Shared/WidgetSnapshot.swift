@@ -60,10 +60,16 @@ struct WidgetSnapshot: Codable {
         return snapshot
     }
 
+    /// Datenschutz-Stufe der Snapshot-Datei – bewusst `.completeUntilFirstUserAuthentication`
+    /// (Issue #104) und ausdrücklich NICHT `.complete`: Das Lock-Screen-Widget muss den
+    /// Snapshot auch bei GESPERRTEM Gerät lesen können. Mit `.complete` wäre die Datei bei
+    /// gesperrtem Bildschirm unlesbar und das Widget bliebe leer/veraltet.
+    static let writeOptions: Data.WritingOptions = [.atomic, .completeFileProtectionUntilFirstUserAuthentication]
+
     /// Schreibt den Snapshot in den gemeinsamen Container (von der App genutzt).
     func save() {
         guard let data = try? JSONEncoder.snapshot.encode(self) else { return }
-        try? data.write(to: AppGroup.snapshotURL, options: .atomic)
+        try? data.write(to: AppGroup.snapshotURL, options: Self.writeOptions)
     }
 }
 
