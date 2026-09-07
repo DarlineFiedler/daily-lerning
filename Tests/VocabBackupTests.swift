@@ -192,6 +192,32 @@ final class VocabBackupTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
     }
 
+    /// Eine unplausibel große Anzahl Vokabeln wird abgelehnt (Robustheit gegen
+    /// riesige/fremde Dateien) – ohne dafür 100k Objekte bauen zu müssen.
+    func testValidateSizeRejectsTooManyVocabs() {
+        XCTAssertThrowsError(try VocabBackup.validateSize(
+            vocabs: VocabBackup.maxVocabCount + 1, groups: 0)) { error in
+            guard case VocabBackup.BackupError.tooLarge = error else {
+                return XCTFail("Erwartete tooLarge, bekam \(error)")
+            }
+        }
+    }
+
+    /// Analog für eine unplausibel große Anzahl Gruppen.
+    func testValidateSizeRejectsTooManyGroups() {
+        XCTAssertThrowsError(try VocabBackup.validateSize(
+            vocabs: 0, groups: VocabBackup.maxGroupCount + 1)) { error in
+            guard case VocabBackup.BackupError.tooLarge = error else {
+                return XCTFail("Erwartete tooLarge, bekam \(error)")
+            }
+        }
+    }
+
+    /// Plausible Mengen (echte Nutzer-Backups) werden nicht abgelehnt.
+    func testValidateSizeAcceptsPlausibleCounts() {
+        XCTAssertNoThrow(try VocabBackup.validateSize(vocabs: 1000, groups: 50))
+    }
+
     /// Eine Sicherung aus einer neueren App-Version wird beim Decodieren abgelehnt,
     /// statt sie unvollständig zu interpretieren.
     func testDecodeRejectsNewerSchemaVersion() throws {

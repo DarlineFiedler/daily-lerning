@@ -26,6 +26,8 @@ struct SettingsView: View {
     @State private var csvFile: ShareFile?
     @State private var showRestore = false
     @State private var restoreMessage: String?
+    /// Eingelesene, noch nicht angewandte Sicherung – löst den Bestätigungsdialog aus.
+    @State private var pendingRestore: PendingRestore?
 
     @AppStorage(WidgetSettingsKeys.interval, store: AppGroup.defaults)
     private var interval = 30
@@ -197,6 +199,16 @@ struct SettingsView: View {
             .alert(restoreMessage ?? "", isPresented: restoreAlertBinding) {
                 Button(L("common.done"), role: .cancel) { restoreMessage = nil }
             }
+            .confirmationDialog(L("settings.backup.restore"),
+                                isPresented: pendingRestoreBinding,
+                                titleVisibility: .visible,
+                                presenting: pendingRestore) { pending in
+                Button(L("settings.backup.confirm.action")) { confirmRestore(pending.backup) }
+                Button(L("common.cancel"), role: .cancel) { pendingRestore = nil }
+            } message: { pending in
+                Text(L("settings.backup.confirm",
+                       pending.backup.vocabs.count, pending.backup.groups.count))
+            }
             .alert(packMessage ?? "", isPresented: packAlertBinding) {
                 Button(L("common.done"), role: .cancel) { packMessage = nil }
             }
@@ -282,6 +294,11 @@ struct SettingsView: View {
         Binding { packMessage != nil } set: { if !$0 { packMessage = nil } }
     }
 
+    /// Bindung, die den Überschreib-Bestätigungsdialog zeigt, sobald eine Sicherung eingelesen ist.
+    private var pendingRestoreBinding: Binding<Bool> {
+        Binding { pendingRestore != nil } set: { if !$0 { pendingRestore = nil } }
+    }
+
     // MARK: - Wortpakete
 
     /// Importiert die angegebenen Pakete jeweils in eine Gruppe mit dem Paketnamen
@@ -328,10 +345,24 @@ struct SettingsView: View {
             restoreMessage = L("settings.backup.error")
             return
         }
+        // Nicht sofort anwenden: erst kurz bestätigen lassen, da vorhandene Wörter
+        // per id überschrieben werden (Datensicherheit + Transparenz über die Menge).
+        pendingRestore = PendingRestore(backup: backup)
+    }
+
+    /// Spielt die zuvor eingelesene Sicherung tatsächlich ein (nach Bestätigung).
+    private func confirmRestore(_ backup: VocabBackup) {
         backup.apply(into: context)
         AppContentRefresh.afterVocabChange(context: context)
         restoreMessage = L("settings.backup.restored", backup.vocabs.count, backup.groups.count)
     }
+}
+
+/// Identifizierbarer Wrapper um eine eingelesene, noch zu bestätigende Sicherung
+/// (`VocabBackup` ist selbst nicht `Identifiable`) fürs `.confirmationDialog(presenting:)`.
+private struct PendingRestore: Identifiable {
+    let backup: VocabBackup
+    let id = UUID()
 }
 
 /// Identifizierbarer Wrapper um eine zu teilende Datei-URL fürs `.sheet(item:)`

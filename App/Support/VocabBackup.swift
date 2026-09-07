@@ -13,6 +13,14 @@ struct VocabBackup: Codable {
     /// sauber ablehnen als still unvollständig wiederherstellen.
     static let currentSchemaVersion = 1
 
+    /// Plausible Obergrenzen für eine Sicherungsdatei. Wer so viele Wörter/Gruppen
+    /// hat, hat mit hoher Wahrscheinlichkeit keine von dieser App erzeugte Datei
+    /// gewählt – lieber sauber ablehnen als bei einer riesigen (evtl. fremden)
+    /// Datei Speicherdruck erzeugen. Großzügig gewählt, damit echte Nutzer-Backups
+    /// nie anschlagen.
+    static let maxVocabCount = 100_000
+    static let maxGroupCount = 10_000
+
     var schemaVersion: Int = currentSchemaVersion
     var exportedAt: Date = .now
     var groups: [GroupDTO]
@@ -22,6 +30,8 @@ struct VocabBackup: Codable {
     enum BackupError: Error {
         /// Datei stammt aus einer neueren App-Version (`found` > unterstützte Version).
         case unsupportedVersion(found: Int)
+        /// Datei überschreitet die plausiblen Obergrenzen (`maxVocabCount`/`maxGroupCount`).
+        case tooLarge(vocabs: Int, groups: Int)
     }
 
     struct GroupDTO: Codable {
@@ -126,7 +136,18 @@ extension VocabBackup {
         guard header.schemaVersion <= currentSchemaVersion else {
             throw BackupError.unsupportedVersion(found: header.schemaVersion)
         }
-        return try decoder.decode(VocabBackup.self, from: data)
+        let backup = try decoder.decode(VocabBackup.self, from: data)
+        try validateSize(vocabs: backup.vocabs.count, groups: backup.groups.count)
+        return backup
+    }
+
+    /// Wirft `BackupError.tooLarge`, wenn eine Sicherung mehr Wörter/Gruppen enthält,
+    /// als plausibel ist. Als eigene Funktion, damit die Grenze ohne riesige Testdaten
+    /// prüfbar bleibt.
+    static func validateSize(vocabs: Int, groups: Int) throws {
+        guard vocabs <= maxVocabCount, groups <= maxGroupCount else {
+            throw BackupError.tooLarge(vocabs: vocabs, groups: groups)
+        }
     }
 
     /// Dateiname-Präfix der Sicherungs-Dateien im Temp-Verzeichnis.
