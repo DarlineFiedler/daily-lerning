@@ -99,7 +99,7 @@ struct HomeView: View {
                 if active.isEmpty {
                     emptyState
                 } else {
-                    let counts = active.statusCounts()
+                    let (counts, problemCount) = active.progressCounts()
                     let plan = DailyPlan.today(from: active)
                     let review = WeeklyReviewStore.currentReview()
                     todayCard(plan)
@@ -107,7 +107,7 @@ struct HomeView: View {
                     if review.hasActivity { weeklyReviewCard(review) }
                     if hasGoal { goalCard }
                     if let word = WordOfDay.pick(from: active) { wordOfDayCard(word) }
-                    progressSection(active: active, counts: counts)
+                    progressSection(active: active, counts: counts, problemCount: problemCount)
                     startPracticeButton
                     groupsSection
                 }
@@ -347,7 +347,7 @@ struct HomeView: View {
 
     // MARK: - Fortschritt
 
-    private func progressSection(active: [Vocab], counts: [LearningStatus: Int]) -> some View {
+    private func progressSection(active: [Vocab], counts: [LearningStatus: Int], problemCount: Int) -> some View {
         let learned = counts[.learned] ?? 0
         let rate = active.isEmpty ? 0 : Int(round(Double(learned) / Double(active.count) * 100))
         return VStack(alignment: .leading, spacing: Theme.Spacing.s) {
@@ -371,8 +371,8 @@ struct HomeView: View {
                 }
                 .buttonStyle(.plain)
             }
-            StatusDistributionBar(counts: counts, height: 14)
-                .padding(.top, Theme.Spacing.xs)
+            StatusDistributionBar(counts: counts, height: 14).padding(.top, Theme.Spacing.xs)
+            ProblemWordsCard(count: problemCount)
         }
     }
 

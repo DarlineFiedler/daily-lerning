@@ -8,6 +8,10 @@ struct WritingView: View {
 
     @State private var typed = ""
     @State private var checked = false
+    /// Der Nutzer hat aufgegeben („Weiß ich nicht"), ohne etwas zu tippen. Die Lösung wird
+    /// wie bei einer falschen Antwort gezeigt, das „Trotzdem richtig" entfällt (es gibt
+    /// keine Eingabe, die man nachträglich als richtig werten könnte).
+    @State private var gaveUp = false
     @State private var match: AnswerChecker.AnswerMatch = .wrong
     /// Bei falscher Eingabe: das (andere) Wort des Wortschatzes, das man stattdessen
     /// getippt hat – für den zusätzlichen „Verwechslungs"-Hinweis. `nil`, wenn die Eingabe
@@ -43,6 +47,13 @@ struct WritingView: View {
                 }
                 .buttonStyle(.primary)
                 .disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
+
+                // Aufgeben ist bewusst NICHT an eine Eingabe gebunden – weiß man das Wort
+                // gar nicht, zeigt der Button direkt die Lösung (zählt als falsch).
+                Button(action: giveUp) {
+                    Label(L("practice.iDontKnow"), systemImage: "questionmark.circle")
+                }
+                .buttonStyle(.secondary(tint: Theme.wrong))
             }
         }
         .onAppear { focused = true }
@@ -117,6 +128,12 @@ struct WritingView: View {
                 Label(L("common.next"), systemImage: "arrow.right")
             }
             .buttonStyle(.primary)
+        } else if gaveUp {
+            // Aufgegeben: nur weiter (als falsch gewertet), kein „Trotzdem richtig".
+            Button { onAnswer(false) } label: {
+                Label(L("common.next"), systemImage: "arrow.right")
+            }
+            .buttonStyle(.primary)
         } else {
             VStack(spacing: Theme.Spacing.s) {
                 Button { onAnswer(true) } label: {
@@ -139,6 +156,15 @@ struct WritingView: View {
         // dessen Bedeutung als Zusatzinfo einblenden. Läuft synchron; die Kandidaten-Varianten
         // sind vorberechnet (siehe `WordPair`), sodass der Abgleich günstig bleibt.
         confused = match == .wrong ? item.confusedPair(forTyped: typed) : nil
+        withAnimation { checked = true }
+        focused = false
+    }
+
+    /// „Weiß ich nicht": Lösung als falsch enthüllen, ohne dass eine Eingabe nötig war.
+    private func giveUp() {
+        match = .wrong
+        confused = nil
+        gaveUp = true
         withAnimation { checked = true }
         focused = false
     }

@@ -14,4 +14,14 @@ extension Sequence where Element == Vocab {
     func statusCounts() -> [LearningStatus: Int] {
         reduce(into: [:]) { $0[$1.status, default: 0] += 1 }
     }
+
+    /// Status-Verteilung **und** Problemwort-Anzahl (siehe [[Vocab]] `isProblemWord`)
+    /// in einem einzigen Durchlauf – spart dem Home-Fortschritt den zweiten O(n)-Pass,
+    /// der sonst nur für die Problemwörter-Karte nötig wäre.
+    func progressCounts() -> (status: [LearningStatus: Int], problems: Int) {
+        reduce(into: (status: [LearningStatus: Int](), problems: 0)) { acc, vocab in
+            acc.status[vocab.status, default: 0] += 1
+            if vocab.isProblemWord { acc.problems += 1 }
+        }
+    }
 }

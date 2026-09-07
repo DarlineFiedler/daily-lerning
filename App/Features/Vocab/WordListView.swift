@@ -8,9 +8,13 @@ import SwiftUI
 /// Zwei Modi über `lockedStatus`:
 /// - `nil` → alle Wörter, Status-Filter-Chips sichtbar (Kachel „Wörter").
 /// - z.B. `.learned` → fest auf diesen Status eingeschränkt, keine Chips (Kachel „Gelernt").
+///
+/// `problemsOnly` ist ein dritter, orthogonaler Modus: nur auffällige Wörter (siehe
+/// [[Vocab]] `isProblemWord`), sortiert nach schlechtester Trefferquote, ohne Status-Chips.
 struct WordListView: View {
     let titleKey: String
     var lockedStatus: LearningStatus?
+    var problemsOnly: Bool = false
 
     @Environment(\.modelContext) private var context
     @Query(sort: \Vocab.word) private var vocabs: [Vocab]
@@ -30,7 +34,17 @@ struct WordListView: View {
     /// sonst greifen die (optional gewählten) Filter-Chips.
     private var results: [Vocab] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        return activeVocabs.filter { matchesStatus($0) && matchesText($0, trimmed) }
+        let filtered = activeVocabs.filter {
+            matchesStatus($0) && matchesText($0, trimmed) && (!problemsOnly || $0.isProblemWord)
+        }
+        // Im Problemwörter-Modus das schwächste Wort (höchste Fehlerquote) zuerst zeigen.
+        guard problemsOnly else { return filtered }
+        return filtered.sorted { wrongRate($0) > wrongRate($1) }
+    }
+
+    /// Lebenszeit-Fehlerquote (0…1); bei 0 Versuchen 0, um Division durch null zu vermeiden.
+    private func wrongRate(_ vocab: Vocab) -> Double {
+        vocab.timesPracticed == 0 ? 0 : Double(vocab.totalWrongCount) / Double(vocab.timesPracticed)
     }
 
     private func matchesStatus(_ vocab: Vocab) -> Bool {
@@ -45,7 +59,7 @@ struct WordListView: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: Theme.Spacing.m) {
-                if lockedStatus == nil, !activeVocabs.isEmpty { filterChips }
+                if lockedStatus == nil, !problemsOnly, !activeVocabs.isEmpty { filterChips }
                 if results.isEmpty {
                     emptyState
                 } else {
@@ -110,7 +124,11 @@ struct WordListView: View {
 
     private var emptyState: some View {
         ContentUnavailableView {
-            Label(L("search.empty"), systemImage: "magnifyingglass")
+            if problemsOnly, query.isEmpty {
+                Label(L("words.problems.empty"), systemImage: "checkmark.seal.fill")
+            } else {
+                Label(L("search.empty"), systemImage: "magnifyingglass")
+            }
         }
         .padding(.top, Theme.Spacing.xl)
     }
