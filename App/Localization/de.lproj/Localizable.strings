@@ -161,6 +161,17 @@
 "practice.boss.stat.rounds" = "Durchgänge";
 "practice.boss.stat.misses" = "Fehler";
 "practice.boss.a11y.status" = "Boss %1$@: %2$d von %3$d HP, %4$d Leben verbleibend";
+"practice.config.exam" = "Prüfungssimulation";
+"practice.exam.toggle" = "Prüfungsmodus";
+"practice.exam.hint" = "Zeitlimitierte TOPIK-Runde mit Prüfungs-Auswertung. Wähle oben genau ein TOPIK-Niveau.";
+"practice.exam.needLevel" = "Wähle zuerst TOPIK I oder II.";
+"practice.exam.empty" = "Keine Wörter mit dem gewählten TOPIK-Niveau. Stufe zuerst Vokabeln ein.";
+"practice.exam.passed" = "Bestanden!";
+"practice.exam.failed" = "Nicht bestanden";
+"practice.exam.score" = "%d %%";
+"practice.exam.stat.correct" = "Richtig";
+"practice.exam.stat.level" = "Niveau";
+"practice.exam.a11y.time" = "%d Sekunden verbleibend";
 
 /* Statistik */
 "stats.title" = "Statistik";

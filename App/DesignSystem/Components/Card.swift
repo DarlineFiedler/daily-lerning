@@ -21,6 +21,26 @@ extension View {
     }
 }
 
+/// Großflächige „Held"-Karte im weichen Marken-Verlauf: zentrierter Inhalt in Weiß,
+/// kräftiger Marken-Schatten. Geteilte Optik der Übungskarte (`ReviewSwipeView`) und der
+/// Wort-Detailansicht (`VocabDetailView`) – dort NICHT dupliziert, sondern hierüber.
+struct HeroCardBackground: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, Theme.Spacing.xl + 16)
+            .padding(.horizontal, Theme.Spacing.m)
+            .background(Theme.brandGradientSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+            .foregroundStyle(.white)
+            .shadow(color: Theme.brandStart.opacity(0.3), radius: 16, y: 8)
+    }
+}
+
+extension View {
+    /// Verpackt den Inhalt in die große Marken-Kopfkarte (Übungs-/Detailansicht).
+    func heroCardStyle() -> some View { modifier(HeroCardBackground()) }
+}
+
 /// Karte mit farbigem Verlauf als Hintergrund (für Gruppen/Header). Der Inhalt
 /// wird in Weiß gezeichnet und bleibt so auf den kräftigen Farben lesbar.
 struct GradientCard<Content: View>: View {

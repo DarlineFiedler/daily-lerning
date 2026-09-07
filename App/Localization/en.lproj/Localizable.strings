@@ -161,6 +161,17 @@
 "practice.boss.stat.rounds" = "Rounds";
 "practice.boss.stat.misses" = "Misses";
 "practice.boss.a11y.status" = "Boss %1$@: %2$d of %3$d HP, %4$d lives left";
+"practice.config.exam" = "Mock exam";
+"practice.exam.toggle" = "Exam mode";
+"practice.exam.hint" = "A timed TOPIK round with an exam-style result. Pick exactly one TOPIK level above.";
+"practice.exam.needLevel" = "Pick TOPIK I or II first.";
+"practice.exam.empty" = "No words at the selected TOPIK level. Rate some vocabulary first.";
+"practice.exam.passed" = "Passed!";
+"practice.exam.failed" = "Not passed";
+"practice.exam.score" = "%d %%";
+"practice.exam.stat.correct" = "Correct";
+"practice.exam.stat.level" = "Level";
+"practice.exam.a11y.time" = "%d seconds remaining";
 
 /* Statistics */
 "stats.title" = "Statistics";

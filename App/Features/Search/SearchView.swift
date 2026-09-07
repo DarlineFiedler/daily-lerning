@@ -7,8 +7,24 @@ struct SearchView: View {
     @Query(sort: \Vocab.word) private var vocabs: [Vocab]
     @Query(sort: \VocabGroup.sortOrder) private var groups: [VocabGroup]
     @State private var query = ""
-    @State private var editingVocab: Vocab?
+    @State private var activeSheet: ActiveSheet?
     @State private var pendingDelete: Vocab?
+
+    /// Ein einziges, umschaltbares Sheet für Ansehen ↔ Bearbeiten. Bewusst EIN
+    /// `.sheet(item:)` (ein Presentation-Controller): der Wechsel vom Ansehen zum
+    /// Bearbeiten ist so ein sauberer Identitätswechsel statt eines Race zwischen
+    /// zwei getrennten Sheet-Bindungen während der Dismiss-Animation.
+    private enum ActiveSheet: Identifiable {
+        case viewing(Vocab)
+        case editing(Vocab)
+
+        var id: String {
+            switch self {
+            case let .viewing(vocab): return "view-\(vocab.id)"
+            case let .editing(vocab): return "edit-\(vocab.id)"
+            }
+        }
+    }
     /// Zusätzliche Filter (Mehrfachauswahl). Leere Menge = keine Einschränkung.
     /// Bewusst pro Öffnen zurückgesetzt (nicht persistiert).
     @State private var selectedGroups: Set<UUID> = []
@@ -53,12 +69,18 @@ struct SearchView: View {
                     AchievementService.recordEvent(\.searchUsed, context: context)
                 }
             }
-            .sheet(item: $editingVocab) { vocab in
-                VocabEditView(vocab: vocab, group: vocab.group) { existing in
-                    // Der Editor schließt sich selbst (`dismiss`), was die item-Bindung auf
-                    // nil zurücksetzt. Den Sprung zur bestehenden Vokabel daher nachziehen,
-                    // sobald das aktuelle Sheet zu ist – sonst wird der Wechsel verschluckt.
-                    DispatchQueue.main.async { editingVocab = existing }
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case let .viewing(vocab):
+                    // „Bearbeiten" schaltet dasselbe Sheet auf den Editier-Fall um.
+                    VocabDetailView(vocab: vocab) { activeSheet = .editing(vocab) }
+                case let .editing(vocab):
+                    VocabEditView(vocab: vocab, group: vocab.group) { existing in
+                        // Der Editor schließt sich selbst (`dismiss`), was `activeSheet` auf nil
+                        // zurücksetzt. Den Sprung zur bestehenden Vokabel daher nachziehen,
+                        // sobald das Sheet zu ist – sonst wird der Wechsel verschluckt.
+                        DispatchQueue.main.async { activeSheet = .editing(existing) }
+                    }
                 }
             }
             .confirmationDialog(
@@ -170,13 +192,13 @@ struct SearchView: View {
             List {
                 ForEach(results) { vocab in
                     VocabRow(vocab: vocab, showGroup: true) {
-                        editingVocab = vocab
+                        activeSheet = .viewing(vocab)
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) { pendingDelete = vocab } label: {
                             Label(L("common.delete"), systemImage: "trash")
                         }
-                        Button { editingVocab = vocab } label: {
+                        Button { activeSheet = .editing(vocab) } label: {
                             Label(L("common.edit"), systemImage: "pencil")
                         }
                         .tint(.accentColor)

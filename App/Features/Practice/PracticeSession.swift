@@ -3,10 +3,32 @@ import SwiftData
 import WidgetKit
 
 /// Ein Wort-/Bedeutungs-Paar des Wortschatzes für die Verwechslungs-Erkennung
-/// im Schreib-Modus.
+/// im Schreib-Modus. Die normalisierten Varianten beider Seiten werden EINMAL beim
+/// Anlegen vorberechnet, damit der Abgleich pro Fehlversuch (siehe
+/// `PracticeItem.confusedPair(forTyped:)`) nicht den ganzen Wortschatz neu normalisiert.
+/// Identität (Hashable/Equatable) hängt bewusst nur an `word`/`meaning` – die Varianten
+/// sind daraus abgeleitet.
 struct WordPair: Hashable {
     let word: String
     let meaning: String
+    let wordVariants: Set<String>
+    let meaningVariants: Set<String>
+
+    init(word: String, meaning: String) {
+        self.word = word
+        self.meaning = meaning
+        self.wordVariants = AnswerChecker.variants(of: word)
+        self.meaningVariants = AnswerChecker.variants(of: meaning)
+    }
+
+    static func == (lhs: WordPair, rhs: WordPair) -> Bool {
+        lhs.word == rhs.word && lhs.meaning == rhs.meaning
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(word)
+        hasher.combine(meaning)
+    }
 }
 
 /// Eine vorbereitete Lernaufgabe (Wort + zugewiesener Modus/Richtung/Optionen).
@@ -41,20 +63,23 @@ struct PracticeItem: Identifiable {
     /// Überspringt Paare, die selbst die gesuchte Lösung oder ein bedeutungsgleiches Wort
     /// sind (das wäre keine Verwechslung, sondern richtig bzw. „fast richtig").
     ///
-    /// Entspricht `AnswerChecker.evaluate(typed: side, …) == .wrong && isCorrect(typed, side)`
-    /// je Paar, zerlegt aber die schleifen-invarianten Strings (Eingabe, Lösung, Synonyme)
-    /// nur einmal statt für jeden der u.U. hunderten Kandidaten neu.
+    /// Der „bedeutungsgleich"-Ausschluss vergleicht direkt die *Bedeutung* des Kandidaten
+    /// mit der des gesuchten Worts – bewusst NICHT über `synonymWords`, denn die decken nur
+    /// den Übungs-Scope ab, während der Verwechslungs-Pool den ganzen Wortschatz umfasst.
+    /// Sonst würde ein sinngleiches Wort aus einer *nicht* geübten Gruppe fälschlich als
+    /// Verwechslung angezeigt. Alle Kandidaten-Varianten sind vorberechnet (`WordPair`),
+    /// pro Aufruf werden nur Eingabe, Lösung und die eigene Bedeutung einmal zerlegt.
     func confusedPair(forTyped typed: String) -> WordPair? {
         let typedVariants = AnswerChecker.variants(of: typed)
         guard !typedVariants.isEmpty else { return nil }
         let answerVariants = AnswerChecker.variants(of: answer())
-        let synonymVariants = synonymWords.map(AnswerChecker.variants(of:))
+        let ownMeaningVariants = AnswerChecker.variants(of: vocab.meaning)
         return confusables.first { pair in
-            let side = direction == .wordToMeaning ? pair.meaning : pair.word
-            let sideVariants = AnswerChecker.variants(of: side)
-            // Die Antwort-Seite selbst wäre richtig bzw. „fast richtig" → keine Verwechslung.
+            let sideVariants = direction == .wordToMeaning ? pair.meaningVariants : pair.wordVariants
+            // Gleiche Lösung (richtig) oder bedeutungsgleiches Wort (fast richtig) →
+            // keine Verwechslung.
             guard sideVariants.isDisjoint(with: answerVariants),
-                  !synonymVariants.contains(where: { !$0.isDisjoint(with: sideVariants) })
+                  pair.meaningVariants.isDisjoint(with: ownMeaningVariants)
             else { return false }
             // Entspricht die Eingabe genau dieser Antwort-Seite?
             return !typedVariants.isDisjoint(with: sideVariants)
@@ -146,9 +171,12 @@ final class PracticeSession {
     /// für den Verwechslungs-Hinweis. Die feste Sortierung macht die Auswahl bei mehreren
     /// gleich getippten Wörtern (Homonyme) reproduzierbar.
     static func loadConfusionPool(context: ModelContext) -> [WordPair] {
-        let descriptor = FetchDescriptor<Vocab>(
+        var descriptor = FetchDescriptor<Vocab>(
             sortBy: [SortDescriptor(\.word), SortDescriptor(\.meaning)]
         )
+        // Nur die beiden benötigten Spalten materialisieren statt der ganzen Vokabel-Objekte
+        // (Beispiel, Lernstand, Beziehungen …) – der Pool umfasst bewusst den ganzen Store.
+        descriptor.propertiesToFetch = [\.word, \.meaning]
         let all = (try? context.fetch(descriptor)) ?? []
         return all.map { WordPair(word: $0.word, meaning: $0.meaning) }
     }
@@ -336,9 +364,8 @@ final class PracticeSession {
         let remaining = distractorPool.filter { !sessionIDs.contains($0.id) }
         let remainingByGroup = Dictionary(grouping: remaining) { $0.group?.id }
         // Verwechslungs-Nachschlage: der volle Wortschatz (vom Aufrufer geladen, siehe
-        // `loadConfusionPool`), von allen Items geteilt (COW). Nur nötig, wenn Schreiben
-        // vorkommt; sonst bleibt die Liste leer.
-        let confusables = perCardModes.contains(.writing) ? confusionPool : []
+        // `loadConfusionPool`; außerhalb des Schreib-Modus leer). Die Liste hängt weiter unten
+        // NUR an tatsächlichen Schreib-Karten – Nicht-Schreib-Karten tragen sie nicht mit.
         return vocabs.compactMap { vocab in
             // Lückentext nur für Wörter mit brauchbarem Beispielsatz. Fehlt er, entfällt der
             // Modus für dieses Wort; bleibt dann keiner übrig (nur-Lückentext ohne Beispiel),
@@ -368,7 +395,7 @@ final class PracticeSession {
                 : []
             return PracticeItem(vocab: vocab, mode: mode, direction: direction,
                                 choices: choices, synonymWords: synonymWords,
-                                confusables: confusables)
+                                confusables: mode == .writing ? confusionPool : [])
         }
     }
 
