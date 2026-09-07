@@ -23,6 +23,7 @@ struct VocabDetailView: View {
                     infoCard(L("vocab.status")) {
                         StatusBadge(status: vocab.status)
                     }
+                    if vocab.hasBeenPracticed { accuracyCard }
                     if let group = vocab.group {
                         infoCard(L("vocab.group")) {
                             HStack(spacing: Theme.Spacing.s) {
@@ -80,6 +81,26 @@ struct VocabDetailView: View {
         }
         .heroCardStyle()
         .accessibilityElement(children: .combine)
+    }
+
+    /// Trefferquote über die Lebenszeit: richtige Antworten / Versuche. Bei Problemwörtern
+    /// (siehe [[Vocab]] `isProblemWord`) zusätzlich ein Warnhinweis.
+    private var accuracyCard: some View {
+        let attempts = vocab.timesPracticed
+        let correct = max(0, attempts - vocab.totalWrongCount)
+        let percent = attempts == 0 ? 0 : Int(round(Double(correct) / Double(attempts) * 100))
+        return infoCard(L("vocab.accuracy")) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(L("vocab.accuracyDetail", percent, attempts))
+                    .font(.appBody)
+                    .monospacedDigit()
+                if vocab.isProblemWord {
+                    Label(L("vocab.problemWord"), systemImage: "exclamationmark.triangle.fill")
+                        .font(.appSubheadline)
+                        .foregroundStyle(Theme.wrong)
+                }
+            }
+        }
     }
 
     /// Eine beschriftete Info-Karte: kleines Label über dem Inhalt.

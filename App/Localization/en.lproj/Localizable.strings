@@ -18,6 +18,7 @@
 "home.stat.rate" = "Rate";
 "words.all.title" = "All Words";
 "words.learned.title" = "Learned Words";
+"words.problems.empty" = "No problem words 🎉";
 "mastery.title" = "Mastery";
 "mastery.ring.label" = "Learned";
 "mastery.ranking.title" = "Group ranking";
@@ -73,6 +74,9 @@
 "vocab.example" = "Example";
 "vocab.examplePlaceholder" = "Optional example sentence";
 "vocab.status" = "Status";
+"vocab.accuracy" = "Accuracy";
+"vocab.accuracyDetail" = "%d%% correct · %d attempts";
+"vocab.problemWord" = "Problem word";
 "vocab.details" = "Details";
 "vocab.widgetToggle" = "Show on Lock Screen";
 "vocab.emojiSection" = "Memory aid";

@@ -35,6 +35,12 @@ struct VocabRow: View {
                     Text(vocab.word)
                         .font(.appHeadline)
                     TopikBadge(level: vocab.topikLevel)
+                    if vocab.isProblemWord {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.appCaption)
+                            .foregroundStyle(Theme.wrong)
+                            .accessibilityLabel(L("vocab.problemWord"))
+                    }
                 }
                 Text(vocab.meaning)
                     .font(.appSubheadline)

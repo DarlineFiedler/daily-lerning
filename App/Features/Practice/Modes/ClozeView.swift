@@ -10,6 +10,9 @@ struct ClozeView: View {
     @State private var typed = ""
     @State private var checked = false
     @State private var wasCorrect = false
+    /// Der Nutzer hat aufgegeben („Weiß ich nicht"), ohne etwas zu tippen. Die Lösung wird
+    /// wie bei einer falschen Antwort gezeigt, das „Trotzdem richtig" entfällt.
+    @State private var gaveUp = false
     @FocusState private var focused: Bool
 
     /// Das gesuchte Wort ist immer die Lernsprache (Hangul).
@@ -46,6 +49,13 @@ struct ClozeView: View {
                 }
                 .buttonStyle(.primary)
                 .disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
+
+                // Aufgeben ist bewusst NICHT an eine Eingabe gebunden – weiß man das Wort
+                // gar nicht, zeigt der Button direkt die Lösung (zählt als falsch).
+                Button(action: giveUp) {
+                    Label(L("practice.iDontKnow"), systemImage: "questionmark.circle")
+                }
+                .buttonStyle(.secondary(tint: Theme.wrong))
             }
         }
         .onAppear { focused = true }
@@ -99,6 +109,12 @@ struct ClozeView: View {
                 Label(L("common.next"), systemImage: "arrow.right")
             }
             .buttonStyle(.primary)
+        } else if gaveUp {
+            // Aufgegeben: nur weiter (als falsch gewertet), kein „Trotzdem richtig".
+            Button { onAnswer(false) } label: {
+                Label(L("common.next"), systemImage: "arrow.right")
+            }
+            .buttonStyle(.primary)
         } else {
             VStack(spacing: Theme.Spacing.s) {
                 Button { onAnswer(true) } label: {
@@ -116,6 +132,14 @@ struct ClozeView: View {
 
     private func check() {
         wasCorrect = AnswerChecker.isCorrect(typed: typed, expected: answer)
+        withAnimation { checked = true }
+        focused = false
+    }
+
+    /// „Weiß ich nicht": Lösung als falsch enthüllen, ohne dass eine Eingabe nötig war.
+    private func giveUp() {
+        wasCorrect = false
+        gaveUp = true
         withAnimation { checked = true }
         focused = false
     }

@@ -2,6 +2,22 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>home.problemWords</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@words@</string>
+		<key>words</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>%d Problemwort</string>
+			<key>other</key>
+			<string>%d Problemwörter</string>
+		</dict>
+	</dict>
 	<key>home.today.learn.count</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
