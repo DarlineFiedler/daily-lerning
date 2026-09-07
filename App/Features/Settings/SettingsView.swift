@@ -203,7 +203,7 @@ struct SettingsView: View {
                                 isPresented: pendingRestoreBinding,
                                 titleVisibility: .visible,
                                 presenting: pendingRestore) { pending in
-                Button(L("settings.backup.confirm.action")) { confirmRestore(pending.backup) }
+                Button(L("settings.backup.confirm.action"), role: .destructive) { confirmRestore(pending.backup) }
                 Button(L("common.cancel"), role: .cancel) { pendingRestore = nil }
             } message: { pending in
                 Text(L("settings.backup.confirm",
@@ -340,21 +340,33 @@ struct SettingsView: View {
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
 
-        guard let data = try? Data(contentsOf: url),
-              let backup = try? VocabBackup.decode(data) else {
+        do {
+            // Größe prüfen, BEVOR die Datei in den Speicher geladen wird – nur so
+            // wird eine riesige (evtl. fremde) Datei nicht erst komplett allokiert.
+            let bytes = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+            try VocabBackup.validateFileSize(bytes)
+            let data = try Data(contentsOf: url)
+            // Nicht sofort anwenden: erst kurz bestätigen lassen, da vorhandene Wörter
+            // per id überschrieben werden (Datensicherheit + Transparenz über die Menge).
+            pendingRestore = PendingRestore(backup: try VocabBackup.decode(data))
+        } catch VocabBackup.BackupError.tooLarge, VocabBackup.BackupError.fileTooLarge {
+            restoreMessage = L("settings.backup.tooLarge")
+        } catch VocabBackup.BackupError.unsupportedVersion {
+            restoreMessage = L("settings.backup.outdated")
+        } catch {
             restoreMessage = L("settings.backup.error")
-            return
         }
-        // Nicht sofort anwenden: erst kurz bestätigen lassen, da vorhandene Wörter
-        // per id überschrieben werden (Datensicherheit + Transparenz über die Menge).
-        pendingRestore = PendingRestore(backup: backup)
     }
 
     /// Spielt die zuvor eingelesene Sicherung tatsächlich ein (nach Bestätigung).
     private func confirmRestore(_ backup: VocabBackup) {
         backup.apply(into: context)
         AppContentRefresh.afterVocabChange(context: context)
-        restoreMessage = L("settings.backup.restored", backup.vocabs.count, backup.groups.count)
+        let message = L("settings.backup.restored", backup.vocabs.count, backup.groups.count)
+        // Erst im nächsten Runloop setzen: der Bestätigungsdialog wird im selben
+        // Zyklus geschlossen; ein direkt gesetzter Alert würde von SwiftUI sonst
+        // verschluckt und der Nutzer sähe keine Erfolgsmeldung.
+        DispatchQueue.main.async { restoreMessage = message }
     }
 }
 

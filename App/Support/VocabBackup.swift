@@ -21,6 +21,13 @@ struct VocabBackup: Codable {
     static let maxVocabCount = 100_000
     static let maxGroupCount = 10_000
 
+    /// Obergrenze für die Dateigröße, geprüft BEVOR die Datei überhaupt in den
+    /// Speicher geladen wird. Nur so lässt sich der eingangs beschriebene Speicherdruck
+    /// wirklich vermeiden – die Zähler-Prüfung greift erst nach dem vollständigen
+    /// Decode (also nach der Allokation). 128 MB liegt weit über einem echten Backup
+    /// (100k Wörter ≈ einige zehn MB), fängt aber Multi-GB-Dateien früh ab.
+    static let maxFileBytes = 128 * 1024 * 1024
+
     var schemaVersion: Int = currentSchemaVersion
     var exportedAt: Date = .now
     var groups: [GroupDTO]
@@ -32,6 +39,8 @@ struct VocabBackup: Codable {
         case unsupportedVersion(found: Int)
         /// Datei überschreitet die plausiblen Obergrenzen (`maxVocabCount`/`maxGroupCount`).
         case tooLarge(vocabs: Int, groups: Int)
+        /// Datei ist bereits vor dem Laden zu groß (`bytes` > `maxFileBytes`).
+        case fileTooLarge(bytes: Int)
     }
 
     struct GroupDTO: Codable {
@@ -147,6 +156,15 @@ extension VocabBackup {
     static func validateSize(vocabs: Int, groups: Int) throws {
         guard vocabs <= maxVocabCount, groups <= maxGroupCount else {
             throw BackupError.tooLarge(vocabs: vocabs, groups: groups)
+        }
+    }
+
+    /// Wirft `BackupError.fileTooLarge`, wenn die Datei größer als `maxFileBytes` ist.
+    /// Muss VOR dem Einlesen der Datei aufgerufen werden, damit eine riesige (evtl.
+    /// fremde) Datei gar nicht erst komplett in den Speicher geladen wird.
+    static func validateFileSize(_ bytes: Int) throws {
+        guard bytes <= maxFileBytes else {
+            throw BackupError.fileTooLarge(bytes: bytes)
         }
     }
 

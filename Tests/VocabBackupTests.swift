@@ -218,6 +218,21 @@ final class VocabBackupTests: XCTestCase {
         XCTAssertNoThrow(try VocabBackup.validateSize(vocabs: 1000, groups: 50))
     }
 
+    /// Eine zu große Datei wird schon anhand der Byte-Größe abgelehnt – bevor sie
+    /// überhaupt in den Speicher geladen wird.
+    func testValidateFileSizeRejectsHugeFile() {
+        XCTAssertThrowsError(try VocabBackup.validateFileSize(VocabBackup.maxFileBytes + 1)) { error in
+            guard case VocabBackup.BackupError.fileTooLarge = error else {
+                return XCTFail("Erwartete fileTooLarge, bekam \(error)")
+            }
+        }
+    }
+
+    /// Eine Datei plausibler Größe (echtes Nutzer-Backup) wird nicht abgelehnt.
+    func testValidateFileSizeAcceptsPlausibleFile() {
+        XCTAssertNoThrow(try VocabBackup.validateFileSize(1_000_000))
+    }
+
     /// Eine Sicherung aus einer neueren App-Version wird beim Decodieren abgelehnt,
     /// statt sie unvollständig zu interpretieren.
     func testDecodeRejectsNewerSchemaVersion() throws {
