@@ -39,6 +39,13 @@ enum PersistenceController {
     /// Hinweis und überspringt das Seeding, statt still einen leeren Store zu zeigen.
     private(set) static var storeOpenFailed = false
 
+    /// Datenschutz-Stufe des lokalen Stores – bewusst auf `.complete` angehoben (Issue #104).
+    /// Die Datenbank wird ausschließlich von der App im Vordergrund gelesen: `AppContentRefresh`
+    /// läuft nur über `onAppActive`/Vokabeländerungen, es gibt keinen `BGTaskScheduler`-Task und
+    /// das Widget nutzt allein den JSON-Snapshot ([[WidgetSnapshotWriter]]), nie die DB. Deshalb
+    /// dürfen die Store-Dateien bei gesperrtem Bildschirm unlesbar sein.
+    static let storeFileProtection: FileProtectionType = .complete
+
     static func makeContainer(inMemory: Bool = false) -> ModelContainer {
         if inMemory {
             let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
@@ -53,7 +60,9 @@ enum PersistenceController {
 
         let config = ModelConfiguration(schema: schema, url: localStoreURL)
         do {
-            return try ModelContainer(for: schema, configurations: config)
+            let container = try ModelContainer(for: schema, configurations: config)
+            applyStoreFileProtection()
+            return container
         } catch {
             // Keinen stillen leeren Disk-Store vortäuschen: Fehler protokollieren,
             // Flag setzen und als letzten Ausweg In-Memory öffnen (kein Crash).
@@ -63,6 +72,24 @@ enum PersistenceController {
             // Letzter Ausweg; In-Memory-Store kann praktisch nicht scheitern.
             // swiftlint:disable:next force_try
             return try! ModelContainer(for: schema, configurations: memoryConfig)
+        }
+    }
+
+    /// Hebt die Datenschutz-Stufe der Store-Dateien auf [[storeFileProtection]] an (Issue #104).
+    /// Best-effort (`try?`): Das Setzen der Schutzstufe darf den App-Start niemals crashen.
+    /// Das Attribut wird auf das Application-Support-Verzeichnis gesetzt (damit später erzeugte
+    /// `-wal`/`-shm`-Sidecar-Dateien die Stufe erben) sowie auf alle bereits existierenden
+    /// `default.store*`-Dateien.
+    private static func applyStoreFileProtection() {
+        let fm = FileManager.default
+        let attributes: [FileAttributeKey: Any] = [.protectionKey: storeFileProtection]
+        let directory = URL.applicationSupportDirectory
+        try? fm.setAttributes(attributes, ofItemAtPath: directory.path)
+
+        let storeName = localStoreURL.lastPathComponent
+        let names = (try? fm.contentsOfDirectory(atPath: directory.path)) ?? []
+        for name in names where name.hasPrefix(storeName) {
+            try? fm.setAttributes(attributes, ofItemAtPath: directory.appendingPathComponent(name).path)
         }
     }
 
