@@ -26,6 +26,8 @@ struct SettingsView: View {
     @State private var csvFile: ShareFile?
     @State private var showRestore = false
     @State private var restoreMessage: String?
+    /// Eingelesene, noch nicht angewandte Sicherung – löst den Bestätigungsdialog aus.
+    @State private var pendingRestore: PendingRestore?
 
     @AppStorage(WidgetSettingsKeys.interval, store: AppGroup.defaults)
     private var interval = 30
@@ -197,6 +199,16 @@ struct SettingsView: View {
             .alert(restoreMessage ?? "", isPresented: restoreAlertBinding) {
                 Button(L("common.done"), role: .cancel) { restoreMessage = nil }
             }
+            .confirmationDialog(L("settings.backup.restore"),
+                                isPresented: pendingRestoreBinding,
+                                titleVisibility: .visible,
+                                presenting: pendingRestore) { pending in
+                Button(L("settings.backup.confirm.action"), role: .destructive) { confirmRestore(pending.backup) }
+                Button(L("common.cancel"), role: .cancel) { pendingRestore = nil }
+            } message: { pending in
+                Text(L("settings.backup.confirm",
+                       pending.backup.vocabs.count, pending.backup.groups.count))
+            }
             .alert(packMessage ?? "", isPresented: packAlertBinding) {
                 Button(L("common.done"), role: .cancel) { packMessage = nil }
             }
@@ -282,6 +294,11 @@ struct SettingsView: View {
         Binding { packMessage != nil } set: { if !$0 { packMessage = nil } }
     }
 
+    /// Bindung, die den Überschreib-Bestätigungsdialog zeigt, sobald eine Sicherung eingelesen ist.
+    private var pendingRestoreBinding: Binding<Bool> {
+        Binding { pendingRestore != nil } set: { if !$0 { pendingRestore = nil } }
+    }
+
     // MARK: - Wortpakete
 
     /// Importiert die angegebenen Pakete jeweils in eine Gruppe mit dem Paketnamen
@@ -323,15 +340,41 @@ struct SettingsView: View {
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
 
-        guard let data = try? Data(contentsOf: url),
-              let backup = try? VocabBackup.decode(data) else {
+        do {
+            // Größe prüfen, BEVOR die Datei in den Speicher geladen wird – nur so
+            // wird eine riesige (evtl. fremde) Datei nicht erst komplett allokiert.
+            let bytes = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+            try VocabBackup.validateFileSize(bytes)
+            let data = try Data(contentsOf: url)
+            // Nicht sofort anwenden: erst kurz bestätigen lassen, da vorhandene Wörter
+            // per id überschrieben werden (Datensicherheit + Transparenz über die Menge).
+            pendingRestore = PendingRestore(backup: try VocabBackup.decode(data))
+        } catch VocabBackup.BackupError.tooLarge, VocabBackup.BackupError.fileTooLarge {
+            restoreMessage = L("settings.backup.tooLarge")
+        } catch VocabBackup.BackupError.unsupportedVersion {
+            restoreMessage = L("settings.backup.outdated")
+        } catch {
             restoreMessage = L("settings.backup.error")
-            return
         }
+    }
+
+    /// Spielt die zuvor eingelesene Sicherung tatsächlich ein (nach Bestätigung).
+    private func confirmRestore(_ backup: VocabBackup) {
         backup.apply(into: context)
         AppContentRefresh.afterVocabChange(context: context)
-        restoreMessage = L("settings.backup.restored", backup.vocabs.count, backup.groups.count)
+        let message = L("settings.backup.restored", backup.vocabs.count, backup.groups.count)
+        // Erst im nächsten Runloop setzen: der Bestätigungsdialog wird im selben
+        // Zyklus geschlossen; ein direkt gesetzter Alert würde von SwiftUI sonst
+        // verschluckt und der Nutzer sähe keine Erfolgsmeldung.
+        DispatchQueue.main.async { restoreMessage = message }
     }
+}
+
+/// Identifizierbarer Wrapper um eine eingelesene, noch zu bestätigende Sicherung
+/// (`VocabBackup` ist selbst nicht `Identifiable`) fürs `.confirmationDialog(presenting:)`.
+private struct PendingRestore: Identifiable {
+    let backup: VocabBackup
+    let id = UUID()
 }
 
 /// Identifizierbarer Wrapper um eine zu teilende Datei-URL fürs `.sheet(item:)`
