@@ -16,7 +16,6 @@
 "home.stat.total" = "단어";
 "home.stat.learned" = "완료";
 "home.stat.rate" = "비율";
-"home.problemWords" = "문제 단어 %d개";
 "words.all.title" = "모든 단어";
 "words.learned.title" = "학습한 단어";
 "words.problems.empty" = "문제 단어가 없습니다 🎉";

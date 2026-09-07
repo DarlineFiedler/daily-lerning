@@ -16,7 +16,6 @@
 "home.stat.total" = "Wörter";
 "home.stat.learned" = "Gelernt";
 "home.stat.rate" = "Quote";
-"home.problemWords" = "%d Problemwörter";
 "words.all.title" = "Alle Wörter";
 "words.learned.title" = "Gelernte Wörter";
 "words.problems.empty" = "Keine Problemwörter 🎉";
