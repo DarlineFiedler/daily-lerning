@@ -173,6 +173,25 @@ final class VocabBackupTests: XCTestCase {
         XCTAssertEqual(kept.meaning, "gehen") // lokaler Wert blieb erhalten
     }
 
+    /// Vor dem Schreiben einer neuen Sicherung werden ältere Sicherungs-Dateien
+    /// (`DailyHangul-Backup-*.json`) im Temp-Verzeichnis entfernt, damit sich die
+    /// vollständigen Datenexporte dort nicht ansammeln.
+    func testExportFileRemovesStaleBackups() throws {
+        // Simulierte Sicherung eines früheren Tages im selben Temp-Verzeichnis.
+        let stale = FileManager.default.temporaryDirectory
+            .appendingPathComponent("DailyHangul-Backup-2000-01-01.json")
+        try "alt".write(to: stale, atomically: true, encoding: .utf8)
+
+        let (group, vocab) = try makeSampleData()
+        let url = try VocabBackup.exportFile(groups: [group], vocabs: [vocab])
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        // Die alte Datei wurde aufgeräumt, die neue existiert.
+        XCTAssertEqual(url.pathExtension, "json")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: stale.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
+    }
+
     /// Eine Sicherung aus einer neueren App-Version wird beim Decodieren abgelehnt,
     /// statt sie unvollständig zu interpretieren.
     func testDecodeRejectsNewerSchemaVersion() throws {

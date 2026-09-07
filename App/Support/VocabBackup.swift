@@ -129,21 +129,41 @@ extension VocabBackup {
         return try decoder.decode(VocabBackup.self, from: data)
     }
 
+    /// Dateiname-Präfix der Sicherungs-Dateien im Temp-Verzeichnis.
+    private static let exportPrefix = "DailyHangul-Backup-"
+
     /// Schreibt die Sicherung als `.json`-Datei ins temporäre Verzeichnis und gibt
     /// die URL zurück (zum Teilen via Share-Sheet → in Dateien/iCloud Drive sichern).
+    /// Ältere Sicherungen werden vorher entfernt, damit die vollständigen (unverschlüsselten)
+    /// Datenexporte sich nicht im Temp-Verzeichnis ansammeln (analog [[VocabCSV]]).
     static func exportFile(groups: [VocabGroup], vocabs: [Vocab]) throws -> URL {
         let backup = VocabBackup(from: groups, vocabs: vocabs)
         let data = try encoder.encode(backup)
+
+        let tmp = FileManager.default.temporaryDirectory
+        cleanupOldExports(in: tmp)
 
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.locale = Locale(identifier: "en_US_POSIX")
         let stamp = formatter.string(from: .now)
 
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("DailyHangul-Backup-\(stamp).json")
-        try data.write(to: url, options: .atomic)
+        let url = tmp.appendingPathComponent("\(exportPrefix)\(stamp).json")
+        // `.completeFileProtection`: der vollständige Datenexport bleibt auf dem Gerät
+        // nur bei entsperrtem Zustand lesbar (auf dem Simulator ein No-Op).
+        try data.write(to: url, options: [.atomic, .completeFileProtection])
         return url
+    }
+
+    /// Entfernt zuvor erzeugte Sicherungs-Dateien (`DailyHangul-Backup-*.json`). Läuft
+    /// vor dem Schreiben der neuen Datei, berührt also nie die gerade geteilte Datei.
+    private static func cleanupOldExports(in dir: URL) {
+        let files = (try? FileManager.default.contentsOfDirectory(
+            at: dir, includingPropertiesForKeys: nil)) ?? []
+        for file in files where file.lastPathComponent.hasPrefix(exportPrefix)
+            && file.pathExtension == "json" {
+            try? FileManager.default.removeItem(at: file)
+        }
     }
 
     // MARK: - Wiederherstellen / Migration

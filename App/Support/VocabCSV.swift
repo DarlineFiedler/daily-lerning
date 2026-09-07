@@ -83,7 +83,10 @@ enum VocabCSV {
         let stamp = formatter.string(from: .now)
 
         let url = tmp.appendingPathComponent("\(exportPrefix)\(stamp).csv")
-        try export(vocabs).write(to: url, atomically: true, encoding: .utf8)
+        // Über `Data` schreiben, um `.completeFileProtection` setzen zu können
+        // (`String.write` kennt keine Protection-Option). Inhalt bleibt identischer
+        // UTF-8-Text; auf dem Simulator ist der Dateischutz ein No-Op.
+        try Data(export(vocabs).utf8).write(to: url, options: [.atomic, .completeFileProtection])
         return url
     }
 
