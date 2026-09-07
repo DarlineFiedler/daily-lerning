@@ -16,8 +16,10 @@
 "home.stat.total" = "단어";
 "home.stat.learned" = "완료";
 "home.stat.rate" = "비율";
+"home.problemWords" = "문제 단어 %d개";
 "words.all.title" = "모든 단어";
 "words.learned.title" = "학습한 단어";
+"words.problems.empty" = "문제 단어가 없습니다 🎉";
 "mastery.title" = "숙련도";
 "mastery.ring.label" = "학습 완료";
 "mastery.ranking.title" = "그룹 순위";
@@ -73,6 +75,9 @@
 "vocab.example" = "예문";
 "vocab.examplePlaceholder" = "선택 예문";
 "vocab.status" = "상태";
+"vocab.accuracy" = "정확도";
+"vocab.accuracyDetail" = "%d%% 정답 · %d회 시도";
+"vocab.problemWord" = "문제 단어";
 "vocab.details" = "세부 정보";
 "vocab.widgetToggle" = "잠금 화면에 표시";
 "vocab.emojiSection" = "기억 도우미";

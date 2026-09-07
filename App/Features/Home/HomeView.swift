@@ -371,8 +371,8 @@ struct HomeView: View {
                 }
                 .buttonStyle(.plain)
             }
-            StatusDistributionBar(counts: counts, height: 14)
-                .padding(.top, Theme.Spacing.xs)
+            StatusDistributionBar(counts: counts, height: 14).padding(.top, Theme.Spacing.xs)
+            ProblemWordsCard(count: active.filter(\.isProblemWord).count)
         }
     }
 
