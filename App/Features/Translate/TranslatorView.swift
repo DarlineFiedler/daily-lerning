@@ -19,7 +19,7 @@ struct TranslatorView: View {
                                            description: Text(L("translator.unavailable.detail")))
                 }
             }
-            .background(Theme.background.ignoresSafeArea())
+            .paperBackground()
             .navigationTitle(L("translator.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

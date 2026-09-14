@@ -59,7 +59,7 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             scrollContent
-            .background(Theme.background.ignoresSafeArea())
+            .paperBackground()
             .navigationBarHidden(true)
             .overlay(alignment: .top) {
                 AchievementUnlockBanner(achievements: goalUnlocked)

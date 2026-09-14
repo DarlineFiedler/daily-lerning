@@ -214,7 +214,7 @@ struct SettingsView: View {
             }
             .onAppear { wordPacks = WordPack.loadBundled() }
             .scrollContentBackground(.hidden)
-            .background(Theme.background.ignoresSafeArea())
+            .paperBackground()
             .navigationTitle(L("tab.settings"))
             .onChange(of: interval) { refreshWidget() }
             .onChange(of: showMeaning) { refreshWidget() }

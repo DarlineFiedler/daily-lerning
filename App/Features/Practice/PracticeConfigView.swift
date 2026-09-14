@@ -113,7 +113,7 @@ struct PracticeConfigView: View {
                 }
                 .padding(Theme.Spacing.m)
             }
-            .background(Theme.background.ignoresSafeArea())
+            .paperBackground()
             .navigationTitle(L("practice.config.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -354,7 +354,9 @@ struct PracticeConfigView: View {
             }
         }
         .padding(Theme.Spacing.m)
-        .background(.ultraThinMaterial)
+        .background(
+            Theme.paper.overlay(Rectangle().fill(Theme.hairline).frame(height: 1), alignment: .top)
+        )
     }
 
     private func toggle<T: Hashable>(_ set: inout Set<T>, _ value: T) {

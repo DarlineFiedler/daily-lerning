@@ -51,7 +51,7 @@ struct ExamContainerView: View {
                 }
             }
         }
-        .background(Theme.background.ignoresSafeArea())
+        .paperBackground()
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {

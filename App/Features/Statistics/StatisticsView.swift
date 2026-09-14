@@ -30,7 +30,7 @@ struct StatisticsView: View {
                     }
                 }
             }
-            .background(Theme.background.ignoresSafeArea())
+            .paperBackground()
             .navigationTitle(L("tab.stats"))
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

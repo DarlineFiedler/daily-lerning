@@ -49,6 +49,7 @@ struct RootView: View {
                 #if DEBUG
                 DemoSeed.insertIfRequestedAndEmpty(into: context)
                 if CommandLine.arguments.contains("-uiTestReview") { showReview = true }
+                if CommandLine.arguments.contains("-uiTestMeTab") { selectedTab = .me }
                 #endif
             }
             AppContentRefresh.onAppActive(context: context)

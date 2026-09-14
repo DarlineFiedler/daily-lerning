@@ -40,7 +40,7 @@ struct VocabDetailView: View {
                 }
                 .padding(Theme.Spacing.m)
             }
-            .background(Theme.background.ignoresSafeArea())
+            .paperBackground()
             .navigationTitle(L("vocab.details"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -71,7 +71,7 @@ struct VocabDetailView: View {
                     .font(.appDisplay(44))
                     .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.5)
-                SpeakButton(text: vocab.word, font: .appTitle2, tint: .white)
+                SpeakButton(text: vocab.word, font: .appTitle2, tint: Theme.vermillion)
             }
             Text(vocab.meaning)
                 .font(.appTitle2)

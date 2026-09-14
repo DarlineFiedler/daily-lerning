@@ -60,7 +60,7 @@ struct SearchView: View {
                 if !vocabs.isEmpty { filterBar }
                 content
             }
-            .background(Theme.background.ignoresSafeArea())
+            .paperBackground()
             .navigationTitle(L("search.title"))
             .searchable(text: $query, prompt: L("search.placeholder"))
             .onChange(of: query) { _, newValue in

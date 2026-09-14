@@ -30,7 +30,7 @@ struct AchievementsView: View {
                 .padding(Theme.Spacing.m)
                 .padding(.bottom, Theme.Spacing.xl)
             }
-            .background(Theme.background.ignoresSafeArea())
+            .paperBackground()
             .navigationTitle(L("ach.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

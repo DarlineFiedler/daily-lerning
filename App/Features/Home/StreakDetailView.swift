@@ -28,7 +28,7 @@ struct StreakDetailView: View {
                 .padding(Theme.Spacing.m)
                 .padding(.bottom, Theme.Spacing.xl)
             }
-            .background(Theme.background.ignoresSafeArea())
+            .paperBackground()
             .navigationTitle(L("streak.detail.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

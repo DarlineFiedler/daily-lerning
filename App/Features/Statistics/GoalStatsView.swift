@@ -24,7 +24,7 @@ struct GoalStatsView: View {
                 }
                 .padding(Theme.Spacing.m)
             }
-            .background(Theme.background.ignoresSafeArea())
+            .paperBackground()
             .navigationTitle(L("goalstats.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
