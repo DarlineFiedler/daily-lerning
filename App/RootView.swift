@@ -23,20 +23,21 @@ struct RootView: View {
     @State private var showStreakDetail = false
     @State private var showStoreError = false
 
+    /// Erststart abgeschlossen? Reaktiv über den geteilten UserDefaults-Store, damit der
+    /// Abschluss des Onboardings sofort in den Garten wechselt.
+    @AppStorage(OnboardingState.completedKey, store: AppGroup.defaults) private var onboardingDone = false
+
     private var dueCount: Int {
         DailyPlan.openWordCount(from: vocabs.filter { $0.group?.isArchived != true })
     }
 
     var body: some View {
         Group {
-            switch selectedTab {
-            case .garden: GardenHomeView()
-            case .me: IchView()
+            if !onboardingDone {
+                OnboardingView(onFinish: { onboardingDone = true })
+            } else {
+                mainShell
             }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            GardenTabBar(selection: $selectedTab, dueCount: dueCount, onPractice: startPractice)
         }
         .tint(Theme.vermillion)
         .id(localization.language)
@@ -51,6 +52,11 @@ struct RootView: View {
                 SeedData.removeLegacySeedIfNeeded(from: context)
                 #if DEBUG
                 DemoSeed.insertIfRequestedAndEmpty(into: context)
+                if CommandLine.arguments.contains("-uiTestOnboarding") {
+                    onboardingDone = false
+                } else if DemoSeed.isRequested {
+                    onboardingDone = true // andere Debug-Screens am Erststart vorbei
+                }
                 if CommandLine.arguments.contains("-uiTestReview") { showReview = true }
                 if CommandLine.arguments.contains("-uiTestMeTab") { selectedTab = .me }
                 if CommandLine.arguments.contains("-uiTestBoss") { showBossDebug = true }
@@ -117,6 +123,20 @@ struct RootView: View {
             .modifier(SheetEnvironment(localization: localization, sessionStore: sessionStore))
         }
         #endif
+    }
+
+    /// Das 3-Tab-Gerüst (Garten · Üben-FAB · Ich) nach abgeschlossenem Erststart.
+    private var mainShell: some View {
+        Group {
+            switch selectedTab {
+            case .garden: GardenHomeView()
+            case .me: IchView()
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            GardenTabBar(selection: $selectedTab, dueCount: dueCount, onPractice: startPractice)
+        }
     }
 
     /// Üben-FAB: liegen fällige Wörter an, startet direkt die heutige Runde; sonst

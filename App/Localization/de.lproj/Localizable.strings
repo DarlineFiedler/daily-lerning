@@ -555,3 +555,27 @@
 "practice.fab.due" = "%d fällig";
 "practice.fab.none" = "üben";
 "practice.understood" = "Verstanden — weiter";
+
+/* --- v3 Onboarding (Issue 117) --- */
+"onboarding.step" = "%1$d von %2$d";
+"onboarding.skip" = "Überspringen";
+"onboarding.next" = "Weiter";
+"onboarding.start" = "Los geht's";
+"onboarding.finish" = "In meinen Garten";
+"onboarding.welcome.title" = "Willkommen in deinem Garten";
+"onboarding.welcome.body" = "Lerne koreanische Wörter wie beim Gärtnern — jedes Wort ist eine Pflanze, die mit dem Üben wächst.";
+"onboarding.pack.title" = "Leg dein erstes Beet an";
+"onboarding.pack.body" = "Wähle ein Wortpaket zum Starten. Weitere kannst du später hinzufügen.";
+"onboarding.pack.imported" = "%d Wörter eingepflanzt 🌱";
+"onboarding.goal.title" = "Dein Tagesziel";
+"onboarding.goal.body" = "Wie viele Wörter möchtest du täglich gießen?";
+"onboarding.goal.words" = "%d / Tag";
+"onboarding.goal.none" = "Kein Ziel";
+"onboarding.reminder.title" = "Ein sanfter Anstupser";
+"onboarding.reminder.body" = "Bekomme eine tägliche Erinnerung, damit dein Garten nie austrocknet.";
+"onboarding.reminder.enable" = "Erinnerung einschalten";
+"onboarding.reminder.time" = "Uhrzeit";
+"onboarding.widget.title" = "Dein Garten auf dem Homescreen";
+"onboarding.widget.body" = "Ein Widget zeigt dir ein Wort zum Wiederholen. Füge es später über den Homescreen hinzu.";
+"onboarding.widget.enable" = "Wörter fürs Widget vorbereiten";
+"onboarding.widget.done" = "Wörter vorbereitet ✦";

@@ -555,3 +555,27 @@
 "practice.fab.due" = "%d due";
 "practice.fab.none" = "practice";
 "practice.understood" = "Understood — next";
+
+/* --- v3 Onboarding (Issue 117) --- */
+"onboarding.step" = "%1$d of %2$d";
+"onboarding.skip" = "Skip";
+"onboarding.next" = "Next";
+"onboarding.start" = "Let's go";
+"onboarding.finish" = "Enter my garden";
+"onboarding.welcome.title" = "Welcome to your garden";
+"onboarding.welcome.body" = "Learn Korean words like tending a garden — every word is a plant that grows as you practice.";
+"onboarding.pack.title" = "Plant your first bed";
+"onboarding.pack.body" = "Pick a word pack to start with. You can add more later.";
+"onboarding.pack.imported" = "Planted %d words 🌱";
+"onboarding.goal.title" = "Your daily goal";
+"onboarding.goal.body" = "How many words do you want to water each day?";
+"onboarding.goal.words" = "%d / day";
+"onboarding.goal.none" = "No goal";
+"onboarding.reminder.title" = "A gentle nudge";
+"onboarding.reminder.body" = "Get a daily reminder so your garden never dries out.";
+"onboarding.reminder.enable" = "Turn on reminder";
+"onboarding.reminder.time" = "Time";
+"onboarding.widget.title" = "Your garden on the home screen";
+"onboarding.widget.body" = "A widget shows a word to review at a glance. Add it later via the home screen.";
+"onboarding.widget.enable" = "Prepare words for the widget";
+"onboarding.widget.done" = "Words prepared ✦";

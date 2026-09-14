@@ -555,3 +555,27 @@
 "practice.fab.due" = "%d개";
 "practice.fab.none" = "연습";
 "practice.understood" = "확인 — 다음";
+
+/* --- v3 Onboarding (Issue 117) --- */
+"onboarding.step" = "%1$d / %2$d";
+"onboarding.skip" = "건너뛰기";
+"onboarding.next" = "다음";
+"onboarding.start" = "시작하기";
+"onboarding.finish" = "내 정원으로";
+"onboarding.welcome.title" = "정원에 오신 것을 환영해요";
+"onboarding.welcome.body" = "정원을 가꾸듯 한국어 단어를 배워요 — 모든 단어는 연습할수록 자라는 식물이에요.";
+"onboarding.pack.title" = "첫 화단 만들기";
+"onboarding.pack.body" = "시작할 단어 팩을 골라요. 나중에 더 추가할 수 있어요.";
+"onboarding.pack.imported" = "%d개 단어를 심었어요 🌱";
+"onboarding.goal.title" = "하루 목표";
+"onboarding.goal.body" = "하루에 몇 개의 단어에 물을 줄까요?";
+"onboarding.goal.words" = "하루 %d개";
+"onboarding.goal.none" = "목표 없음";
+"onboarding.reminder.title" = "부드러운 알림";
+"onboarding.reminder.body" = "정원이 마르지 않도록 매일 알림을 받아요.";
+"onboarding.reminder.enable" = "알림 켜기";
+"onboarding.reminder.time" = "시간";
+"onboarding.widget.title" = "홈 화면 속 정원";
+"onboarding.widget.body" = "위젯이 복습할 단어를 보여줘요. 나중에 홈 화면에서 추가하세요.";
+"onboarding.widget.enable" = "위젯용 단어 준비하기";
+"onboarding.widget.done" = "단어 준비 완료 ✦";
