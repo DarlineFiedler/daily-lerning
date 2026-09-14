@@ -9,11 +9,14 @@ options:
 
 settings:
   base:
-    MARKETING_VERSION: "2.24.0"
-    CURRENT_PROJECT_VERSION: "100"
+    MARKETING_VERSION: "3.0.0"
+    CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.0"
     CODE_SIGN_STYLE: Automatic
-    DEVELOPMENT_TEAM: ""
+    # Persönliches Free-Team von Darline – damit Xcode ▶︎ die neue Bundle-ID/App-Group
+    # der v3-App „Hangul Garten" ohne manuelles Team-Wählen signiert. CI baut mit
+    # CODE_SIGNING_ALLOWED=NO und ist davon unberührt.
+    DEVELOPMENT_TEAM: "5SXUQGZT89"
     IPHONEOS_DEPLOYMENT_TARGET: "17.0"
     ENABLE_USER_SCRIPT_SANDBOXING: YES
 
@@ -28,7 +31,7 @@ targets:
         type: folder
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.darlinefiedler.DailyHangul
+        PRODUCT_BUNDLE_IDENTIFIER: com.darlinefiedler.HangulGarten
         PRODUCT_NAME: DailyHangul
         CODE_SIGN_ENTITLEMENTS: App/DailyHangul.entitlements
         ENABLE_PREVIEWS: YES
@@ -37,12 +40,18 @@ targets:
     info:
       path: App/Info.plist
       properties:
-        CFBundleDisplayName: DailyHangul
+        CFBundleDisplayName: Hangul Garten
         CFBundleDevelopmentRegion: en
         CFBundleLocalizations:
           - en
           - de
           - ko
+        UIAppFonts:
+          - GowunBatang-Regular.ttf
+          - GowunBatang-Bold.ttf
+          - CourierPrime-Regular.ttf
+          - CourierPrime-Bold.ttf
+          - NanumPenScript-Regular.ttf
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
@@ -50,9 +59,9 @@ targets:
           - UIInterfaceOrientationPortrait
         NSSupportsLiveActivities: true
         CFBundleURLTypes:
-          - CFBundleURLName: com.darlinefiedler.DailyHangul
+          - CFBundleURLName: com.darlinefiedler.HangulGarten
             CFBundleURLSchemes:
-              - dailyhangul
+              - hangulgarten
     dependencies:
       - target: DailyHangulWidgetExtension
 
@@ -64,14 +73,14 @@ targets:
       - path: Shared
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.darlinefiedler.DailyHangul.Widget
+        PRODUCT_BUNDLE_IDENTIFIER: com.darlinefiedler.HangulGarten.Widget
         PRODUCT_NAME: DailyHangulWidget
         CODE_SIGN_ENTITLEMENTS: Widget/DailyHangulWidget.entitlements
         TARGETED_DEVICE_FAMILY: "1"
     info:
       path: Widget/Info.plist
       properties:
-        CFBundleDisplayName: DailyHangul
+        CFBundleDisplayName: Hangul Garten
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
 

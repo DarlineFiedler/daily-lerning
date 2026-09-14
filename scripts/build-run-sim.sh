@@ -16,7 +16,7 @@ set -euo pipefail
 # --- Konfiguration ---------------------------------------------------------
 SIM_NAME="${SIM_NAME:-iPhone 17}"
 SCHEME="DailyHangul"
-APP_BUNDLE_ID="com.darlinefiedler.DailyHangul"
+APP_BUNDLE_ID="com.darlinefiedler.HangulGarten"
 PROJECT="DailyHangul.xcodeproj"
 
 # Repo-Wurzel = Verzeichnis über diesem Skript.

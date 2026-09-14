@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>DailyHangul</string>
+	<string>Hangul Garten</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -28,10 +28,10 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.darlinefiedler.DailyHangul</string>
+			<string>com.darlinefiedler.HangulGarten</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>dailyhangul</string>
+				<string>hangulgarten</string>
 			</array>
 		</dict>
 	</array>
@@ -39,6 +39,14 @@
 	<string>1</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>GowunBatang-Regular.ttf</string>
+		<string>GowunBatang-Bold.ttf</string>
+		<string>CourierPrime-Regular.ttf</string>
+		<string>CourierPrime-Bold.ttf</string>
+		<string>NanumPenScript-Regular.ttf</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

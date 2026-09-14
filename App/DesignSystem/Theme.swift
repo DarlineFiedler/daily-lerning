@@ -1,59 +1,98 @@
 import SwiftUI
 
-/// Zentrale Design-Tokens (Farben, Radien, Abstände, Schatten) für das
-/// bunte, verspielte Erscheinungsbild. Ersetzt die System-„Einstellungen"-Optik.
+/// Zentrale Design-Tokens der v3-Optik **„Papier & Tinte / Gartenkarte"**.
+/// Die App sieht aus wie ein handbeschriftetes Gartentagebuch: warmes Papier,
+/// Zinnober- und Blattgrün-Akzente, kleine Radien (4pt) und **harte Offset-Schatten
+/// ohne Blur** (Print-Look).
+///
+/// Wichtig: Die bisherigen Token-Namen (`brandStart`, `background`, `Radius.card`,
+/// `Spacing`, `statusLearned` …) bleiben erhalten, damit der gesamte Bestandscode
+/// weiter kompiliert – sie zeigen nur auf die neuen Werte. Neue Screens nutzen
+/// zusätzlich die semantischen Tokens weiter unten (`paper`, `ink`, `vermillion` …).
 enum Theme {
 
-    // MARK: - Marken-Farben
+    // MARK: - Papier & Tinte – semantische Farben (adaptiv Light/Dark)
 
-    /// Primäre Markenfarbe (Indigo) – auch als AccentColor hinterlegt.
-    static let brandStart = Color(hex: "#6366F1") // Indigo
-    static let brandMid = Color(hex: "#A855F7") // Violett
-    static let brandEnd = Color(hex: "#EC4899") // Pink
+    /// App-Hintergrund: warmes Papier. Dark: tiefe Tinte.
+    static let paper = adaptive(light: "#F2E9D8", dark: "#14120F")
+    /// Karten, Listenzeilen, Eingabefelder.
+    static let card = adaptive(light: "#FBF5EA", dark: "#211E19")
+    /// Tiefere Kartenfläche (unterer Gradient der Gartenkarte).
+    static let cardDeep = adaptive(light: "#F0E4CC", dark: "#1B1813")
 
-    /// Der zentrale Marken-Verlauf für CTAs, Header und Akzente.
+    /// Primärtext (Tinte). Dark: helles Papier.
+    static let ink = adaptive(light: "#211E19", dark: "#F2E9D8")
+    /// Sekundärtext (~55 % Tinte).
+    static let inkSecondary = adaptive(light: "#211E19", dark: "#F2E9D8").opacity(0.55)
+    /// Labels/Meta (~45 % Tinte).
+    static let inkMuted = adaptive(light: "#211E19", dark: "#F2E9D8").opacity(0.45)
+    /// Deaktiviert (~40 % Tinte).
+    static let inkFaint = adaptive(light: "#211E19", dark: "#F2E9D8").opacity(0.40)
+
+    /// Rahmen aktiv (~20 %) / ruhig (~12 %).
+    static let hairline = adaptive(light: "#211E19", dark: "#F2E9D8").opacity(0.12)
+    static let hairlineStrong = adaptive(light: "#211E19", dark: "#F2E9D8").opacity(0.20)
+
+    /// Zinnober – Primär-CTA („Üben"), Streak, Notizen, Warnungen.
+    static let vermillion = Color(hex: "#B23A2C")
+    /// Zinnober dunkel – Hard-Shadow unter Primärbuttons, Fehlertext.
+    static let vermillionDark = Color(hex: "#8E2C20")
+    /// Blattgrün – Erfolg, Fortschritt, „Weiter"-Button.
+    static let leaf = Color(hex: "#4F7043")
+    /// Blattgrün dunkel – Hard-Shadow unter Erfolgsbuttons.
+    static let leafDark = Color(hex: "#3C5633")
+    /// Text auf grünem Tönungsfeld.
+    static let leafText = Color(hex: "#2F4A26")
+    /// Ocker – dritte Gruppenfarbe, Hinweise, Sticker.
+    static let ocher = Color(hex: "#C98A2B")
+    /// Nacht – dunkler Screen (Sperrbildschirm, Endgegner).
+    static let night = Color(hex: "#14120F")
+
+    // MARK: - Marken-Kompatibilität (Bestandscode)
+    // Früher Indigo→Pink-Verlauf. Jetzt auf die Papier-Palette umgemünzt, damit alte
+    // Aufrufer denselben Namen verwenden können.
+
+    static let brandStart = vermillion
+    static let brandMid = Color(hex: "#C0503F")
+    static let brandEnd = vermillionDark
+
+    /// Zentraler Akzent-Verlauf (nun ein ruhiger Zinnober-Verlauf statt Regenbogen).
     static let brandGradient = LinearGradient(
-        colors: [brandStart, brandMid, brandEnd],
+        colors: [vermillion, vermillionDark],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
 
-    /// Weicherer Verlauf für große Flächen (Home-Header).
+    /// Weicher Verlauf für große Flächen (z.B. Gartenkarte Papier → Papier-tief).
     static let brandGradientSoft = LinearGradient(
-        colors: [brandStart.opacity(0.95), brandEnd.opacity(0.95)],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
+        colors: [card, cardDeep],
+        startPoint: .top,
+        endPoint: .bottom
     )
 
-    // MARK: - Adaptive Flächenfarben (Light/Dark)
+    // MARK: - Adaptive Flächenfarben (Bestandsnamen → neue Werte)
 
-    /// App-Hintergrund – helles, leicht kühles Weiß bzw. tiefes Anthrazit.
-    static let background = adaptive(light: "#F5F5FB", dark: "#0E0E13")
+    static let background = paper
+    static let surface = card
+    static let surfaceMuted = cardDeep
 
-    /// Karten-/Oberflächenfarbe.
-    static let surface = adaptive(light: "#FFFFFF", dark: "#1B1B22")
+    // MARK: - Lern-Status-Farben (Pflanzenstufen), adaptiv
+    // Genutzt via `LearningStatus.color`. Erdige Töne passend zum Garten.
 
-    /// Leicht abgesetzte Fläche (z.B. Chips, Balken-Hintergrund).
-    static let surfaceMuted = adaptive(light: "#EEEEF5", dark: "#26262F")
+    static let statusNew = adaptive(light: "#9A8F79", dark: "#7C725E") // Samen 🌰 – neutral
+    static let statusLearning = ocher // Keimling 🌱
+    static let statusAlmostLearned = adaptive(light: "#6E8F5B", dark: "#88A874") // Blatt 🌿
+    static let statusLearned = leaf // Blüte 🌸
 
-    // MARK: - Semantische Farben (adaptiv, Light/Dark)
+    /// Signalfarbe für falsche Antworten.
+    static let wrong = vermillion
 
-    /// Lern-Status-Farben – zentral hier, damit sie in Dark Mode angepasst sind
-    /// (statt fest verdrahtet in der Models-Schicht). Genutzt via `LearningStatus.color`.
-    static let statusNew = adaptive(light: "#94A3B8", dark: "#64748B")
-    static let statusLearning = adaptive(light: "#F59E0B", dark: "#FBBF24")
-    static let statusAlmostLearned = adaptive(light: "#3B82F6", dark: "#60A5FA")
-    static let statusLearned = adaptive(light: "#22C55E", dark: "#4ADE80")
-
-    /// Signalfarbe für falsche Antworten (ersetzt hartcodiertes `Color.red`).
-    static let wrong = adaptive(light: "#EF4444", dark: "#F87171")
-
-    // MARK: - Radien
+    // MARK: - Radien (Papier: klein, keine iOS-Cards)
 
     enum Radius {
-        static let card: CGFloat = 22
-        static let button: CGFloat = 16
-        static let chip: CGFloat = 14
+        static let card: CGFloat = 4
+        static let button: CGFloat = 4
+        static let chip: CGFloat = 4
         static let pill: CGFloat = 999
     }
 
@@ -68,11 +107,14 @@ enum Theme {
     }
 
     // MARK: - Schatten
+    // Bestands-`Shadow` (weicher Blur) bleibt für Alt-Aufrufer, aber deutlich dezenter.
+    // Neue Screens nutzen `HardShadow` (siehe PaperStyle.swift) für den Print-Look.
 
     enum Shadow {
-        static let color = Color.black.opacity(0.08)
-        static let radius: CGFloat = 14
-        static let y: CGFloat = 6
+        static let color = Color(hex: "#211E19").opacity(0.09)
+        static let radius: CGFloat = 0
+        static let x: CGFloat = 2
+        static let y: CGFloat = 3
     }
 
     // MARK: - Helfer
