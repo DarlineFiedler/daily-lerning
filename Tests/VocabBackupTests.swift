@@ -247,4 +247,63 @@ final class VocabBackupTests: XCTestCase {
             }
         }
     }
+
+    // MARK: - Mehrsprachige Bedeutungen (Issue #29)
+
+    /// export → decode → apply stellt getaggte Bedeutungen verlustfrei wieder her.
+    func testRoundTripRestoresTaggedMeanings() throws {
+        let group = VocabGroup(name: "Tiere")
+        context.insert(group)
+        let dog = Vocab(word: "개", meaning: "Hund", group: group)
+        dog.meaningsByLanguage = ["en": "dog", "fr": "chien"]
+        context.insert(dog)
+        try context.save()
+
+        let data = try Data(contentsOf:
+            VocabBackup.exportFile(groups: [group], vocabs: [dog]))
+        let backup = try VocabBackup.decode(data)
+
+        // Container festhalten – sonst wird der frische Store sofort wieder freigegeben.
+        let freshContainer = PersistenceController.makeContainer(inMemory: true)
+        let freshContext = freshContainer.mainContext
+        backup.apply(into: freshContext)
+
+        let restored = try XCTUnwrap(try freshContext.fetch(FetchDescriptor<Vocab>()).first)
+        XCTAssertEqual(restored.meaningsByLanguage, ["en": "dog", "fr": "chien"])
+    }
+
+    /// Eine Sicherung aus der Version *vor* #29 (mit allen damaligen Feldern, aber ohne
+    /// `meaningsByLanguage`) bleibt lesbar: das optionale Feld wird als `nil` decodiert und
+    /// beim Anwenden zu `[:]`. `schemaVersion` bleibt 1 (kein Versionssprung).
+    func testDecodesOldBackupWithoutTaggedMeanings() throws {
+        let json = """
+        {
+          "schemaVersion": 1,
+          "exportedAt": "2024-01-01T00:00:00.000Z",
+          "groups": [],
+          "vocabs": [
+            {
+              "id": "\(UUID().uuidString)",
+              "word": "개",
+              "meaning": "Hund",
+              "statusRaw": 0,
+              "successCounter": 0,
+              "includeInWidget": false,
+              "timesPracticed": 0,
+              "totalWrongCount": 0,
+              "createdAt": "2024-01-01T00:00:00.000Z"
+            }
+          ]
+        }
+        """
+        let backup = try VocabBackup.decode(Data(json.utf8))
+        XCTAssertEqual(backup.schemaVersion, 1)
+        XCTAssertNil(backup.vocabs.first?.meaningsByLanguage) // fehlender Schlüssel → nil
+
+        let freshContainer = PersistenceController.makeContainer(inMemory: true)
+        let freshContext = freshContainer.mainContext
+        backup.apply(into: freshContext)
+        let restored = try XCTUnwrap(try freshContext.fetch(FetchDescriptor<Vocab>()).first)
+        XCTAssertEqual(restored.meaningsByLanguage, [:]) // nil → [:] beim Anwenden
+    }
 }

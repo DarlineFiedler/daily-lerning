@@ -15,6 +15,7 @@ struct PracticeConfigView: View {
     @State private var direction: PracticeDirection = .wordToMeaning
     @State private var selectedModes: Set<PracticeMode> = []
     @State private var wordLimit: Int?
+    @State private var meaningLanguage: String?
     @State private var bossMode = false
     @State private var examMode = false
     @State private var startSession = false
@@ -62,8 +63,25 @@ struct PracticeConfigView: View {
 
     private var config: PracticeConfig {
         PracticeConfig(statuses: selectedStatuses, direction: direction,
-                       modes: selectedModes, wordLimit: wordLimit, bossMode: bossMode,
+                       modes: selectedModes, wordLimit: wordLimit,
+                       meaningLanguage: meaningLanguage, bossMode: bossMode,
                        examMode: examMode)
+    }
+
+    /// In den ausgewählten Gruppen gepflegte Bedeutungssprachen (für den Sprach-Picker,
+    /// Issue #29) – unabhängig vom Status-/TOPIK-Filter, damit der Picker stabil bleibt.
+    /// Gecacht statt pro Render berechnet (die Auswertung läuft über alle Vokabeln);
+    /// wird beim Erscheinen und bei Gruppenwechsel via `refreshMeaningLanguages` erneuert.
+    @State private var availableMeaningLanguages: [String] = []
+
+    /// Erneuert die verfügbaren Sprachen und verwirft eine Auswahl, die es nach einem
+    /// Gruppenwechsel nicht mehr gibt (sonst zeigte der Picker eine leere Auswahl).
+    private func refreshMeaningLanguages() {
+        availableMeaningLanguages =
+            Set(resolvedGroups.flatMap(\.vocabs).flatMap(\.availableMeaningLanguages)).sorted()
+        if let lang = meaningLanguage, !availableMeaningLanguages.contains(lang) {
+            meaningLanguage = nil
+        }
     }
 
     /// Das für die Prüfung maßgebliche TOPIK-Niveau: nur eindeutig, wenn genau ein Level
@@ -86,7 +104,9 @@ struct PracticeConfigView: View {
                     statusSection
                     topikSection
                     focusSection
-                    DirectionModeSelection(direction: $direction, modes: $selectedModes)
+                    DirectionModeSelection(direction: $direction, modes: $selectedModes,
+                                           meaningLanguage: $meaningLanguage,
+                                           availableMeaningLanguages: availableMeaningLanguages)
                     WordLimitSelection(wordLimit: $wordLimit)
                     examSection
                     bossSection
@@ -153,7 +173,11 @@ struct PracticeConfigView: View {
                     )
                 }
             }
-            .onAppear { presets = PracticePresetStore.all() }
+            .onAppear {
+                presets = PracticePresetStore.all()
+                refreshMeaningLanguages()
+            }
+            .onChange(of: selectedGroupIDs) { refreshMeaningLanguages() }
             .alert(L("practice.config.savePreset"), isPresented: $showingSavePreset) {
                 TextField(L("practice.preset.namePrompt"), text: $newPresetName)
                 Button(L("common.cancel"), role: .cancel) {}

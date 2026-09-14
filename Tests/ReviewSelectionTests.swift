@@ -111,11 +111,25 @@ final class ReviewSelectionTests: XCTestCase {
 
     func testRoundTripPreservesSelection() {
         let original = ReviewSelection(direction: .meaningToWord, modes: [.review, .writing],
-                                       wordLimit: 10)
+                                       wordLimit: 10, meaningLanguage: "en")
         let restored = ReviewSelection.load(directionRaw: original.direction.rawValue,
                                             modesRaw: original.modesRaw,
                                             wordLimitRaw: original.wordLimitRaw,
+                                            meaningLanguageRaw: original.meaningLanguageRaw,
                                             available: allModes)
         XCTAssertEqual(restored, original)
+    }
+
+    // MARK: - Bedeutungssprache (Issue #29)
+
+    func testLoadEmptyMeaningLanguageIsNil() {
+        let selection = ReviewSelection.load(directionRaw: "mixed", modesRaw: "",
+                                             meaningLanguageRaw: "  ", available: allModes)
+        XCTAssertNil(selection.meaningLanguage)
+    }
+
+    func testMeaningLanguageRawIsEmptyForNil() {
+        XCTAssertEqual(ReviewSelection().meaningLanguageRaw, "")
+        XCTAssertEqual(ReviewSelection(meaningLanguage: "en").meaningLanguageRaw, "en")
     }
 }

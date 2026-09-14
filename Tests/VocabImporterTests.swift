@@ -175,6 +175,40 @@ final class VocabImporterTests: XCTestCase {
         XCTAssertNil(byWord["가수"] ?? nil) // ungetaggt bleibt nil
     }
 
+    // MARK: - Mehrsprachige Bedeutungen (Issue #29)
+
+    func testCarriesTaggedMeaningsIntoNewVocab() throws {
+        let rows = [VocabCSV.Row(word: "개", meaning: "Hund", example: nil,
+                                 meaningsByLanguage: ["en": "dog"])]
+        VocabImporter.importRows(rows, intoGroupNamed: "Tiere", context: context,
+                                 existingGroups: try groups())
+        try context.save()
+
+        let dog = try XCTUnwrap(try groups().first?.vocabs.first)
+        XCTAssertEqual(dog.meaningsByLanguage, ["en": "dog"])
+    }
+
+    func testReimportAddsMissingLanguageButKeepsExisting() throws {
+        let existing = VocabGroup(name: "Tiere")
+        context.insert(existing)
+        let dog = Vocab(word: "개", meaning: "Hund", group: existing)
+        dog.meaningsByLanguage = ["en": "dog"] // bereits gepflegt
+        context.insert(dog)
+        try context.save()
+
+        // Import: EN abweichend (darf NICHT überschreiben), FR neu (wird ergänzt).
+        let result = VocabImporter.importRows(
+            [VocabCSV.Row(word: "개", meaning: "Hund", example: nil,
+                          meaningsByLanguage: ["en": "puppy", "fr": "chien"])],
+            intoGroupNamed: "Tiere", context: context, existingGroups: try groups()
+        )
+        try context.save()
+
+        XCTAssertEqual(result.updated, 1)
+        XCTAssertEqual(dog.meaningsByLanguage["en"], "dog") // bestehend unangetastet
+        XCTAssertEqual(dog.meaningsByLanguage["fr"], "chien") // fehlende Sprache ergänzt
+    }
+
     /// Beim Import mehrerer Pakete in einem Rutsch (statische `existingGroups`-Liste)
     /// muss jede neu angelegte Gruppe eine eigene, aufsteigende `sortOrder` bekommen.
     func testAssignsDistinctSortOrderAcrossMultipleImports() throws {

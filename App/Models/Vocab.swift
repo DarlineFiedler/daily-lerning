@@ -6,7 +6,14 @@ import SwiftData
 final class Vocab {
     var id: UUID = UUID()
     var word: String = "" // Lernsprache (z.B. Hangul)
-    var meaning: String = "" // Muttersprache / Bedeutung
+    var meaning: String = "" // Muttersprache / Bedeutung (untagged Primär-/Fallback-Wert)
+    /// JSON-kodierte Ablage der sprachgetaggten Bedeutungen (Issue #29). Bewusst als
+    /// **String** persistiert und nicht als natives `[String: String]`-Attribut: ein
+    /// Textfeld mit Default migriert per SwiftData-Lightweight-Migration verlustfrei
+    /// (wie `word`/`meaning`), während ein neu hinzugefügtes Dictionary-Attribut die
+    /// Migration eines bestehenden Stores gefährden kann. Zugriff ausschließlich über
+    /// die berechnete `meaningsByLanguage`; nie direkt lesen/schreiben.
+    private var meaningsJSON: String = "{}"
     var example: String? // optionaler Freitext (Beispielsatz)
     /// Optionale visuelle Merkhilfe (ein Emoji). Wird beim Anlegen/Bearbeiten anhand der
     /// Bedeutung automatisch vorgeschlagen (siehe [[EmojiSuggestionService]]), ist aber
@@ -66,6 +73,77 @@ final class Vocab {
     var topikLevel: TopikLevel? {
         get { topikRaw.flatMap(TopikLevel.init(rawValue:)) }
         set { topikRaw = newValue?.rawValue }
+    }
+
+    // MARK: - Mehrsprachige Bedeutungen
+
+    /// Zusätzliche, sprachgetaggte Bedeutungen (Sprachcode → Bedeutung, z.B.
+    /// `["en": "dog"]`). Erlaubt es, zu ein und demselben Wort mehrere
+    /// Bedeutungssprachen parallel zu pflegen (Issue #29). `meaning` bleibt der untagged
+    /// Primär-/Fallback-Wert, sodass bestehende Daten und alle Consumer unverändert
+    /// weiterlaufen; getaggte Bedeutungen werden über `meaning(forLanguage:)` bevorzugt.
+    /// Berechnet aus/nach `meaningsJSON` (siehe dort, warum als String persistiert).
+    var meaningsByLanguage: [String: String] {
+        get {
+            guard let data = meaningsJSON.data(using: .utf8),
+                  let dict = try? JSONDecoder().decode([String: String].self, from: data)
+            else { return [:] }
+            return dict
+        }
+        set {
+            // Stabile Schlüsselreihenfolge → deterministischer String, keine unnötigen Writes.
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.sortedKeys]
+            if let data = try? encoder.encode(newValue),
+               let json = String(data: data, encoding: .utf8) {
+                meaningsJSON = json
+            } else {
+                meaningsJSON = "{}"
+            }
+        }
+    }
+
+    /// Normalisiert einen Sprachcode für die Verwendung als Schlüssel (getrimmt,
+    /// kleingeschrieben), damit „DE", „de " und „de" denselben Eintrag treffen.
+    static func normalizeLanguageCode(_ code: String) -> String {
+        code.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    /// Bedeutung in der gewünschten Sprache. `code == nil` (oder leer) liefert die
+    /// untagged Primärbedeutung (`meaning`). Ist für die gewählte Sprache keine
+    /// (nicht-leere) Bedeutung gepflegt, wird auf `meaning` zurückgefallen (Issue #29,
+    /// Entscheidung „Fallback auf vorhandene Sprache").
+    func meaning(forLanguage code: String?) -> String {
+        guard let code else { return meaning }
+        let normalized = Self.normalizeLanguageCode(code)
+        guard !normalized.isEmpty,
+              let tagged = meaningsByLanguage[normalized],
+              !tagged.isEmpty else { return meaning }
+        return tagged
+    }
+
+    /// Sortierte Liste der Sprachcodes, für die eine nicht-leere getaggte Bedeutung
+    /// existiert. Die untagged `meaning` ist hier bewusst nicht enthalten – sie ist der
+    /// Fallback, keine benannte Sprache.
+    var availableMeaningLanguages: [String] {
+        meaningsByLanguage
+            .filter { !$0.value.isEmpty }
+            .keys
+            .sorted()
+    }
+
+    /// Setzt (oder entfernt) die getaggte Bedeutung für eine Sprache. Ein leerer Text
+    /// entfernt den Eintrag, damit `availableMeaningLanguages` nicht auf leere Werte
+    /// zeigt. Der Sprachcode wird normalisiert (siehe `normalizeLanguageCode`).
+    func setMeaning(_ text: String, forLanguage code: String) {
+        let key = Self.normalizeLanguageCode(code)
+        guard !key.isEmpty else { return }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            meaningsByLanguage[key] = nil
+        } else {
+            meaningsByLanguage[key] = trimmed
+        }
     }
 
     var hasBeenPracticed: Bool { timesPracticed > 0 }

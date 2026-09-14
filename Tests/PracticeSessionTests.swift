@@ -218,6 +218,48 @@ final class PracticeSessionTests: XCTestCase {
         XCTAssertTrue(session.items.allSatisfy { $0.direction == .wordToMeaning })
     }
 
+    // MARK: - Bedeutungssprache pro Session (Issue #29)
+
+    /// Mit gewählter Bedeutungssprache liefert die Session Frage/Antwort in dieser
+    /// Sprache; fehlt sie an einer Vokabel, greift der Fallback auf die Primärbedeutung.
+    func testBuildItemsUsesSessionMeaningLanguageWithFallback() throws {
+        let group = makeGroup("Tiere")
+        let dog = Vocab(word: "개", meaning: "Hund", group: group)
+        dog.meaningsByLanguage = ["en": "dog"]
+        let cat = Vocab(word: "고양이", meaning: "Katze", group: group) // keine EN-Bedeutung
+        context.insert(dog)
+        context.insert(cat)
+
+        let items = PracticeSession.buildItems(
+            from: [dog, cat], distractorPool: [dog, cat],
+            config: PracticeConfig(direction: .wordToMeaning, modes: [.review],
+                                   meaningLanguage: "en")
+        )
+
+        let dogItem = try XCTUnwrap(items.first { $0.vocab.id == dog.id })
+        XCTAssertEqual(dogItem.prompt(), "개")
+        XCTAssertEqual(dogItem.answer(), "dog") // EN-Bedeutung bevorzugt
+
+        let catItem = try XCTUnwrap(items.first { $0.vocab.id == cat.id })
+        XCTAssertEqual(catItem.answer(), "Katze") // Fallback auf Primärbedeutung
+    }
+
+    /// Ohne gewählte Sprache (nil) bleibt es bei der untagged Primärbedeutung, auch wenn
+    /// getaggte Bedeutungen existieren.
+    func testBuildItemsDefaultLanguageUsesPrimaryMeaning() throws {
+        let group = makeGroup("Tiere")
+        let dog = Vocab(word: "개", meaning: "Hund", group: group)
+        dog.meaningsByLanguage = ["en": "dog"]
+        context.insert(dog)
+
+        let items = PracticeSession.buildItems(
+            from: [dog], distractorPool: [dog],
+            config: PracticeConfig(direction: .wordToMeaning, modes: [.review])
+        )
+        let dogItem = try XCTUnwrap(items.first)
+        XCTAssertEqual(dogItem.answer(), "Hund")
+    }
+
     /// Distraktoren werden bevorzugt aus den Wörtern des laufenden Durchgangs
     /// gezogen: 4 Session-Wörter reichen exakt für Ziel + 3 Distraktoren, obwohl
     /// der Pool viel größer ist – jede Option muss ein Session-Wort sein.

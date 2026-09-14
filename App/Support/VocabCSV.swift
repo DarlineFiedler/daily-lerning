@@ -13,54 +13,128 @@ enum VocabCSV {
         /// Optionale TOPIK-Einstufung aus der 4. Spalte. `nil`, wenn die Spalte fehlt
         /// oder einen unbekannten Wert enthält (Default für alle bisherigen Dateien).
         let topik: TopikLevel?
+        /// Zusätzliche, sprachgetaggte Bedeutungen (Sprachcode → Bedeutung), nur aus dem
+        /// header-gesteuerten Format mit `meaning:<code>`-Spalten. Leer für das bisherige
+        /// positionsbasierte Single-Language-Format (Issue #29).
+        let meaningsByLanguage: [String: String]
 
-        init(word: String, meaning: String, example: String?, topik: TopikLevel? = nil) {
+        init(word: String, meaning: String, example: String?, topik: TopikLevel? = nil,
+             meaningsByLanguage: [String: String] = [:]) {
             self.word = word
             self.meaning = meaning
             self.example = example
             self.topik = topik
+            self.meaningsByLanguage = meaningsByLanguage
         }
     }
 
-    /// Zerlegt eingefügten Text in Zeilen. Leere Zeilen, Zeilen ohne Bedeutung und
-    /// eine evtl. vorhandene Kopfzeile (`word;meaning;…`, z.B. aus dem Export) werden
+    /// Zerlegt eingefügten Text in Zeilen. Leere Zeilen und Zeilen ohne Bedeutung werden
     /// übersprungen. Erkennt das Trennzeichen pro Zeile automatisch und respektiert
     /// per `"…"` gequotete Felder (inkl. `""`-Escaping), sodass ein Export wieder
     /// eingelesen werden kann. (Feldinterne Zeilenumbrüche werden nicht unterstützt.)
+    ///
+    /// Zwei Formate werden unterstützt:
+    /// - **Header-gesteuert**: Ist die erste Zeile eine Kopfzeile mit den Spalten `word`
+    ///   und `meaning` (z.B. aus dem Export), werden die Spalten benannt zugeordnet. So
+    ///   lassen sich sprachgetaggte Bedeutungen über `meaning:<code>`-Spalten (z.B.
+    ///   `meaning:en`) einlesen (Issue #29). Zusätzliche Spalten (`group`, `status`)
+    ///   werden ignoriert.
+    /// - **Positionsbasiert** (bisheriges Single-Language-Format): ohne Kopfzeile gilt die
+    ///   feste Reihenfolge Wort, Bedeutung, Beispiel (optional), TOPIK (optional).
     static func parse(_ text: String) -> [Row] {
-        text.split(whereSeparator: \.isNewline).compactMap { line -> Row? in
-            let raw = String(line).trimmingCharacters(in: .whitespaces)
-            guard !raw.isEmpty else { return nil }
+        let lines = text.split(whereSeparator: \.isNewline)
+            .map { String($0).trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        guard let first = lines.first else { return [] }
 
-            let fields = splitFields(raw, delimiter: delimiter(for: raw))
-                .map { $0.trimmingCharacters(in: .whitespaces) }
-                .map(deneutralizeFormula)
-
-            guard fields.count >= 2 else { return nil }
-            let word = fields[0]
-            let meaning = fields[1]
-            guard !word.isEmpty, !meaning.isEmpty else { return nil }
-            // Kopfzeile des Exports überspringen (nicht als Vokabel importieren).
-            guard !(word.lowercased() == "word" && meaning.lowercased() == "meaning") else { return nil }
-            let example = fields.count >= 3 && !fields[2].isEmpty ? fields[2] : nil
-            let topik = fields.count >= 4 ? TopikLevel(csv: fields[3]) : nil
-            return Row(word: word, meaning: meaning, example: example, topik: topik)
+        if let header = headerMapping(for: first) {
+            return lines.dropFirst().compactMap { parseRow($0, header: header) }
         }
+        return lines.compactMap(parsePositionalRow)
+    }
+
+    /// Baut aus einer möglichen Kopfzeile eine Spaltenname→Index-Zuordnung. Gibt `nil`
+    /// zurück, wenn die Zeile keine Kopfzeile ist (kein `word`- **und** `meaning`-Feld) –
+    /// dann greift der positionsbasierte Pfad. Spaltennamen werden kleingeschrieben.
+    private static func headerMapping(for line: String) -> [String: Int]? {
+        let names = splitFields(line, delimiter: delimiter(for: line))
+            .map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
+        var map: [String: Int] = [:]
+        for (index, name) in names.enumerated() where !name.isEmpty && map[name] == nil {
+            map[name] = index
+        }
+        guard map["word"] != nil, map["meaning"] != nil else { return nil }
+        return map
+    }
+
+    /// Liest eine Datenzeile im header-gesteuerten Format anhand der Spaltenzuordnung.
+    private static func parseRow(_ raw: String, header: [String: Int]) -> Row? {
+        let fields = splitFields(raw, delimiter: delimiter(for: raw))
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .map(deneutralizeFormula)
+
+        func field(_ name: String) -> String? {
+            guard let index = header[name], index < fields.count else { return nil }
+            let value = fields[index]
+            return value.isEmpty ? nil : value
+        }
+
+        guard let word = field("word"), let meaning = field("meaning") else { return nil }
+        let example = field("example")
+        let topik = field("topik").flatMap { TopikLevel(csv: $0) }
+
+        var meanings: [String: String] = [:]
+        for (name, index) in header where name.hasPrefix("meaning:") {
+            let code = Vocab.normalizeLanguageCode(String(name.dropFirst("meaning:".count)))
+            guard !code.isEmpty, index < fields.count else { continue }
+            let value = fields[index]
+            guard !value.isEmpty else { continue }
+            meanings[code] = value
+        }
+
+        return Row(word: word, meaning: meaning, example: example, topik: topik,
+                   meaningsByLanguage: meanings)
+    }
+
+    /// Liest eine Zeile im positionsbasierten Single-Language-Format (Wort, Bedeutung,
+    /// Beispiel, TOPIK). Überspringt eine evtl. mitkopierte `word;meaning`-Kopfzeile.
+    private static func parsePositionalRow(_ raw: String) -> Row? {
+        let fields = splitFields(raw, delimiter: delimiter(for: raw))
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .map(deneutralizeFormula)
+
+        guard fields.count >= 2 else { return nil }
+        let word = fields[0]
+        let meaning = fields[1]
+        guard !word.isEmpty, !meaning.isEmpty else { return nil }
+        // Kopfzeile des Exports überspringen (nicht als Vokabel importieren).
+        guard !(word.lowercased() == "word" && meaning.lowercased() == "meaning") else { return nil }
+        let example = fields.count >= 3 && !fields[2].isEmpty ? fields[2] : nil
+        let topik = fields.count >= 4 ? TopikLevel(csv: fields[3]) : nil
+        return Row(word: word, meaning: meaning, example: example, topik: topik)
     }
 
     /// Serialisiert Vokabeln als CSV (Semikolon-getrennt), inkl. Header.
+    ///
+    /// Enthält keine Vokabel sprachgetaggte Bedeutungen, entsteht **exakt** das bisherige
+    /// Single-Language-Format. Sobald mindestens eine getaggte Sprache vorkommt, wird je
+    /// Sprache eine `meaning:<code>`-Spalte ergänzt (stabil sortiert); der Re-Import über
+    /// `parse` erkennt dieses Format am Header (Issue #29).
     static func export(_ vocabs: [Vocab]) -> String {
-        var lines = ["word;meaning;example;topik;group;status"]
+        let languages: [String] = Set(vocabs.flatMap(\.availableMeaningLanguages)).sorted()
+
+        var headerColumns: [String] = ["word", "meaning"]
+        headerColumns += languages.map { "meaning:\($0)" }
+        headerColumns += ["example", "topik", "group", "status"]
+
+        // Auch die Kopfzeile escapen: ein (frei eingegebener) Sprachcode könnte das
+        // Trennzeichen/Quote enthalten und sonst die Spaltenstruktur zerreißen.
+        var lines: [String] = [headerColumns.map(escape).joined(separator: ";")]
         for v in vocabs {
-            let fields = [
-                v.word,
-                v.meaning,
-                v.example ?? "",
-                v.topikLevel?.abbreviation ?? "",
-                v.group?.name ?? "",
-                L(v.status.titleKey)
-            ].map(escape)
-            lines.append(fields.joined(separator: ";"))
+            var fields: [String] = [v.word, v.meaning]
+            fields += languages.map { v.meaningsByLanguage[$0] ?? "" }
+            fields += [v.example ?? "", v.topikLevel?.abbreviation ?? "", v.group?.name ?? "", L(v.status.titleKey)]
+            lines.append(fields.map(escape).joined(separator: ";"))
         }
         return lines.joined(separator: "\n")
     }
