@@ -84,6 +84,7 @@
 "vocab.translationCode" = "Code";
 "vocab.translationMeaning" = "Bedeutung";
 "vocab.translationAdd" = "Übersetzung hinzufügen";
+"vocab.translationIncomplete" = "Jede Übersetzung braucht Sprachcode UND Bedeutung – unvollständige Zeilen werden sonst verworfen.";
 "vocab.emojiSection" = "Merkhilfe";
 "vocab.emojiPlaceholder" = "Emoji";
 "vocab.emojiHint" = "Ein optionales Emoji als visuelle Eselsbrücke. Wird passend zur Bedeutung vorgeschlagen und kann geändert oder entfernt werden.";

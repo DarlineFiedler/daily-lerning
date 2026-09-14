@@ -127,7 +127,9 @@ enum VocabCSV {
         headerColumns += languages.map { "meaning:\($0)" }
         headerColumns += ["example", "topik", "group", "status"]
 
-        var lines: [String] = [headerColumns.joined(separator: ";")]
+        // Auch die Kopfzeile escapen: ein (frei eingegebener) Sprachcode könnte das
+        // Trennzeichen/Quote enthalten und sonst die Spaltenstruktur zerreißen.
+        var lines: [String] = [headerColumns.map(escape).joined(separator: ";")]
         for v in vocabs {
             var fields: [String] = [v.word, v.meaning]
             fields += languages.map { v.meaningsByLanguage[$0] ?? "" }

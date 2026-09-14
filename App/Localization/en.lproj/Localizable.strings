@@ -84,6 +84,7 @@
 "vocab.translationCode" = "Code";
 "vocab.translationMeaning" = "Meaning";
 "vocab.translationAdd" = "Add translation";
+"vocab.translationIncomplete" = "Each translation needs both a language code AND a meaning – incomplete rows are discarded otherwise.";
 "vocab.emojiSection" = "Memory aid";
 "vocab.emojiPlaceholder" = "Emoji";
 "vocab.emojiHint" = "An optional emoji as a visual mnemonic. Suggested from the meaning; you can change or remove it.";

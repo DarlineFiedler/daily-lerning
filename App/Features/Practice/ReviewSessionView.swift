@@ -28,9 +28,8 @@ struct ReviewSessionView: View {
     @State private var meaningLanguage: String?
 
     /// Im Wortschatz gepflegte Bedeutungssprachen (für den Sprach-Picker, Issue #29).
-    private var availableMeaningLanguages: [String] {
-        Set(allVocabs.flatMap(\.availableMeaningLanguages)).sorted()
-    }
+    /// Gecacht statt pro Render über alle Vokabeln berechnet; in `loadSelection` gefüllt.
+    @State private var availableMeaningLanguages: [String] = []
 
     /// Heute noch offene Wörter (lernen bzw. wiederholen) – gleiche Logik wie die Home-Karte.
     private var dueVocabs: [Vocab] { DailyPlan.today(from: allVocabs).words }
@@ -105,7 +104,11 @@ struct ReviewSessionView: View {
         direction = selection.direction
         modes = selection.modes
         wordLimit = selection.wordLimit
+        // Verfügbare Sprachen einmalig cachen; eine gespeicherte Sprache, die es nicht
+        // (mehr) gibt, auf „Standard" zurücksetzen (sonst zeigte der Picker eine leere Auswahl).
+        availableMeaningLanguages = Set(allVocabs.flatMap(\.availableMeaningLanguages)).sorted()
         meaningLanguage = selection.meaningLanguage
+            .flatMap { availableMeaningLanguages.contains($0) ? $0 : nil }
     }
 
     /// Merkt die Auswahl und startet die Session über die heute fälligen Wörter.

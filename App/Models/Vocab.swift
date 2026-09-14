@@ -7,14 +7,13 @@ final class Vocab {
     var id: UUID = UUID()
     var word: String = "" // Lernsprache (z.B. Hangul)
     var meaning: String = "" // Muttersprache / Bedeutung (untagged Primär-/Fallback-Wert)
-    /// Zusätzliche, sprachgetaggte Bedeutungen (Sprachcode → Bedeutung, z.B.
-    /// `["en": "dog"]`). Erlaubt es, zu ein und demselben Wort mehrere
-    /// Bedeutungssprachen parallel zu pflegen (Issue #29). `meaning` bleibt der
-    /// untagged Primär-/Fallback-Wert, sodass bestehende Daten und alle Consumer
-    /// unverändert weiterlaufen; getaggte Bedeutungen werden über
-    /// `meaning(forLanguage:)` bevorzugt herangezogen. Additiv eingeführt; SwiftData
-    /// migriert bestehende Stores automatisch (Default `[:]`).
-    var meaningsByLanguage: [String: String] = [:]
+    /// JSON-kodierte Ablage der sprachgetaggten Bedeutungen (Issue #29). Bewusst als
+    /// **String** persistiert und nicht als natives `[String: String]`-Attribut: ein
+    /// Textfeld mit Default migriert per SwiftData-Lightweight-Migration verlustfrei
+    /// (wie `word`/`meaning`), während ein neu hinzugefügtes Dictionary-Attribut die
+    /// Migration eines bestehenden Stores gefährden kann. Zugriff ausschließlich über
+    /// die berechnete `meaningsByLanguage`; nie direkt lesen/schreiben.
+    private var meaningsJSON: String = "{}"
     var example: String? // optionaler Freitext (Beispielsatz)
     /// Optionale visuelle Merkhilfe (ein Emoji). Wird beim Anlegen/Bearbeiten anhand der
     /// Bedeutung automatisch vorgeschlagen (siehe [[EmojiSuggestionService]]), ist aber
@@ -77,6 +76,32 @@ final class Vocab {
     }
 
     // MARK: - Mehrsprachige Bedeutungen
+
+    /// Zusätzliche, sprachgetaggte Bedeutungen (Sprachcode → Bedeutung, z.B.
+    /// `["en": "dog"]`). Erlaubt es, zu ein und demselben Wort mehrere
+    /// Bedeutungssprachen parallel zu pflegen (Issue #29). `meaning` bleibt der untagged
+    /// Primär-/Fallback-Wert, sodass bestehende Daten und alle Consumer unverändert
+    /// weiterlaufen; getaggte Bedeutungen werden über `meaning(forLanguage:)` bevorzugt.
+    /// Berechnet aus/nach `meaningsJSON` (siehe dort, warum als String persistiert).
+    var meaningsByLanguage: [String: String] {
+        get {
+            guard let data = meaningsJSON.data(using: .utf8),
+                  let dict = try? JSONDecoder().decode([String: String].self, from: data)
+            else { return [:] }
+            return dict
+        }
+        set {
+            // Stabile Schlüsselreihenfolge → deterministischer String, keine unnötigen Writes.
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.sortedKeys]
+            if let data = try? encoder.encode(newValue),
+               let json = String(data: data, encoding: .utf8) {
+                meaningsJSON = json
+            } else {
+                meaningsJSON = "{}"
+            }
+        }
+    }
 
     /// Normalisiert einen Sprachcode für die Verwendung als Schlüssel (getrimmt,
     /// kleingeschrieben), damit „DE", „de " und „de" denselben Eintrag treffen.

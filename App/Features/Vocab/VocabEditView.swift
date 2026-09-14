@@ -75,7 +75,25 @@ struct VocabEditView: View {
 
     private var canSave: Bool {
         !word.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !meaning.trimmingCharacters(in: .whitespaces).isEmpty
+        !meaning.trimmingCharacters(in: .whitespaces).isEmpty &&
+        !hasIncompleteTranslation
+    }
+
+    /// Eine Übersetzungszeile ist „halb ausgefüllt", wenn genau eines von Code/Bedeutung
+    /// gesetzt ist. Solche Zeilen würden beim Speichern still verworfen (`setMeaning`
+    /// ignoriert leere Codes, ein leerer Text entfernt den Eintrag) – daher blockieren sie
+    /// das Speichern und werden im Abschnitt als Hinweis markiert (Issue #29).
+    private var hasIncompleteTranslation: Bool {
+        Self.hasIncompleteTranslation(translations.map { ($0.code, $0.text) })
+    }
+
+    /// Testbare Reinform der Prüfung (siehe `hasIncompleteTranslation`).
+    static func hasIncompleteTranslation(_ rows: [(code: String, text: String)]) -> Bool {
+        rows.contains { row in
+            let code = row.code.trimmingCharacters(in: .whitespacesAndNewlines)
+            let text = row.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            return code.isEmpty != text.isEmpty
+        }
     }
 
     /// Berechnet das aktuelle Wort-Duplikat gegen den gecachten Bestand (eigene Vokabel
@@ -225,7 +243,12 @@ struct VocabEditView: View {
         } header: {
             Text(L("vocab.translationsSection"))
         } footer: {
-            Text(L("vocab.translationsHint"))
+            if hasIncompleteTranslation {
+                Label(L("vocab.translationIncomplete"), systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(Theme.wrong)
+            } else {
+                Text(L("vocab.translationsHint"))
+            }
         }
     }
 

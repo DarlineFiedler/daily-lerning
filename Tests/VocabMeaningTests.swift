@@ -62,4 +62,30 @@ final class VocabMeaningTests: XCTestCase {
         v.setMeaning("dog", forLanguage: "   ")
         XCTAssertTrue(v.meaningsByLanguage.isEmpty)
     }
+
+    // MARK: - JSON-Backing (Persistenz)
+
+    /// Der berechnete Zugriff serialisiert/parst verlustfrei – auch mit mehreren Sprachen.
+    func testMeaningsByLanguageRoundTripsThroughJSONBacking() {
+        let v = Vocab(word: "개", meaning: "Hund")
+        v.meaningsByLanguage = ["en": "dog", "fr": "chien"]
+        XCTAssertEqual(v.meaningsByLanguage, ["en": "dog", "fr": "chien"])
+        v.meaningsByLanguage = [:]
+        XCTAssertEqual(v.meaningsByLanguage, [:])
+    }
+
+    // MARK: - Editor: unvollständige Übersetzungszeilen (Issue #29)
+
+    func testIncompleteTranslationDetectsHalfFilledRows() {
+        XCTAssertTrue(VocabEditView.hasIncompleteTranslation([("en", "")])) // Code ohne Text
+        XCTAssertTrue(VocabEditView.hasIncompleteTranslation([("", "dog")])) // Text ohne Code
+        XCTAssertTrue(VocabEditView.hasIncompleteTranslation([(" ", "dog")])) // nur Whitespace-Code
+    }
+
+    func testIncompleteTranslationAcceptsCompleteOrEmptyRows() {
+        XCTAssertFalse(VocabEditView.hasIncompleteTranslation([]))
+        XCTAssertFalse(VocabEditView.hasIncompleteTranslation([("en", "dog")]))
+        XCTAssertFalse(VocabEditView.hasIncompleteTranslation([("", "")])) // ganz leer = ok (wird verworfen)
+        XCTAssertFalse(VocabEditView.hasIncompleteTranslation([("en", "dog"), ("fr", "chien")]))
+    }
 }

@@ -243,4 +243,18 @@ final class VocabCSVTests: XCTestCase {
         XCTAssertEqual(rows, [VocabCSV.Row(word: "개", meaning: "Hund", example: "귀엽다")])
         XCTAssertEqual(rows.first?.meaningsByLanguage, [:])
     }
+
+    func testExportEscapesLanguageCodeContainingDelimiter() throws {
+        // Ein (frei eingegebener) Sprachcode mit Trennzeichen darf die Spaltenstruktur
+        // nicht zerreißen: die Kopfzeile wird gequotet, der Re-Import bleibt korrekt.
+        let v = Vocab(word: "개", meaning: "Hund")
+        v.meaningsByLanguage = ["e;n": "dog"]
+        let csv = VocabCSV.export([v])
+        XCTAssertTrue(csv.contains("\"meaning:e;n\""), "Kopfzeilen-Spalte muss gequotet sein")
+
+        let row = try XCTUnwrap(VocabCSV.parse(csv).first)
+        XCTAssertEqual(row.word, "개")
+        XCTAssertEqual(row.meaning, "Hund") // keine Spaltenverschiebung
+        XCTAssertEqual(row.meaningsByLanguage["e;n"], "dog")
+    }
 }

@@ -84,6 +84,7 @@
 "vocab.translationCode" = "코드";
 "vocab.translationMeaning" = "의미";
 "vocab.translationAdd" = "번역 추가";
+"vocab.translationIncomplete" = "각 번역에는 언어 코드와 의미가 모두 필요합니다. 그렇지 않으면 불완전한 행은 삭제됩니다.";
 "vocab.emojiSection" = "기억 도우미";
 "vocab.emojiPlaceholder" = "이모지";
 "vocab.emojiHint" = "뜻을 시각적으로 기억하기 위한 선택 이모지입니다. 뜻에 따라 자동 제안되며 변경하거나 삭제할 수 있습니다.";
