@@ -65,18 +65,22 @@ struct ClozeView: View {
         VStack(spacing: Theme.Spacing.s) {
             Text(sentence)
                 .font(.appTitle2)
+                .foregroundStyle(Theme.ink)
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.5)
             Text(L("practice.cloze.meaningHint", item.vocab.meaning))
-                .font(.appHeadline)
-                .opacity(0.9)
+                .font(.appMono(14))
+                .foregroundStyle(Theme.inkSecondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, Theme.Spacing.xl + 8)
         .padding(.horizontal, Theme.Spacing.m)
-        .background(Theme.brandGradientSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .foregroundStyle(.white)
-        .shadow(color: Theme.brandStart.opacity(0.3), radius: 16, y: 8)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+                .strokeBorder(Theme.hairline, lineWidth: 1)
+        )
+        .hardShadow(x: 3, y: 4)
     }
 
     private var resultBanner: some View {

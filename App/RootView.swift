@@ -48,6 +48,7 @@ struct RootView: View {
                 SeedData.removeLegacySeedIfNeeded(from: context)
                 #if DEBUG
                 DemoSeed.insertIfRequestedAndEmpty(into: context)
+                if CommandLine.arguments.contains("-uiTestReview") { showReview = true }
                 #endif
             }
             AppContentRefresh.onAppActive(context: context)
@@ -76,13 +77,13 @@ struct RootView: View {
             }
         }
         .sheet(item: $deepLink) { item in
-            WordRevealSheet(wordID: item.id)
+            WordRevealSheet(wordID: item.id).modifier(SheetEnvironment(localization: localization, sessionStore: sessionStore))
         }
         .sheet(isPresented: $showReview) {
-            ReviewSessionView()
+            ReviewSessionView().modifier(SheetEnvironment(localization: localization, sessionStore: sessionStore))
         }
         .sheet(isPresented: $showPracticeConfig) {
-            PracticeConfigView()
+            PracticeConfigView().modifier(SheetEnvironment(localization: localization, sessionStore: sessionStore))
         }
         .sheet(isPresented: $showStreakDetail) {
             StreakDetailView(streak: StreakStore.displayStreak(),
@@ -91,6 +92,7 @@ struct RootView: View {
                              maxJokers: StreakStore.maxJokers,
                              jokerUses: StreakStore.jokerUses,
                              activeDays: StreakStore.activeDays)
+                .modifier(SheetEnvironment(localization: localization, sessionStore: sessionStore))
         }
     }
 
@@ -102,6 +104,22 @@ struct RootView: View {
         } else {
             showPracticeConfig = true
         }
+    }
+}
+
+/// Reicht die für Sheets nötige Umgebung (Sprache, Locale, Session-Store) explizit
+/// weiter. Bei der eigenen 3-Tab-Shell erben Sheets die `.environment`-Objekte nicht
+/// zuverlässig – ohne diese Re-Injektion stürzt z.B. ReviewSessionView
+/// (`@Environment(ActiveSessionStore.self)`) beim Öffnen ab.
+private struct SheetEnvironment: ViewModifier {
+    let localization: LocalizationManager
+    let sessionStore: ActiveSessionStore
+
+    func body(content: Content) -> some View {
+        content
+            .environment(localization)
+            .environment(sessionStore)
+            .environment(\.locale, localization.localeForFormatting)
     }
 }
 

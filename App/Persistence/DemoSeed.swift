@@ -22,6 +22,9 @@ enum DemoSeed {
         guard existing == 0 else { return }
 
         let now = Date.now
+        // „Gestern" geübt → Wörter sind heute wieder fällig (DailyPlan ist tagesbasiert),
+        // damit sich Garten-Fälligkeit und Übungsrunde mit Inhalt testen lassen.
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now) ?? now
         let old = Calendar.current.date(byAdding: .day, value: -9, to: now) ?? now
 
         // (Name, Farbe, [(Wort, Bedeutung, Stufe)], zuletzt geübt)
@@ -56,7 +59,7 @@ enum DemoSeed {
                 vocab.status = entry.2
                 vocab.successCounter = entry.2.rawValue
                 vocab.timesPracticed = entry.2 == .new ? 0 : 3
-                vocab.lastPracticedAt = entry.2 == .new ? nil : bed.3
+                vocab.lastPracticedAt = entry.2 == .new ? nil : (bed.3 == old ? old : yesterday)
                 context.insert(vocab)
             }
         }

@@ -22,7 +22,7 @@ struct StatTile: View {
                 .contentTransition(.numericText())
             Text(label)
                 .font(.appCaption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.inkSecondary)
                 .lineLimit(2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

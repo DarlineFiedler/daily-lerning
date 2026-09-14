@@ -34,7 +34,7 @@ struct PracticeContainerView: View {
                 }
             }
         }
-        .background(Theme.background.ignoresSafeArea())
+        .paperBackground()
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -136,25 +136,28 @@ struct PracticeProgressHeader: View {
 
     var body: some View {
         VStack(spacing: Theme.Spacing.s) {
-            HStack {
-                Text("\(session.position) / \(session.total)")
-                    .font(.appSubheadline.weight(.semibold))
-                Spacer()
-                Label("\(session.correctCount)", systemImage: "checkmark")
-                    .foregroundStyle(LearningStatus.learned.color)
-                Label("\(session.wrongCount)", systemImage: "xmark")
-                    .foregroundStyle(Theme.wrong)
-            }
-            .font(.appCaption.weight(.medium))
-
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Theme.surfaceMuted)
-                    Capsule().fill(Theme.brandGradient)
-                        .frame(width: geo.size.width * progress)
+            HStack(spacing: Theme.Spacing.m) {
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Theme.ink.opacity(0.10))
+                        Capsule().fill(Theme.leaf)
+                            .frame(width: geo.size.width * progress)
+                    }
                 }
+                .frame(height: 8)
+                Text("\(session.position) / \(session.total)")
+                    .font(.appMono(12))
+                    .foregroundStyle(Theme.inkSecondary)
+                    .fixedSize()
             }
-            .frame(height: 8)
+            HStack(spacing: Theme.Spacing.m) {
+                Label("\(session.correctCount)", systemImage: "checkmark")
+                    .foregroundStyle(Theme.leaf)
+                Label("\(session.wrongCount)", systemImage: "xmark")
+                    .foregroundStyle(Theme.vermillion)
+                Spacer()
+            }
+            .font(.appMono(11))
         }
         .padding(.horizontal, Theme.Spacing.m)
         .padding(.top, Theme.Spacing.s)
@@ -176,13 +179,13 @@ struct PracticeSummaryView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.Spacing.l) {
-                Image(systemName: "party.popper.fill")
-                    .font(.system(size: 64))
-                    .foregroundStyle(Theme.brandGradient)
+                Text("🌷🌸🌼")
+                    .font(.system(size: 56))
                     .scaleEffect(appeared ? 1 : 0.4)
                     .rotationEffect(.degrees(appeared ? 0 : -20))
                 Text(L("practice.finished"))
                     .font(.appLargeTitle)
+                    .foregroundStyle(Theme.ink)
 
                 if let newLevel = session.newLevel {
                     XPLevelUpBanner(level: newLevel)
@@ -317,24 +320,28 @@ struct PromptCard: View {
         VStack(spacing: Theme.Spacing.s) {
             HStack(spacing: Theme.Spacing.s) {
                 Text(text)
-                    .font(.appDisplay(44))
+                    .font(.appDisplay(52))
+                    .foregroundStyle(Theme.ink)
                     .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.5)
                 if let spokenText {
-                    SpeakButton(text: spokenText, font: .appTitle2, tint: .white)
+                    SpeakButton(text: spokenText, font: .appTitle2, tint: Theme.vermillion)
                 }
             }
             if let subtitle {
                 Text(subtitle)
-                    .font(.appHeadline)
-                    .opacity(0.9)
+                    .font(.appMono(14))
+                    .foregroundStyle(Theme.inkSecondary)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, Theme.Spacing.xl + 8)
+        .padding(.vertical, Theme.Spacing.xl + 12)
         .padding(.horizontal, Theme.Spacing.m)
-        .background(Theme.brandGradientSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .foregroundStyle(.white)
-        .shadow(color: Theme.brandStart.opacity(0.3), radius: 16, y: 8)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+                .strokeBorder(Theme.hairline, lineWidth: 1)
+        )
+        .hardShadow(x: 3, y: 4)
     }
 }

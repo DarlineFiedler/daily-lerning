@@ -47,18 +47,18 @@ struct ReviewSwipeView: View {
                     .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.5)
                 if item.direction == .wordToMeaning {
-                    SpeakButton(text: item.vocab.word, font: .appTitle2, tint: .white)
+                    SpeakButton(text: item.vocab.word, font: .appTitle2, tint: Theme.vermillion)
                 }
             }
             if revealed {
-                Divider().overlay(.white.opacity(0.4))
+                Divider().overlay(Theme.hairline)
                 HStack(spacing: Theme.Spacing.s) {
                     Text(item.answer())
                         .font(.appTitle2)
                         .opacity(0.95)
                         .minimumScaleFactor(0.5)
                     if item.direction == .meaningToWord {
-                        SpeakButton(text: item.vocab.word, font: .appTitle3, tint: .white)
+                        SpeakButton(text: item.vocab.word, font: .appTitle3, tint: Theme.vermillion)
                     }
                 }
                 if let example = item.vocab.example, !example.isEmpty {

@@ -43,9 +43,13 @@ struct ListeningView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, Theme.Spacing.xl + 8)
             .padding(.horizontal, Theme.Spacing.m)
-            .background(Theme.brandGradientSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-            .foregroundStyle(.white)
-            .shadow(color: Theme.brandStart.opacity(0.3), radius: 16, y: 8)
+            .foregroundStyle(Theme.vermillion)
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+                    .strokeBorder(Theme.hairline, lineWidth: 1)
+            )
+            .hardShadow(x: 3, y: 4)
         }
         .buttonStyle(.plain)
         // Nach dem Beantworten das Wort einblenden – dann verrät es nichts mehr.
@@ -53,7 +57,7 @@ struct ListeningView: View {
             if answered {
                 Text(item.vocab.word)
                     .font(.appHeadline)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.ink)
                     .padding(.bottom, Theme.Spacing.m)
             }
         }
