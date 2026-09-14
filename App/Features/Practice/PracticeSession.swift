@@ -49,13 +49,21 @@ struct PracticeItem: Identifiable {
     /// gesuchten ein *anderes* bekanntes Wort getippt, wird dessen Bedeutung angezeigt
     /// (siehe `confusedPair(forTyped:)`). Alle Items teilen sich dieselbe Referenz (COW).
     let confusables: [WordPair]
+    /// Bedeutungssprache dieser Session (Sprachcode) oder `nil` für die untagged
+    /// Primärbedeutung. Steuert, welche Bedeutung als Frage/Antwort/Option gezeigt wird;
+    /// fehlt sie an einer Vokabel, greift der Fallback in `Vocab.meaning(forLanguage:)`
+    /// (Issue #29).
+    let meaningLanguage: String?
+
+    /// Sprachabhängige Bedeutung der eigenen Vokabel (mit Fallback auf `meaning`).
+    private var localizedMeaning: String { vocab.meaning(forLanguage: meaningLanguage) }
 
     func prompt() -> String {
-        direction == .wordToMeaning ? vocab.word : vocab.meaning
+        direction == .wordToMeaning ? vocab.word : localizedMeaning
     }
 
     func answer() -> String {
-        direction == .wordToMeaning ? vocab.meaning : vocab.word
+        direction == .wordToMeaning ? localizedMeaning : vocab.word
     }
 
     /// Sucht ein *anderes* Wort des Wortschatzes, dessen Antwort-Seite der Eingabe
@@ -72,7 +80,11 @@ struct PracticeItem: Identifiable {
     func confusedPair(forTyped typed: String) -> WordPair? {
         let typedVariants = AnswerChecker.variants(of: typed)
         guard !typedVariants.isEmpty else { return nil }
-        let answerVariants = AnswerChecker.variants(of: answer())
+        // Verwechslungs-Hinweis arbeitet bewusst auf der untagged Primärbedeutung: der
+        // globale `confusables`-Pool (`WordPair`) wird ebenfalls aus `vocab.meaning`
+        // gebildet (siehe `loadConfusionPool`), damit beide Seiten vergleichbar bleiben.
+        let primaryAnswer = direction == .wordToMeaning ? vocab.meaning : vocab.word
+        let answerVariants = AnswerChecker.variants(of: primaryAnswer)
         let ownMeaningVariants = AnswerChecker.variants(of: vocab.meaning)
         return confusables.first { pair in
             let sideVariants = direction == .wordToMeaning ? pair.meaningVariants : pair.wordVariants
@@ -88,7 +100,7 @@ struct PracticeItem: Identifiable {
 
     /// Die anzuzeigende Seite einer Antwortoption (die „Antwort-Seite“).
     func optionText(_ option: Vocab) -> String {
-        direction == .wordToMeaning ? option.meaning : option.word
+        direction == .wordToMeaning ? option.meaning(forLanguage: meaningLanguage) : option.word
     }
 }
 
@@ -362,7 +374,10 @@ final class PracticeSession {
         // und gemischt (O(Wörter × Pool)).
         let sessionIDs = Set(vocabs.map(\.id))
         let remaining = distractorPool.filter { !sessionIDs.contains($0.id) }
-        let remainingByGroup = Dictionary(grouping: remaining) { $0.group?.id }
+        let pool = DistractorPool(remaining: remaining,
+                                  byGroup: Dictionary(grouping: remaining) { $0.group?.id })
+        // Bedeutungssprache der Session – steuert Frage/Antwort/Optionen (Issue #29).
+        let meaningLanguage = config.meaningLanguage
         // Verwechslungs-Nachschlage: der volle Wortschatz (vom Aufrufer geladen, siehe
         // `loadConfusionPool`; außerhalb des Schreib-Modus leer). Die Liste hängt weiter unten
         // NUR an tatsächlichen Schreib-Karten – Nicht-Schreib-Karten tragen sie nicht mit.
@@ -379,23 +394,26 @@ final class PracticeSession {
             // Nur Auswahl-/Hör-Modi brauchen Distraktoren; Lückentext (wie Schreiben/Durchgehen)
             // wird eingetippt bzw. gewischt – die Options-Berechnung entfällt.
             let choices = mode == .cloze ? [] : makeChoices(
-                for: vocab, sessionVocabs: vocabs,
-                remaining: remaining, remainingByGroup: remainingByGroup, direction: direction
+                for: vocab, sessionVocabs: vocabs, pool: pool,
+                direction: direction, meaningLanguage: meaningLanguage
             )
             // „Fast richtig"-Synonyme: nur wenn das Wort selbst die gesuchte Antwort ist
             // (Bedeutung→Wort). Sammelt die Wörter aller anderen Karten mit gleicher
             // Bedeutung – so zählt eine inhaltlich richtige, aber andere Übersetzung nicht
             // stumpf als „falsch".
+            let vocabMeaning = vocab.meaning(forLanguage: meaningLanguage)
             let synonymWords: [String] = direction == .meaningToWord
                 ? (vocabs + remaining).compactMap { other in
                     other.id != vocab.id
-                        && AnswerChecker.isCorrect(typed: other.meaning, expected: vocab.meaning)
+                        && AnswerChecker.isCorrect(typed: other.meaning(forLanguage: meaningLanguage),
+                                                   expected: vocabMeaning)
                         ? other.word : nil
                 }
                 : []
             return PracticeItem(vocab: vocab, mode: mode, direction: direction,
                                 choices: choices, synonymWords: synonymWords,
-                                confusables: mode == .writing ? confusionPool : [])
+                                confusables: mode == .writing ? confusionPool : [],
+                                meaningLanguage: meaningLanguage)
         }
     }
 
@@ -412,21 +430,31 @@ final class PracticeSession {
     /// werden vom Aufrufer einmal je Session vorberechnet. Die Tiers werden faul
     /// abgearbeitet und nur so weit gemischt, bis drei Distraktoren stehen – im Normalfall
     /// (genug Session-Wörter) wird der große Pool gar nicht erst angefasst.
+    /// Vorberechneter Distraktor-Pool (einmal je Session): der um die Session-Wörter
+    /// bereinigte Rest und dessen Gruppierung – gebündelt, damit `makeChoices` wenige
+    /// Parameter behält.
+    private struct DistractorPool {
+        let remaining: [Vocab]
+        let byGroup: [UUID?: [Vocab]]
+    }
+
     private static func makeChoices(
         for vocab: Vocab,
         sessionVocabs: [Vocab],
-        remaining: [Vocab],
-        remainingByGroup: [UUID?: [Vocab]],
-        direction: ResolvedDirection
+        pool: DistractorPool,
+        direction: ResolvedDirection,
+        meaningLanguage: String?
     ) -> [Vocab] {
+        let remaining = pool.remaining
+        let remainingByGroup = pool.byGroup
         let answerText: (Vocab) -> String = {
-            direction == .wordToMeaning ? $0.meaning : $0.word
+            direction == .wordToMeaning ? $0.meaning(forLanguage: meaningLanguage) : $0.word
         }
         // Die Prompt-Seite (Frage) des Zielworts – ein Distraktor mit gleicher Prompt-Seite
         // wäre selbst eine gültige Antwort und machte die Frage doppeldeutig (z.B. zwei
         // Karten „Danke" mit verschiedenen Wörtern).
         let promptText: (Vocab) -> String = {
-            direction == .wordToMeaning ? $0.word : $0.meaning
+            direction == .wordToMeaning ? $0.word : $0.meaning(forLanguage: meaningLanguage)
         }
         // Das Zielwort ist ausgeschlossen: gleiche ID wird übersprungen und sein
         // Antworttext liegt vorab in `seenAnswers` (kein Distraktor darf denselben

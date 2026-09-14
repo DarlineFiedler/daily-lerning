@@ -35,6 +35,12 @@ enum VocabImporter {
                 vocab.topikLevel = topik
                 changed = true
             }
+            // Nur **fehlende** Sprach-Bedeutungen ergänzen; vorhandene bleiben unangetastet.
+            for (code, meaning) in row.meaningsByLanguage
+                where !meaning.isEmpty && (vocab.meaningsByLanguage[code]?.isEmpty ?? true) {
+                vocab.meaningsByLanguage[code] = meaning
+                changed = true
+            }
             if changed { updated += 1 } else { skipped += 1 }
         }
     }
@@ -87,6 +93,7 @@ enum VocabImporter {
             } else {
                 let vocab = Vocab(word: row.word, meaning: row.meaning, example: row.example,
                                   topik: row.topik, group: group)
+                vocab.meaningsByLanguage = row.meaningsByLanguage
                 context.insert(vocab)
                 byWord[key] = vocab
                 result.added += 1

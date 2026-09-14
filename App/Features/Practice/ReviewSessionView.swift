@@ -16,6 +16,7 @@ struct ReviewSessionView: View {
     @AppStorage("reviewDirection") private var directionRaw = PracticeDirection.mixed.rawValue
     @AppStorage("reviewModes") private var modesRaw = ""
     @AppStorage("reviewWordLimit") private var wordLimitRaw = 0
+    @AppStorage("reviewMeaningLanguage") private var meaningLanguageRaw = ""
 
     /// Die laufende Session liegt app-weit im Store (statt lokal), damit die Live
     /// Activity und ein Deep-Link-Rücksprung dieselbe Session wiederfinden.
@@ -24,6 +25,12 @@ struct ReviewSessionView: View {
     @State private var direction: PracticeDirection = .mixed
     @State private var modes: Set<PracticeMode> = []
     @State private var wordLimit: Int?
+    @State private var meaningLanguage: String?
+
+    /// Im Wortschatz gepflegte Bedeutungssprachen (für den Sprach-Picker, Issue #29).
+    private var availableMeaningLanguages: [String] {
+        Set(allVocabs.flatMap(\.availableMeaningLanguages)).sorted()
+    }
 
     /// Heute noch offene Wörter (lernen bzw. wiederholen) – gleiche Logik wie die Home-Karte.
     private var dueVocabs: [Vocab] { DailyPlan.today(from: allVocabs).words }
@@ -57,7 +64,9 @@ struct ReviewSessionView: View {
     private var configStep: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.l) {
-                DirectionModeSelection(direction: $direction, modes: $modes)
+                DirectionModeSelection(direction: $direction, modes: $modes,
+                                       meaningLanguage: $meaningLanguage,
+                                       availableMeaningLanguages: availableMeaningLanguages)
                 WordLimitSelection(wordLimit: $wordLimit)
             }
             .padding(Theme.Spacing.m)
@@ -91,10 +100,12 @@ struct ReviewSessionView: View {
     /// installierte koreanische Stimme – werden ausgefiltert.
     private func loadSelection() {
         let selection = ReviewSelection.load(directionRaw: directionRaw, modesRaw: modesRaw,
-                                             wordLimitRaw: wordLimitRaw)
+                                             wordLimitRaw: wordLimitRaw,
+                                             meaningLanguageRaw: meaningLanguageRaw)
         direction = selection.direction
         modes = selection.modes
         wordLimit = selection.wordLimit
+        meaningLanguage = selection.meaningLanguage
     }
 
     /// Merkt die Auswahl und startet die Session über die heute fälligen Wörter.
@@ -104,15 +115,17 @@ struct ReviewSessionView: View {
     private func start() {
         let due = dueVocabs
         guard !due.isEmpty else { return }
-        let selection = ReviewSelection(direction: direction, modes: modes, wordLimit: wordLimit)
+        let selection = ReviewSelection(direction: direction, modes: modes, wordLimit: wordLimit,
+                                        meaningLanguage: meaningLanguage)
         directionRaw = selection.direction.rawValue
         modesRaw = selection.modesRaw
         wordLimitRaw = selection.wordLimitRaw
+        meaningLanguageRaw = selection.meaningLanguageRaw
         let newSession = PracticeSession(
             vocabs: due,
             distractorPool: allVocabs,
             config: PracticeConfig(statuses: [], direction: direction, modes: modes,
-                                   wordLimit: wordLimit),
+                                   wordLimit: wordLimit, meaningLanguage: meaningLanguage),
             context: context
         )
         // Session app-weit ablegen + Live Activity starten (aus der „Heute"-Runde

@@ -17,6 +17,10 @@ struct VocabEditView: View {
 
     @State private var word: String
     @State private var meaning: String
+    /// Bearbeitbare Zusatzübersetzungen (Sprachcode + Bedeutung, Issue #29). Die
+    /// untagged `meaning` bleibt die Primärbedeutung; hier gepflegte Sprachen werden
+    /// zusätzlich gespeichert.
+    @State private var translations: [TranslationDraft]
     @State private var example: String
     @State private var emoji: String
     @State private var status: LearningStatus
@@ -37,12 +41,22 @@ struct VocabEditView: View {
     /// (siehe `refreshDuplicateMatch`) statt in jeder `body`-Auswertung.
     @State private var duplicateMatch: DuplicateChecker.Match?
 
+    /// Eine bearbeitbare Zeile im Übersetzungs-Abschnitt (Sprachcode + Bedeutung).
+    private struct TranslationDraft: Identifiable {
+        let id = UUID()
+        var code: String
+        var text: String
+    }
+
     init(vocab: Vocab?, group: VocabGroup?, onSelectExisting: ((Vocab) -> Void)? = nil) {
         self.vocab = vocab
         self.group = group ?? vocab?.group
         self.onSelectExisting = onSelectExisting
         _word = State(initialValue: vocab?.word ?? "")
         _meaning = State(initialValue: vocab?.meaning ?? "")
+        _translations = State(initialValue: (vocab?.meaningsByLanguage ?? [:])
+            .sorted { $0.key < $1.key }
+            .map { TranslationDraft(code: $0.key, text: $0.value) })
         _example = State(initialValue: vocab?.example ?? "")
         _emoji = State(initialValue: vocab?.emoji ?? "")
         _status = State(initialValue: vocab?.status ?? .new)
@@ -99,6 +113,8 @@ struct VocabEditView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+
+                translationsSection
 
                 emojiSection
 
@@ -184,6 +200,35 @@ struct VocabEditView: View {
         }
     }
 
+    /// Abschnitt für weitere Bedeutungssprachen (Issue #29): je Zeile ein Sprachcode
+    /// (z.B. „en") und die zugehörige Bedeutung. Leere Zeilen werden beim Speichern
+    /// verworfen (siehe `Vocab.setMeaning`).
+    private var translationsSection: some View {
+        Section {
+            ForEach($translations) { $draft in
+                HStack(spacing: Theme.Spacing.s) {
+                    TextField(L("vocab.translationCode"), text: $draft.code)
+                        .frame(width: 64)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    Divider()
+                    TextField(L("vocab.translationMeaning"), text: $draft.text)
+                }
+            }
+            .onDelete { translations.remove(atOffsets: $0) }
+
+            Button {
+                translations.append(TranslationDraft(code: "", text: ""))
+            } label: {
+                Label(L("vocab.translationAdd"), systemImage: "plus.circle")
+            }
+        } header: {
+            Text(L("vocab.translationsSection"))
+        } footer: {
+            Text(L("vocab.translationsHint"))
+        }
+    }
+
     /// Abschnitt für die optionale Emoji-Merkhilfe: großes Vorschau-Emoji, ein Feld für
     /// manuelle Eingabe (Standard-Emoji-Tastatur), Entfernen-Button und – falls vorhanden –
     /// ein Button, um den automatischen Vorschlag zu übernehmen.
@@ -263,6 +308,12 @@ struct VocabEditView: View {
         } else {
             target = Vocab(word: trimmedWord, meaning: trimmedMeaning, group: selectedGroup ?? group)
             context.insert(target)
+        }
+        // Zusatzübersetzungen aus den Zeilen neu aufbauen (leere Code-/Textzeilen fallen
+        // über `setMeaning` weg; bei doppeltem Code gewinnt die letzte Zeile).
+        target.meaningsByLanguage = [:]
+        for draft in translations {
+            target.setMeaning(draft.text, forLanguage: draft.code)
         }
         target.example = trimmedExample.isEmpty ? nil : trimmedExample
         let trimmedEmoji = emoji.trimmingCharacters(in: .whitespacesAndNewlines)

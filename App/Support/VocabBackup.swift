@@ -58,6 +58,13 @@ struct VocabBackup: Codable {
         var id: UUID
         var word: String
         var meaning: String
+        /// Zusätzliche, sprachgetaggte Bedeutungen (Sprachcode → Bedeutung, Issue #29).
+        /// Bewusst optional: das synthetisierte `Codable` liest einen fehlenden Schlüssel
+        /// (ältere Sicherung ohne dieses Feld) über `decodeIfPresent` als `nil` – ein
+        /// non-optionaler Default würde beim Decode `keyNotFound` werfen. Beim Anwenden
+        /// wird `nil` zu `[:]` (siehe `apply`); ist die Map leer, wird sie als `nil`
+        /// gesichert, damit die Datei kompakt bleibt.
+        var meaningsByLanguage: [String: String]?
         var example: String?
         /// Optionale Emoji-Merkhilfe. Fehlt der Schlüssel in einer älteren Sicherung,
         /// decodiert das synthetisierte `Codable` ihn als `nil` (kein Versionssprung nötig).
@@ -90,7 +97,9 @@ extension VocabBackup {
                      isArchived: $0.isArchived)
         }
         self.vocabs = vocabs.map {
-            VocabDTO(id: $0.id, word: $0.word, meaning: $0.meaning, example: $0.example,
+            VocabDTO(id: $0.id, word: $0.word, meaning: $0.meaning,
+                     meaningsByLanguage: $0.meaningsByLanguage.isEmpty ? nil : $0.meaningsByLanguage,
+                     example: $0.example,
                      emoji: $0.emoji, topikRaw: $0.topikRaw,
                      statusRaw: $0.statusRaw, successCounter: $0.successCounter,
                      includeInWidget: $0.includeInWidget, timesPracticed: $0.timesPracticed,
@@ -258,6 +267,7 @@ extension VocabBackup {
             }()
             vocab.word = dto.word
             vocab.meaning = dto.meaning
+            vocab.meaningsByLanguage = dto.meaningsByLanguage ?? [:]
             vocab.example = dto.example
             vocab.emoji = dto.emoji
             vocab.topikRaw = dto.topikRaw

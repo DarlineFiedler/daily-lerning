@@ -182,4 +182,65 @@ final class VocabCSVTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: stale.path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
     }
+
+    // MARK: - Mehrsprachige Bedeutungen (Issue #29)
+
+    func testParsesHeaderTaggedMeanings() throws {
+        let rows = VocabCSV.parse("""
+        word;meaning;meaning:en;example
+        개;Hund;dog;귀엽다
+        """)
+        XCTAssertEqual(rows.count, 1)
+        let row = try XCTUnwrap(rows.first)
+        XCTAssertEqual(row.word, "개")
+        XCTAssertEqual(row.meaning, "Hund")
+        XCTAssertEqual(row.example, "귀엽다")
+        XCTAssertEqual(row.meaningsByLanguage, ["en": "dog"])
+    }
+
+    func testHeaderColumnOrderIsFlexible() throws {
+        // Spaltenreihenfolge egal – Zuordnung erfolgt über den Header, nicht die Position.
+        let rows = VocabCSV.parse("""
+        meaning:en;word;meaning
+        dog;개;Hund
+        """)
+        let row = try XCTUnwrap(rows.first)
+        XCTAssertEqual(row.word, "개")
+        XCTAssertEqual(row.meaning, "Hund")
+        XCTAssertEqual(row.meaningsByLanguage, ["en": "dog"])
+    }
+
+    func testHeaderTaggedCodeIsNormalized() {
+        let rows = VocabCSV.parse("word;meaning;meaning:EN\n개;Hund;dog")
+        XCTAssertEqual(rows.first?.meaningsByLanguage, ["en": "dog"])
+    }
+
+    func testExportTaggedMeaningsRoundTrips() {
+        let dog = Vocab(word: "개", meaning: "Hund", example: nil)
+        dog.meaningsByLanguage = ["en": "dog"]
+        let cat = Vocab(word: "고양이", meaning: "Katze", example: nil) // keine EN-Bedeutung
+        let csv = VocabCSV.export([dog, cat])
+
+        // Header enthält die getaggte Spalte.
+        XCTAssertEqual(csv.split(separator: "\n").first, "word;meaning;meaning:en;example;topik;group;status")
+
+        let parsed = VocabCSV.parse(csv)
+        XCTAssertEqual(parsed.first(where: { $0.word == "개" })?.meaningsByLanguage, ["en": "dog"])
+        // Wort ohne EN-Bedeutung trägt keine getaggte Sprache.
+        XCTAssertEqual(parsed.first(where: { $0.word == "고양이" })?.meaningsByLanguage, [:])
+    }
+
+    func testExportWithoutTaggedMeaningsKeepsLegacyFormat() {
+        // Ohne getaggte Sprachen bleibt das Format exakt wie bisher (keine meaning:-Spalte).
+        let csv = VocabCSV.export([Vocab(word: "사과", meaning: "Apfel", example: nil)])
+        XCTAssertEqual(csv.split(separator: "\n").first, "word;meaning;example;topik;group;status")
+        XCTAssertFalse(csv.contains("meaning:"))
+    }
+
+    func testLegacyPositionalFormatStillImports() {
+        // Ohne Kopfzeile greift weiterhin der positionsbasierte Pfad, ohne getaggte Sprachen.
+        let rows = VocabCSV.parse("개;Hund;귀엽다")
+        XCTAssertEqual(rows, [VocabCSV.Row(word: "개", meaning: "Hund", example: "귀엽다")])
+        XCTAssertEqual(rows.first?.meaningsByLanguage, [:])
+    }
 }

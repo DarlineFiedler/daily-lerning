@@ -7,6 +7,22 @@ import SwiftUI
 struct DirectionModeSelection: View {
     @Binding var direction: PracticeDirection
     @Binding var modes: Set<PracticeMode>
+    /// Gewählte Bedeutungssprache (Sprachcode) oder `nil` für die Standard-/Primär-
+    /// bedeutung (Issue #29). Nur relevant, wenn `availableMeaningLanguages` nicht leer ist.
+    @Binding var meaningLanguage: String?
+    /// Im Wortschatz tatsächlich gepflegte Bedeutungssprachen (Sprachcodes). Ist die Liste
+    /// leer, wird der Sprach-Picker ausgeblendet – dann verhält sich die View wie zuvor.
+    var availableMeaningLanguages: [String] = []
+
+    init(direction: Binding<PracticeDirection>,
+         modes: Binding<Set<PracticeMode>>,
+         meaningLanguage: Binding<String?> = .constant(nil),
+         availableMeaningLanguages: [String] = []) {
+        _direction = direction
+        _modes = modes
+        _meaningLanguage = meaningLanguage
+        self.availableMeaningLanguages = availableMeaningLanguages
+    }
 
     /// Verfügbare Modi werden einmal beim Erscheinen ermittelt statt bei jedem
     /// Render (z.B. jedem Chip-Tap): die Verfügbarkeitsprüfung fragt über
@@ -20,9 +36,32 @@ struct DirectionModeSelection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.l) {
             directionSection
+            if !availableMeaningLanguages.isEmpty { meaningLanguageSection }
             modeSection
         }
         .onAppear { availableModes = PracticeMode.available }
+    }
+
+    /// Sprach-Picker für die Bedeutung. Nur sichtbar, wenn im Wortschatz überhaupt
+    /// getaggte Bedeutungssprachen existieren. „Standard" (nil) nutzt die Primär-
+    /// bedeutung; fehlt die gewählte Sprache an einer Vokabel, greift der Fallback.
+    private var meaningLanguageSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionHeader(L("practice.config.meaningLanguage"))
+            Picker(L("practice.config.meaningLanguage"), selection: $meaningLanguage) {
+                Text(L("practice.config.meaningLanguage.default")).tag(String?.none)
+                ForEach(availableMeaningLanguages, id: \.self) { code in
+                    Text(Self.displayName(for: code)).tag(String?.some(code))
+                }
+            }
+            .pickerStyle(.menu)
+        }
+    }
+
+    /// Menschlich lesbarer Sprachname zu einem Code (z.B. „en" → „Englisch"), sonst der
+    /// Code in Großbuchstaben als Rückfall.
+    static func displayName(for code: String) -> String {
+        Locale.current.localizedString(forLanguageCode: code) ?? code.uppercased()
     }
 
     private var directionSection: some View {

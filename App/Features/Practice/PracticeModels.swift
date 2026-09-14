@@ -84,6 +84,9 @@ struct ReviewSelection: Equatable {
     var modes: Set<PracticeMode> = []
     /// Maximale Wortanzahl pro Durchgang. `nil` = alle heute fälligen Wörter.
     var wordLimit: Int?
+    /// Bedeutungssprache (Sprachcode) oder `nil` für die untagged Primärbedeutung
+    /// (Issue #29). Ein leerer gespeicherter String bedeutet `nil`.
+    var meaningLanguage: String?
 
     /// Rekonstruiert die Auswahl aus den gespeicherten rawValues. Eine ungültige
     /// Richtung fällt auf `.mixed` zurück; unbekannte oder nicht (mehr) verfügbare
@@ -91,12 +94,15 @@ struct ReviewSelection: Equatable {
     /// `wordLimitRaw` ≤ 0 bedeutet „alle Wörter" (`nil`), da `@AppStorage` kein
     /// optionales Int kennt.
     static func load(directionRaw: String, modesRaw: String, wordLimitRaw: Int = 0,
+                     meaningLanguageRaw: String = "",
                      available: [PracticeMode] = PracticeMode.available) -> ReviewSelection {
         let direction = PracticeDirection(rawValue: directionRaw) ?? .mixed
         let stored = modesRaw.split(separator: ",").compactMap { PracticeMode(rawValue: String($0)) }
+        let meaningLanguage = meaningLanguageRaw.trimmingCharacters(in: .whitespacesAndNewlines)
         return ReviewSelection(direction: direction,
                                modes: Set(stored).intersection(Set(available)),
-                               wordLimit: wordLimitRaw > 0 ? wordLimitRaw : nil)
+                               wordLimit: wordLimitRaw > 0 ? wordLimitRaw : nil,
+                               meaningLanguage: meaningLanguage.isEmpty ? nil : meaningLanguage)
     }
 
     /// CSV der Modus-rawValues (stabil sortiert, damit derselbe Zustand denselben
@@ -107,6 +113,9 @@ struct ReviewSelection: Equatable {
 
     /// Für `@AppStorage` speicherbare Wortanzahl – 0 = alle (`nil`).
     var wordLimitRaw: Int { wordLimit ?? 0 }
+
+    /// Für `@AppStorage` speicherbarer Sprachcode – leerer String = Standard (`nil`).
+    var meaningLanguageRaw: String { meaningLanguage ?? "" }
 
     /// Wie viele Wörter aus einem Pool von `poolCount` fälligen tatsächlich
     /// abgefragt werden: die Begrenzung greift, sonst der ganze Pool. Spiegelt das
@@ -125,6 +134,10 @@ struct PracticeConfig {
     var modes: Set<PracticeMode> = []
     /// Maximale Wortanzahl pro Durchgang. `nil` = alle.
     var wordLimit: Int?
+    /// Bedeutungssprache für diese Session (Sprachcode, z.B. `"en"`) oder `nil` für die
+    /// untagged Primärbedeutung. Fehlt die Sprache an einer Vokabel, greift der Fallback
+    /// (siehe `Vocab.meaning(forLanguage:)`, Issue #29).
+    var meaningLanguage: String?
     /// „Endgegner"-Modus: rein visuelle Kampf-Schicht (HP-Leiste, Sieg/Niederlage)
     /// über der Runde (Issue #89). Ändert die Lern-Logik nicht.
     var bossMode = false

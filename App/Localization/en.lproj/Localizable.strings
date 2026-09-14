@@ -79,6 +79,11 @@
 "vocab.problemWord" = "Problem word";
 "vocab.details" = "Details";
 "vocab.widgetToggle" = "Show on Lock Screen";
+"vocab.translationsSection" = "Additional translations";
+"vocab.translationsHint" = "Extra meanings in other languages. Language code (e.g. “en”) and meaning. The main meaning above stays the default.";
+"vocab.translationCode" = "Code";
+"vocab.translationMeaning" = "Meaning";
+"vocab.translationAdd" = "Add translation";
 "vocab.emojiSection" = "Memory aid";
 "vocab.emojiPlaceholder" = "Emoji";
 "vocab.emojiHint" = "An optional emoji as a visual mnemonic. Suggested from the meaning; you can change or remove it.";
@@ -109,6 +114,8 @@
 "practice.config.direction" = "Direction";
 "practice.config.modes" = "Modes";
 "practice.config.modesHint" = "Pick several (= Mix). None selected uses all.";
+"practice.config.meaningLanguage" = "Meaning language";
+"practice.config.meaningLanguage.default" = "Default";
 "practice.direction.wordToMeaning" = "Word → Meaning";
 "practice.direction.meaningToWord" = "Meaning → Word";
 "practice.direction.mixed" = "Mixed";
