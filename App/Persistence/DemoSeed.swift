@@ -11,6 +11,24 @@ import SwiftData
 /// gestartet wird (`xcrun simctl launch … -uiTestSeed`). In Release-Builds ist dieser
 /// Code nicht vorhanden und kann echte Installationen nie beeinflussen.
 enum DemoSeed {
+    private struct Word {
+        let hangul: String
+        let meaning: String
+        let status: LearningStatus
+        init(_ hangul: String, _ meaning: String, _ status: LearningStatus) {
+            self.hangul = hangul
+            self.meaning = meaning
+            self.status = status
+        }
+    }
+
+    private struct Bed {
+        let name: String
+        let colorHex: String
+        let fallow: Bool
+        let words: [Word]
+    }
+
     static var isRequested: Bool {
         CommandLine.arguments.contains("-uiTestSeed")
     }
@@ -27,39 +45,38 @@ enum DemoSeed {
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now) ?? now
         let old = Calendar.current.date(byAdding: .day, value: -9, to: now) ?? now
 
-        // (Name, Farbe, [(Wort, Bedeutung, Stufe)], zuletzt geübt)
-        let beds: [(String, String, [(String, String, LearningStatus)], Date?)] = [
-            ("Verben", "#B23A2C", [
-                ("가다", "gehen", .learned), ("먹다", "essen", .learned),
-                ("마시다", "trinken", .learned), ("보다", "sehen", .almostLearned),
-                ("자다", "schlafen", .learning), ("읽다", "lesen", .new),
-                ("쓰다", "schreiben", .almostLearned), ("듣다", "hören", .learned),
-            ], now),
-            ("Essen & Trinken", "#4F7043", [
-                ("사과", "Apfel", .learned), ("밥", "Reis", .almostLearned),
-                ("물", "Wasser", .learning), ("김치", "Kimchi", .learned),
-                ("커피", "Kaffee", .new), ("차", "Tee", .learning),
-            ], now),
-            ("Zahlen", "#C98A2B", [
-                ("하나", "eins", .learned), ("둘", "zwei", .learned),
-                ("셋", "drei", .almostLearned), ("넷", "vier", .learning),
-                ("다섯", "fünf", .new),
-            ], now),
-            ("Grammatik", "#3B82F6", [
-                ("은/는", "Themenpartikel", .new), ("이/가", "Subjektpartikel", .new),
-                ("을/를", "Objektpartikel", .new), ("에", "Ortspartikel", .new),
-            ], old),
+        let beds: [Bed] = [
+            Bed(name: "Verben", colorHex: "#B23A2C", fallow: false, words: [
+                Word("가다", "gehen", .learned), Word("먹다", "essen", .learned),
+                Word("마시다", "trinken", .learned), Word("보다", "sehen", .almostLearned),
+                Word("자다", "schlafen", .learning), Word("읽다", "lesen", .new),
+                Word("쓰다", "schreiben", .almostLearned), Word("듣다", "hören", .learned)
+            ]),
+            Bed(name: "Essen & Trinken", colorHex: "#4F7043", fallow: false, words: [
+                Word("사과", "Apfel", .learned), Word("밥", "Reis", .almostLearned),
+                Word("물", "Wasser", .learning), Word("김치", "Kimchi", .learned),
+                Word("커피", "Kaffee", .new), Word("차", "Tee", .learning)
+            ]),
+            Bed(name: "Zahlen", colorHex: "#C98A2B", fallow: false, words: [
+                Word("하나", "eins", .learned), Word("둘", "zwei", .learned),
+                Word("셋", "drei", .almostLearned), Word("넷", "vier", .learning),
+                Word("다섯", "fünf", .new)
+            ]),
+            Bed(name: "Grammatik", colorHex: "#3B82F6", fallow: true, words: [
+                Word("은/는", "Themenpartikel", .new), Word("이/가", "Subjektpartikel", .new),
+                Word("을/를", "Objektpartikel", .new), Word("에", "Ortspartikel", .new)
+            ])
         ]
 
         for (index, bed) in beds.enumerated() {
-            let group = VocabGroup(name: bed.0, colorHex: bed.1, sortOrder: index)
+            let group = VocabGroup(name: bed.name, colorHex: bed.colorHex, sortOrder: index)
             context.insert(group)
-            for entry in bed.2 {
-                let vocab = Vocab(word: entry.0, meaning: entry.1, group: group)
-                vocab.status = entry.2
-                vocab.successCounter = entry.2.rawValue
-                vocab.timesPracticed = entry.2 == .new ? 0 : 3
-                vocab.lastPracticedAt = entry.2 == .new ? nil : (bed.3 == old ? old : yesterday)
+            for word in bed.words {
+                let vocab = Vocab(word: word.hangul, meaning: word.meaning, group: group)
+                vocab.status = word.status
+                vocab.successCounter = word.status.rawValue
+                vocab.timesPracticed = word.status == .new ? 0 : 3
+                vocab.lastPracticedAt = word.status == .new ? nil : (bed.fallow ? old : yesterday)
                 context.insert(vocab)
             }
         }

@@ -15,12 +15,12 @@ final class DeepLinkTests: XCTestCase {
     }
 
     func testRejectsWrongHost() {
-        let url = URL(string: "dailyhangul://group/\(UUID().uuidString)")!
+        let url = URL(string: "\(AppGroup.urlScheme)://group/\(UUID().uuidString)")!
         XCTAssertNil(DeepLink.wordID(from: url))
     }
 
     func testRejectsNonUUIDPath() {
-        let url = URL(string: "dailyhangul://word/not-a-uuid")!
+        let url = URL(string: "\(AppGroup.urlScheme)://word/not-a-uuid")!
         XCTAssertNil(DeepLink.wordID(from: url))
     }
 

@@ -30,6 +30,7 @@ struct GardenTabBar: View {
                 .overlay(Rectangle().fill(Theme.hairline).frame(height: 1), alignment: .top)
                 .ignoresSafeArea(edges: .bottom)
         )
+        .accessibilityIdentifier("gardenTabBar")
     }
 
     private func tab(_ tab: GardenTab, emoji: String, title: String) -> some View {
@@ -68,6 +69,7 @@ struct GardenTabBar: View {
             .offset(y: -4)
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("practiceFAB")
         .accessibilityLabel("\(L("tab.practice")), \(dueCount > 0 ? L("practice.fab.due", dueCount) : "")")
     }
 }

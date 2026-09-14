@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Wiederverwendbare Bausteine der „Papier & Tinte"-Optik: Papierhintergrund mit
-/// feiner Linierung, **harte Offset-Schatten ohne Blur** (Print-Look), Papierkarten,
-/// Gruppen-Akzentbalken und handschriftliche Randnotizen.
+// Wiederverwendbare Bausteine der „Papier & Tinte"-Optik: Papierhintergrund mit
+// feiner Linierung, harte Offset-Schatten ohne Blur (Print-Look), Papierkarten,
+// Gruppen-Akzentbalken und handschriftliche Randnotizen.
 
 // MARK: - Harter Offset-Schatten (kein Blur)
 
