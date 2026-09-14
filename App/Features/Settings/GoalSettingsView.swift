@@ -51,6 +51,8 @@ struct GoalSettingsView: View {
                 Text(L("settings.goal.footer"))
             }
         }
+        .scrollContentBackground(.hidden)
+        .paperBackground()
         .navigationTitle(L("settings.goal.section"))
         .navigationBarTitleDisplayMode(.inline)
         // Zieländerung wirkt sich direkt auf den Ring des Streak-Widgets aus.

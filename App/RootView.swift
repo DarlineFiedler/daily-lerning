@@ -17,6 +17,9 @@ struct RootView: View {
     @State private var deepLink: IdentifiableID?
     @State private var showReview = false
     @State private var showPracticeConfig = false
+    #if DEBUG
+    @State private var showBossDebug = false
+    #endif
     @State private var showStreakDetail = false
     @State private var showStoreError = false
 
@@ -50,6 +53,7 @@ struct RootView: View {
                 DemoSeed.insertIfRequestedAndEmpty(into: context)
                 if CommandLine.arguments.contains("-uiTestReview") { showReview = true }
                 if CommandLine.arguments.contains("-uiTestMeTab") { selectedTab = .me }
+                if CommandLine.arguments.contains("-uiTestBoss") { showBossDebug = true }
                 #endif
             }
             AppContentRefresh.onAppActive(context: context)
@@ -95,6 +99,24 @@ struct RootView: View {
                              activeDays: StreakStore.activeDays)
                 .modifier(SheetEnvironment(localization: localization, sessionStore: sessionStore))
         }
+        #if DEBUG
+        .sheet(isPresented: $showBossDebug) {
+            let vocabs = (try? context.fetch(FetchDescriptor<Vocab>())) ?? []
+            NavigationStack {
+                BossBattleContainerView(
+                    session: BossSession(
+                        vocabs: vocabs, distractorPool: vocabs,
+                        config: PracticeConfig(statuses: [], direction: .mixed, modes: [.multipleChoice],
+                                               wordLimit: nil, meaningLanguage: nil,
+                                               bossMode: true, examMode: false),
+                        context: context
+                    ),
+                    onClose: { showBossDebug = false }
+                )
+            }
+            .modifier(SheetEnvironment(localization: localization, sessionStore: sessionStore))
+        }
+        #endif
     }
 
     /// Üben-FAB: liegen fällige Wörter an, startet direkt die heutige Runde; sonst

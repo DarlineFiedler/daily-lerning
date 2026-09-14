@@ -34,7 +34,19 @@ struct BossBattleContainerView: View {
                 giveUpBar
             }
         }
-        .background(Theme.background.ignoresSafeArea())
+        // Endgegner ist ein dunkler Screen (#14120F) mit rotem Radial-Glow. Durch das
+        // Erzwingen des Dark-Modus lösen alle adaptiven Theme-Farben (Karten, Tinte,
+        // Rahmen) ihre Dark-Varianten auf – die Modus-Karten werden so zu dunklen Karten
+        // auf Nachtgrund, ohne dass jede Teilansicht eigene Farben braucht.
+        .background {
+            Theme.night.ignoresSafeArea()
+                .overlay(
+                    RadialGradient(colors: [Theme.vermillion.opacity(0.30), .clear],
+                                   center: .center, startRadius: 0, endRadius: 440)
+                        .ignoresSafeArea()
+                )
+        }
+        .environment(\.colorScheme, .dark)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
