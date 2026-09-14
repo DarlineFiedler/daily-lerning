@@ -64,7 +64,7 @@ struct GroupDetailView: View {
             }
             .padding(Theme.Spacing.m)
         }
-        .background(Theme.background.ignoresSafeArea())
+        .paperBackground()
         .navigationTitle(group.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }
@@ -221,7 +221,9 @@ struct GroupDetailView: View {
                 }
             }
             .padding(Theme.Spacing.m)
-            .background(.ultraThinMaterial)
+            .background(
+            Theme.paper.overlay(Rectangle().fill(Theme.hairline).frame(height: 1), alignment: .top)
+        )
         }
     }
 
@@ -257,33 +259,36 @@ struct GroupDetailView: View {
         .font(.appSubheadline.weight(.medium))
         .disabled(selection.isEmpty)
         .padding(Theme.Spacing.m)
-        .background(.ultraThinMaterial)
+        .background(
+            Theme.paper.overlay(Rectangle().fill(Theme.hairline).frame(height: 1), alignment: .top)
+        )
     }
 
     // MARK: - Kopf-Karte & Filter
 
     private var header: some View {
-        GradientCard(gradient: .forHex(group.colorHex), radius: 24, padding: Theme.Spacing.l) {
-            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-                HStack {
-                    Text(group.name)
-                        .font(.appTitle)
-                        .lineLimit(2)
-                    Spacer()
-                    Text(L("group.wordCount", group.vocabCount))
-                        .font(.appCaption.weight(.semibold))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(.white.opacity(0.22), in: Capsule())
-                }
-                if group.vocabCount > 0 {
-                    MasteryBar(fraction: fraction, height: 10)
-                    Text("\(learned) / \(group.vocabCount) · \(L("status.learned"))")
-                        .font(.appCaption)
-                        .opacity(0.9)
-                }
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(group.name)
+                    .font(.appDisplay(22))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(2)
+                Spacer()
+                Text(L("group.wordCount", group.vocabCount))
+                    .font(.appMono(11))
+                    .foregroundStyle(Theme.inkMuted)
+            }
+            if group.vocabCount > 0 {
+                PlantRow(group: group)
+                MasteryBar(fraction: fraction, height: 10)
+                Text("\(learned) / \(group.vocabCount) · \(L("status.learned"))")
+                    .font(.appMono(11))
+                    .foregroundStyle(Theme.inkSecondary)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .paperCard(padding: Theme.Spacing.l)
+        .groupAccent(Color(hex: group.colorHex))
     }
 
     /// Umschalter zwischen klassischer Liste und der Garten-Ansicht (Issue #92).

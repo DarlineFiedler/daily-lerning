@@ -534,3 +534,23 @@
 "translator.error" = "번역에 실패했습니다. 다시 시도해 주세요.";
 "translator.unavailable" = "iOS 18부터 사용 가능";
 "translator.unavailable.detail" = "번역기는 iOS 18 이상이 필요한 온디바이스 번역을 사용합니다.";
+
+/* --- v3 Garden Redesign --- */
+"tab.garden" = "정원";
+"tab.practice" = "연습";
+"tab.me" = "나";
+"garden.title" = "내 정원";
+"garden.beds.count" = "화단 · %d";
+"garden.streak.days" = "일";
+"garden.water.title" = "오늘 물주기";
+"garden.water.subtitle" = "%d개 복습 · 약 %d분";
+"garden.water.none.title" = "정원에 물을 다 줬어요";
+"garden.water.none.subtitle" = "복습할 단어가 없어요 — 내일 다시 오세요.";
+"garden.fallow" = "휴경";
+"garden.fallow.note" = "%1$@ 화단이 %2$d일째 물을 기다리고 있어요!";
+"garden.learned.count" = "%1$d / %2$d";
+"garden.learned.label" = "완료";
+"garden.empty.title" = "정원이 아직 비어 있어요.";
+"garden.empty.cta" = "첫 화단 만들기";
+"practice.fab.due" = "%d개";
+"practice.fab.none" = "연습";

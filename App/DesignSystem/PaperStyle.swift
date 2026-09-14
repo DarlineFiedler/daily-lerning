@@ -132,6 +132,28 @@ struct HandNote: View {
     }
 }
 
+// MARK: - Pflanzenreihe (jedes Wort eine Pflanze)
+
+/// Emoji-Reihe der Wörter einer Gruppe: jede Pflanze zeigt die Lernstufe (SRS).
+/// Einzeilig mit Abschneiden, damit die Reihe kompakt bleibt (Screens 1a/1d/1e).
+struct PlantRow: View {
+    let group: VocabGroup
+    var limit: Int = 16
+    var size: CGFloat = 21
+
+    var body: some View {
+        let plants = group.vocabs
+            .sorted { $0.createdAt < $1.createdAt }
+            .prefix(limit)
+            .map { VocabGarden.plantEmoji(for: $0.status, groupHex: group.colorHex) }
+            .joined()
+        Text(plants.isEmpty ? "🌱" : plants)
+            .font(.system(size: size))
+            .lineLimit(1)
+            .truncationMode(.tail)
+    }
+}
+
 // MARK: - Mono-Label (Großbuchstaben, gesperrt)
 
 extension View {

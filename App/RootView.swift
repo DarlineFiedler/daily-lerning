@@ -1,37 +1,41 @@
 import SwiftData
 import SwiftUI
 
-/// Wurzel-View mit den fünf Haupt-Tabs. Wird bei Sprachwechsel komplett neu
-/// aufgebaut (`.id(localization.language)`), damit alle Texte aktualisiert werden.
+/// Wurzel-View der v3-Optik: eigene 3-Tab-Navigation (Garten · Üben-FAB · Ich) statt
+/// der bisherigen fünf System-Tabs. Der zentrale FAB startet die heutige Runde bzw.
+/// öffnet die Rundenkonfiguration. Wird bei Sprachwechsel komplett neu aufgebaut
+/// (`.id(localization.language)`), damit alle Texte aktualisieren.
 struct RootView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.scenePhase) private var scenePhase
 
+    @Query(sort: \Vocab.createdAt) private var vocabs: [Vocab]
+
     @State private var localization = LocalizationManager.shared
     @State private var sessionStore = ActiveSessionStore()
+    @State private var selectedTab: GardenTab = .garden
     @State private var deepLink: IdentifiableID?
     @State private var showReview = false
+    @State private var showPracticeConfig = false
     @State private var showStreakDetail = false
     @State private var showStoreError = false
 
+    private var dueCount: Int {
+        DailyPlan.openWordCount(from: vocabs.filter { $0.group?.isArchived != true })
+    }
+
     var body: some View {
-        TabView {
-            HomeView()
-                .tabItem { Label(L("tab.home"), systemImage: "house.fill") }
-
-            GroupListView()
-                .tabItem { Label(L("tab.groups"), systemImage: "rectangle.stack.fill") }
-
-            SearchView()
-                .tabItem { Label(L("tab.search"), systemImage: "magnifyingglass") }
-
-            StatisticsView()
-                .tabItem { Label(L("tab.stats"), systemImage: "chart.bar.fill") }
-
-            SettingsView()
-                .tabItem { Label(L("tab.settings"), systemImage: "gearshape.fill") }
+        Group {
+            switch selectedTab {
+            case .garden: GardenHomeView()
+            case .me: IchView()
+            }
         }
-        .tint(Theme.brandStart)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            GardenTabBar(selection: $selectedTab, dueCount: dueCount, onPractice: startPractice)
+        }
+        .tint(Theme.vermillion)
         .id(localization.language)
         .environment(localization)
         .environment(sessionStore)
@@ -40,10 +44,11 @@ struct RootView: View {
             if PersistenceController.storeOpenFailed {
                 showStoreError = true
             } else {
-                // Erst Altdaten aus dem App-Group-Store übernehmen, dann die alten
-                // Beispieldaten einmalig entfernen. Neue Installationen starten leer.
                 StoreMigration.runIfNeeded(into: context)
                 SeedData.removeLegacySeedIfNeeded(from: context)
+                #if DEBUG
+                DemoSeed.insertIfRequestedAndEmpty(into: context)
+                #endif
             }
             AppContentRefresh.onAppActive(context: context)
         }
@@ -64,9 +69,6 @@ struct RootView: View {
             } else if DeepLink.isReview(url) {
                 showReview = true
             } else if DeepLink.isSession(url) {
-                // Aus der Live Activity zurück: läuft eine (wieder-präsentierbare)
-                // „Heute"-Session, das Sheet erneut zeigen – sonst bringt der Tap die
-                // App nur in den Vordergrund (Gruppen-Fluss läuft in der Navigation weiter).
                 showReview = sessionStore.active != nil
             } else if DeepLink.isStreak(url) {
                 showStreakDetail = true
@@ -79,15 +81,26 @@ struct RootView: View {
         .sheet(isPresented: $showReview) {
             ReviewSessionView()
         }
+        .sheet(isPresented: $showPracticeConfig) {
+            PracticeConfigView()
+        }
         .sheet(isPresented: $showStreakDetail) {
-            // Öffnet aus dem Streak-Widget dieselbe Detailansicht wie der Home-Screen –
-            // die Werte kommen direkt aus dem geteilten StreakStore.
             StreakDetailView(streak: StreakStore.displayStreak(),
                              longest: StreakStore.longest,
                              jokers: StreakStore.availableJokers(),
                              maxJokers: StreakStore.maxJokers,
                              jokerUses: StreakStore.jokerUses,
                              activeDays: StreakStore.activeDays)
+        }
+    }
+
+    /// Üben-FAB: liegen fällige Wörter an, startet direkt die heutige Runde; sonst
+    /// öffnet sich die Rundenkonfiguration zum freien Üben.
+    private func startPractice() {
+        if dueCount > 0 {
+            showReview = true
+        } else {
+            showPracticeConfig = true
         }
     }
 }

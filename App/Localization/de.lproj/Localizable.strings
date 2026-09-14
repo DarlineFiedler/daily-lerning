@@ -534,3 +534,23 @@
 "translator.error" = "Übersetzung fehlgeschlagen. Bitte erneut versuchen.";
 "translator.unavailable" = "Ab iOS 18 verfügbar";
 "translator.unavailable.detail" = "Der Übersetzer nutzt die geräteinterne Übersetzung, die iOS 18 oder neuer benötigt.";
+
+/* --- v3 Garden Redesign --- */
+"tab.garden" = "Garten";
+"tab.practice" = "Üben";
+"tab.me" = "Ich";
+"garden.title" = "Mein Garten";
+"garden.beds.count" = "BEETE · %d";
+"garden.streak.days" = "TAGE";
+"garden.water.title" = "Heute gießen";
+"garden.water.subtitle" = "%d Wörter fällig · ca. %d Min";
+"garden.water.none.title" = "Garten gegossen";
+"garden.water.none.subtitle" = "Nichts fällig — komm morgen wieder.";
+"garden.fallow" = "brachliegend";
+"garden.fallow.note" = "%1$@ wartet seit %2$d Tagen auf Wasser!";
+"garden.learned.count" = "%1$d / %2$d";
+"garden.learned.label" = "gelernt";
+"garden.empty.title" = "Dein Garten ist noch leer.";
+"garden.empty.cta" = "Erstes Beet anlegen";
+"practice.fab.due" = "%d fällig";
+"practice.fab.none" = "üben";
