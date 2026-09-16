@@ -6,8 +6,6 @@ import Translation
 /// Sprachausgabe über den vorhandenen [[SpeakButton]]. Richtung Koreanisch ↔ App-Sprache,
 /// automatisch erkannt via [[TranslationDirection]] mit Tausch-Möglichkeit.
 struct TranslatorView: View {
-    @Environment(\.dismiss) private var dismiss
-
     var body: some View {
         // Kein eigener NavigationStack: aus IchView in dessen Stack gepusht.
         Group {

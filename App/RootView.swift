@@ -9,8 +9,6 @@ struct RootView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.scenePhase) private var scenePhase
 
-    @Query(sort: \Vocab.createdAt) private var vocabs: [Vocab]
-
     @State private var localization = LocalizationManager.shared
     @State private var sessionStore = ActiveSessionStore()
     @State private var selectedTab: GardenTab = .garden
@@ -34,10 +32,6 @@ struct RootView: View {
     /// Erststart abgeschlossen? Reaktiv über den geteilten UserDefaults-Store, damit der
     /// Abschluss des Onboardings sofort in den Garten wechselt.
     @AppStorage(OnboardingState.completedKey, store: AppGroup.defaults) private var onboardingDone = false
-
-    private var dueCount: Int {
-        DailyPlan.openWordCount(from: vocabs.filter { $0.group?.isArchived != true })
-    }
 
     var body: some View {
         Group {
@@ -163,8 +157,8 @@ struct RootView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            GardenTabBar(selection: selectedTab, dueCount: dueCount,
-                         onSelect: selectTab, onPractice: startPractice)
+            GardenTabBarContainer(selection: selectedTab,
+                                  onSelect: selectTab, onPractice: startPractice)
         }
     }
 
@@ -200,6 +194,25 @@ private struct SheetEnvironment: ViewModifier {
             .environment(localization)
             .environment(sessionStore)
             .environment(\.locale, localization.localeForFormatting)
+    }
+}
+
+/// Kapselt die `@Query` für die Zahl fälliger Wörter. Dadurch lösen Vokabel-
+/// änderungen nur ein Neuberechnen dieser schmalen Tab-Leiste aus – nicht der
+/// kompletten RootView-Shell (Garten/Ich-Inhalt bleibt unberührt).
+private struct GardenTabBarContainer: View {
+    @Query(sort: \Vocab.createdAt) private var vocabs: [Vocab]
+    let selection: GardenTab
+    let onSelect: (GardenTab) -> Void
+    let onPractice: () -> Void
+
+    private var dueCount: Int {
+        DailyPlan.openWordCount(from: vocabs.filter { $0.group?.isArchived != true })
+    }
+
+    var body: some View {
+        GardenTabBar(selection: selection, dueCount: dueCount,
+                     onSelect: onSelect, onPractice: onPractice)
     }
 }
 

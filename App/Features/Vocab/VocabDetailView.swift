@@ -115,10 +115,15 @@ struct VocabDetailView: View {
     }
 
     private func deleteVocab() {
-        context.delete(vocab)
-        context.saveOrLog()
-        AppContentRefresh.afterVocabChange(context: context)
+        // Erst das Sheet schließen, dann löschen: Sonst wertet SwiftUI den noch
+        // sichtbaren Body (header ⇒ `vocab.group`) während der Ausblend-Animation
+        // erneut aus und liest ein bereits invalidiertes SwiftData-Objekt.
         dismiss()
+        DispatchQueue.main.async {
+            context.delete(vocab)
+            context.saveOrLog()
+            AppContentRefresh.afterVocabChange(context: context)
+        }
     }
 
     /// Status als Schnellwechsel: tippbares Menü, das den Lernstatus direkt setzt
