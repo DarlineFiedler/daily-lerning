@@ -5,7 +5,12 @@ import WidgetKit
 
 /// Tab 4: Einstellungen – Sprache (Runtime-Umschaltung) und Lock-Screen-Widget.
 struct SettingsView: View {
-    @Environment(LocalizationManager.self) private var localization
+    // Bewusst NICHT via `@Environment(LocalizationManager.self)`: Wird die Umgebung beim
+    // (mehrfach) gepushten Screen kurzzeitig ohne dieses Objekt neu ausgewertet, führt der
+    // fehlende Environment-Eintrag zu einem harten `EnvironmentValues`-Trap (Absturz beim
+    // Öffnen von „Dein Ziel"). Das geteilte Singleton ist ohnehin dieselbe Instanz, die
+    // RootView injiziert – so kann der Zugriff nie ins Leere greifen.
+    private let localization = LocalizationManager.shared
     @Environment(\.modelContext) private var context
 
     @Query(filter: #Predicate<Vocab> { $0.includeInWidget == true })
@@ -48,7 +53,7 @@ struct SettingsView: View {
     @State private var showResetConfirm = false
 
     var body: some View {
-        @Bindable var localization = localization
+        @Bindable var localization = localization // lokale Bindung fürs Sprach-Segment
 
         // Kein eigener NavigationStack: SettingsView wird aus IchView in dessen Stack
         // gepusht. Ein zweiter, verschachtelter Stack ließ das Pushen von Unterseiten

@@ -27,6 +27,7 @@ struct RootView: View {
     @State private var showSearchDebug = false
     @State private var showDetailDebug = false
     @State private var showGoalDebug = false
+    @State private var showGoalPushDebug = false
     #endif
     @State private var showStreakDetail = false
     @State private var showStoreError = false
@@ -44,7 +45,22 @@ struct RootView: View {
             if !onboardingDone {
                 OnboardingView(onFinish: { onboardingDone = true })
             } else {
+                #if DEBUG
+                if showGoalPushDebug {
+                    // Faithful repro des Absturz-Pfads mit ECHTER Umgebung (wie mainShell):
+                    // Ich → Einstellungen → „Dein Ziel" als dreifacher Push in EINEM Stack.
+                    NavigationStack(path: .constant([0, 1])) {
+                        Color.clear
+                            .navigationDestination(for: Int.self) { i in
+                                if i == 0 { SettingsView() } else { GoalSettingsView() }
+                            }
+                    }
+                } else {
+                    mainShell
+                }
+                #else
                 mainShell
+                #endif
             }
         }
         .tint(Theme.vermillion)
@@ -74,6 +90,7 @@ struct RootView: View {
                 if CommandLine.arguments.contains("-uiTestSearch") { showSearchDebug = true }
                 if CommandLine.arguments.contains("-uiTestDetail") { showDetailDebug = true }
                 if CommandLine.arguments.contains("-uiTestGoal") { showGoalDebug = true }
+                if CommandLine.arguments.contains("-uiTestGoalPush") { showGoalPushDebug = true }
                 #endif
             }
             AppContentRefresh.onAppActive(context: context)
