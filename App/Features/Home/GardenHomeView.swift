@@ -14,9 +14,19 @@ struct GardenHomeView: View {
     @State private var showReview = false
     @State private var showStreakDetail = false
     @State private var showNewGroup = false
+    @State private var showGoalStats = false
+
+    // Persönliches Ziel (geteilter Store, wie im Home-Dashboard).
+    @AppStorage(GoalKeys.metric, store: AppGroup.defaults) private var goalMetricRaw = GoalMetric.practiced.rawValue
+    @AppStorage(GoalKeys.weekly, store: AppGroup.defaults) private var weeklyGoal = GoalOptions.defaultWeekly
+    @AppStorage(GoalKeys.daily, store: AppGroup.defaults) private var dailyGoal = GoalOptions.defaultDaily
 
     private var activeVocabs: [Vocab] { vocabs.filter { $0.group?.isArchived != true } }
     private var activeGroups: [VocabGroup] { groups.filter { !$0.isArchived } }
+
+    private var goalMetric: GoalMetric { GoalMetric(rawValue: goalMetricRaw) ?? .practiced }
+    private var dayDone: Int { WeeklyReviewStore.dayProgress(for: goalMetric) }
+    private var weekDone: Int { WeeklyReviewStore.weekProgress(for: goalMetric) }
 
     var body: some View {
         NavigationStack {
@@ -27,6 +37,7 @@ struct GardenHomeView: View {
                     if activeGroups.isEmpty {
                         emptyGarden
                     } else {
+                        challengeCard
                         gardenCard
                     }
                 }
@@ -42,6 +53,7 @@ struct GardenHomeView: View {
             }
             .sheet(isPresented: $showReview) { ReviewSessionView() }
             .sheet(isPresented: $showNewGroup) { GroupEditView(group: nil) }
+            .sheet(isPresented: $showGoalStats) { GoalStatsView() }
             .sheet(isPresented: $showStreakDetail) {
                 StreakDetailView(streak: StreakStore.displayStreak(), longest: StreakStore.longest,
                                  jokers: StreakStore.availableJokers(), maxJokers: StreakStore.maxJokers,
@@ -50,10 +62,11 @@ struct GardenHomeView: View {
         }
     }
 
-    // MARK: - Kopf (Datum + Titel + Streak-Kreis)
+    // MARK: - Kopf (Datum + Titel + Streak-Notiz + Ziel-Ring)
 
     private var header: some View {
-        HStack(alignment: .top) {
+        let streak = StreakStore.displayStreak()
+        return HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(dateText)
                     .font(.appMono(13))
@@ -61,17 +74,48 @@ struct GardenHomeView: View {
                 Text(L("garden.title"))
                     .font(.appDisplay(30))
                     .foregroundStyle(Theme.ink)
+                if streak > 0 {
+                    HandNote(L("garden.streak.note", streak), size: 17)
+                        .padding(.top, 2)
+                }
             }
             Spacer()
-            streakCircle
+            // Ist ein Tagesziel gesetzt, zeigt der Kreis den heutigen Ziel-Fortschritt;
+            // sonst fällt er auf den Streak-Kreis zurück.
+            if dailyGoal > 0 { goalRing(streak: streak) } else { streakCircle(streak) }
         }
         .padding(.horizontal, 6)
         .padding(.top, 4)
     }
 
-    private var streakCircle: some View {
-        let streak = StreakStore.displayStreak()
-        return Button { showStreakDetail = true } label: {
+    /// Tagesziel-Ring: gefüllter Bogen = heute erreichter Anteil, innen „erledigt/Ziel".
+    private func goalRing(streak: Int) -> some View {
+        let target = max(dailyGoal, 1)
+        let fraction = min(1, Double(dayDone) / Double(target))
+        return Button { showGoalStats = true } label: {
+            ZStack {
+                Circle().stroke(Theme.ink.opacity(0.10), lineWidth: 6)
+                Circle()
+                    .trim(from: 0, to: fraction)
+                    .stroke(Theme.leaf, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                VStack(spacing: 1) {
+                    Text("\(dayDone)").font(.appDisplay(19)).foregroundColor(Theme.ink)
+                        + Text("/\(dailyGoal)").font(.appMono(11)).foregroundColor(Theme.inkMuted)
+                    Text(L("garden.today"))
+                        .font(.appMono(8)).tracking(1).foregroundColor(Theme.inkMuted)
+                }
+                .rotationEffect(.degrees(-7))
+            }
+            .frame(width: 74, height: 74)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(L("home.goal.progress", dayDone, dailyGoal))
+        .accessibilityHint(L("home.goal.stats.hint"))
+    }
+
+    private func streakCircle(_ streak: Int) -> some View {
+        Button { showStreakDetail = true } label: {
             VStack(spacing: 2) {
                 Text("\(streak)")
                     .font(.appDisplay(20))
@@ -144,11 +188,8 @@ struct GardenHomeView: View {
                 .buttonStyle(.plain)
             }
 
-            HStack(alignment: .bottom) {
-                Spacer()
-                totalCounter
-            }
-            .padding(.top, 2)
+            gardenFooter
+                .padding(.top, 2)
         }
         .padding(14)
         .background(
@@ -190,6 +231,100 @@ struct GardenHomeView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.card.opacity(fallow ? 0.4 : 0.75))
         .groupAccent(fallow ? Theme.hairlineStrong : color, radius: 0)
+    }
+
+    // MARK: - Tages-Challenge
+
+    private var challengeCard: some View {
+        let c = DailyChallengeStore.snapshot()
+        return HStack(spacing: 11) {
+            Text(c.challenge.emoji)
+                .font(.system(size: 18))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(L("home.challenge.title"))
+                    .font(.appMono(10)).tracking(1.2).textCase(.uppercase)
+                    .foregroundStyle(Theme.inkMuted)
+                Text(L(c.challenge.titleKey, c.target))
+                    .font(.appDisplay(14))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+            }
+            Spacer(minLength: 4)
+            VStack(alignment: .trailing, spacing: 4) {
+                if c.satisfied {
+                    Text("✓").font(.appHeadline).foregroundStyle(Theme.leaf)
+                } else {
+                    Text(L("home.goal.progress", c.done, c.target))
+                        .font(.appMono(12)).foregroundStyle(Theme.inkSecondary)
+                }
+                miniBar(fraction: c.fraction, color: Theme.ocher).frame(width: 46)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Theme.card.opacity(0.6), in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+                .strokeBorder(Theme.hairline, lineWidth: 1)
+        )
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - Fuß der Gartenkarte: Wochenziel bzw. Gesamtzähler
+
+    @ViewBuilder
+    private var gardenFooter: some View {
+        let review = WeeklyReviewStore.currentReview()
+        if weeklyGoal > 0 || review.hasActivity {
+            weeklyFooter(review)
+        } else {
+            HStack(alignment: .bottom) { Spacer(); totalCounter }
+        }
+    }
+
+    private func weeklyFooter(_ review: WeeklyReview) -> some View {
+        let target = max(weeklyGoal, 1)
+        let fraction = weeklyGoal > 0 ? min(1, Double(weekDone) / Double(target)) : 0
+        return VStack(alignment: .leading, spacing: 6) {
+            Divider().overlay(Theme.hairline)
+            HStack(alignment: .firstTextBaseline) {
+                Text(L("home.weekly.title"))
+                    .font(.appMono(10)).tracking(1.2).textCase(.uppercase)
+                    .foregroundStyle(Theme.inkMuted)
+                Spacer()
+                if weeklyGoal > 0 {
+                    Text("\(weekDone)").font(.appDisplay(14)).foregroundColor(Theme.leaf)
+                        + Text(" / \(weeklyGoal)").font(.appMono(12)).foregroundColor(Theme.inkSecondary)
+                }
+            }
+            if weeklyGoal > 0 {
+                MasteryBar(fraction: fraction)
+            }
+            HStack(spacing: Theme.Spacing.s) {
+                Text(L("garden.week.practiced", review.practicedCount))
+                Spacer()
+                Text(L("garden.week.bloomed", review.newlyLearnedCount))
+                if let delta = review.deltaPercent {
+                    Spacer()
+                    Text(delta >= 0 ? L("garden.week.delta.up", delta) : L("garden.week.delta.down", abs(delta)))
+                        .foregroundStyle(delta >= 0 ? Theme.vermillion : Theme.inkMuted)
+                }
+            }
+            .font(.appMono(11))
+            .foregroundStyle(Theme.inkSecondary)
+        }
+    }
+
+    private func miniBar(fraction: Double, color: Color) -> some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 2).fill(Theme.ink.opacity(0.06))
+                RoundedRectangle(cornerRadius: 2).fill(color)
+                    .frame(width: geo.size.width * max(0, min(fraction, 1)))
+            }
+        }
+        .frame(height: 6)
+        .overlay(RoundedRectangle(cornerRadius: 2).strokeBorder(Theme.hairline, lineWidth: 1))
     }
 
     private var totalCounter: some View {

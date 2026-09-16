@@ -581,3 +581,9 @@
 "onboarding.widget.done" = "단어 준비 완료 ✦";
 "search.hits" = "%d개 결과";
 "search.filter.widget" = "잠금 화면";
+"garden.streak.note" = "%d일 연속 물주기.";
+"garden.today" = "오늘";
+"garden.week.practiced" = "%d개 연습";
+"garden.week.bloomed" = "%d개 개화";
+"garden.week.delta.up" = "↗ %d %% 증가";
+"garden.week.delta.down" = "↘ %d %% 감소";

@@ -581,3 +581,9 @@
 "onboarding.widget.done" = "Words prepared ✦";
 "search.hits" = "%d hits";
 "search.filter.widget" = "Lock Screen";
+"garden.streak.note" = "%d-day watering streak.";
+"garden.today" = "TODAY";
+"garden.week.practiced" = "%d practiced";
+"garden.week.bloomed" = "%d newly bloomed";
+"garden.week.delta.up" = "↗ %d %% more";
+"garden.week.delta.down" = "↘ %d %% less";

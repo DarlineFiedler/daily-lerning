@@ -581,3 +581,9 @@
 "onboarding.widget.done" = "Wörter vorbereitet ✦";
 "search.hits" = "%d Treffer";
 "search.filter.widget" = "Sperrbildschirm";
+"garden.streak.note" = "%d Tage am Stück gegossen.";
+"garden.today" = "HEUTE";
+"garden.week.practiced" = "%d geübt";
+"garden.week.bloomed" = "%d neu erblüht";
+"garden.week.delta.up" = "↗ %d %% mehr";
+"garden.week.delta.down" = "↘ %d %% weniger";

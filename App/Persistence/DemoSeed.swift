@@ -81,6 +81,10 @@ enum DemoSeed {
             }
         }
         context.saveOrLog()
+
+        // Beispiel-Ziele, damit Ziel-Ring & Wochenziel-Fuß im Garten sichtbar sind.
+        AppGroup.defaults.set(10, forKey: GoalKeys.daily)
+        AppGroup.defaults.set(50, forKey: GoalKeys.weekly)
     }
 }
 #endif
