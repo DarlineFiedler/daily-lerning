@@ -26,7 +26,7 @@ struct PracticeContainerView: View {
                     onClose: handleClose
                 )
             } else if let item = session.currentItem {
-                PracticeProgressHeader(session: session)
+                PracticeProgressHeader(session: session, onClose: handleClose)
                 ScrollView {
                     modeView(for: item)
                         .padding(Theme.Spacing.m)
@@ -37,11 +37,7 @@ struct PracticeContainerView: View {
         .paperBackground()
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(L("common.close"), action: handleClose)
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         // Haptik für die wichtigsten Lern-Momente (richtig/falsch).
         .sensoryFeedback(.success, trigger: session.correctCount)
         .sensoryFeedback(.error, trigger: session.wrongCount)
@@ -96,7 +92,7 @@ struct PracticeContainerView: View {
                 .foregroundStyle(Theme.brandStart)
             Text(L(session.isClozeOnly ? "practice.cloze.empty" : "practice.noWords"))
                 .font(.appBody)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.inkSecondary)
                 .multilineTextAlignment(.center)
             Button(L("common.done"), action: onClose)
                 .buttonStyle(.primary)
@@ -126,9 +122,11 @@ struct PracticeContainerView: View {
     }
 }
 
-/// Fortschrittsleiste eines Lernvorgangs (Position, Treffer/Fehler, Balken).
+/// Fortschrittsleiste eines Lernvorgangs: inline-Schließen (✕), Balken, Zähler und
+/// darunter ein Mono-Label des aktuellen Modus (Papier-Design-Handoff 2d–2g).
 struct PracticeProgressHeader: View {
     let session: PracticeSession
+    var onClose: () -> Void
 
     private var progress: Double {
         Double(session.index) / Double(max(session.total, 1))
@@ -137,6 +135,12 @@ struct PracticeProgressHeader: View {
     var body: some View {
         VStack(spacing: Theme.Spacing.s) {
             HStack(spacing: Theme.Spacing.m) {
+                Button(action: onClose) {
+                    Text("✕")
+                        .font(.appTitle3)
+                        .foregroundStyle(Theme.ink.opacity(0.5))
+                }
+                .buttonStyle(.plain)
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule().fill(Theme.ink.opacity(0.10))
@@ -145,19 +149,15 @@ struct PracticeProgressHeader: View {
                     }
                 }
                 .frame(height: 8)
-                Text("\(session.position) / \(session.total)")
+                Text("\(session.position)/\(session.total)")
                     .font(.appMono(12))
                     .foregroundStyle(Theme.inkSecondary)
                     .fixedSize()
             }
-            HStack(spacing: Theme.Spacing.m) {
-                Label("\(session.correctCount)", systemImage: "checkmark")
-                    .foregroundStyle(Theme.leaf)
-                Label("\(session.wrongCount)", systemImage: "xmark")
-                    .foregroundStyle(Theme.vermillion)
-                Spacer()
+            if let mode = session.currentItem?.mode {
+                SectionLabel(L(mode.titleKey))
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .font(.appMono(11))
         }
         .padding(.horizontal, Theme.Spacing.m)
         .padding(.top, Theme.Spacing.s)
@@ -312,12 +312,17 @@ struct PracticeSummaryView: View {
 struct PromptCard: View {
     let text: String
     var subtitle: String?
+    /// Optionales Mono-Mikro-Label über dem Wort (z.B. „BEDEUTUNG WÄHLEN"), Handoff 2b/2c.
+    var topLabel: String?
     /// Wenn gesetzt, erscheint ein Vorlese-Button (koreanisches Wort). Nur übergeben,
     /// wenn der Prompt selbst das Wort ist – sonst würde er die Antwort verraten.
     var spokenText: String?
 
     var body: some View {
         VStack(spacing: Theme.Spacing.s) {
+            if let topLabel {
+                SectionLabel(topLabel)
+            }
             HStack(spacing: Theme.Spacing.s) {
                 Text(text)
                     .font(.appDisplay(52))

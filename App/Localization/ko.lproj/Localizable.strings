@@ -76,6 +76,10 @@
 "vocab.status" = "상태";
 "vocab.accuracy" = "정확도";
 "vocab.accuracyDetail" = "%d%% 정답 · %d회 시도";
+"vocab.delete" = "단어 삭제";
+"vocab.stat.practiced" = "연습";
+"vocab.stat.wrong" = "틀림";
+"vocab.stat.streak" = "연속";
 "vocab.problemWord" = "문제 단어";
 "vocab.details" = "세부 정보";
 "vocab.widgetToggle" = "잠금 화면에 표시";
@@ -168,6 +172,8 @@
 "practice.boss.toggle" = "보스 모드";
 "practice.boss.hint" = "라운드를 보스와의 전투로: 정답은 공격, 오답은 생명이 줄어듭니다.";
 "practice.boss.generic" = "보스";
+"practice.boss.lives" = "목숨 %d";
+"practice.boss.battleLabel" = "전투 · %@";
 "practice.boss.hp" = "%d / %d HP";
 "practice.boss.victory" = "보스 격파!";
 "practice.boss.defeat" = "보스에게 패배";
@@ -188,6 +194,13 @@
 "practice.exam.stat.correct" = "정답";
 "practice.exam.stat.level" = "등급";
 "practice.exam.a11y.time" = "%d초 남음";
+"practice.exam.titleFormat" = "%@ 시험";
+"practice.exam.question" = "문제 %1$d/%2$d";
+"practice.exam.rubric" = "채점 방식";
+"practice.exam.passMark" = "합격 기준 %@";
+"practice.exam.timePerQuestion" = "문제당 시간";
+"practice.exam.seconds" = "%d초";
+"practice.exam.countsNote" = "스트릭, XP, 성장에 정상 반영돼요.";
 
 /* Statistics */
 "stats.title" = "통계";
@@ -211,6 +224,7 @@
 "search.placeholder" = "단어 또는 뜻 검색";
 "search.empty" = "결과가 없습니다.";
 "search.prompt" = "모든 그룹에서 검색합니다.";
+"search.swipeHint" = "왼쪽으로 밀어 편집하거나 삭제하세요.";
 "search.filter.status" = "상태";
 "search.filter.groups" = "그룹";
 "search.filter.selectedSuffix" = "선택됨";
@@ -310,6 +324,11 @@
 "streak.detail.longest" = "최고 기록";
 "streak.detail.jokers" = "프리즈";
 "streak.detail.joker.title" = "스트릭 프리즈";
+"streak.detail.daysInARow" = "일 연속 물 주기";
+"streak.detail.recordShort" = "최고 기록: %d일";
+"streak.detail.joker.covers" = "놓친 하루를 보완해요";
+"streak.detail.joker.usedCount" = "%d회 사용";
+"streak.detail.jokerFooter" = "물 준 7일마다 조커가 하나 자라나요.";
 "streak.detail.joker.explainer" = "매주 자동으로 프리즈 1개를 받습니다. 하루를 놓쳐도 프리즈가 연속 학습을 지켜줍니다. 최대 %d개까지 모을 수 있습니다.";
 "streak.detail.history" = "사용한 프리즈";
 "streak.detail.history.entry" = "%@에 프리즈 사용";
@@ -528,6 +547,7 @@
 "home.translator.title" = "번역기";
 "home.translator.subtitle" = "단어와 문장을 번역하고 들어보세요";
 "translator.title" = "번역기";
+"translator.inputLabel" = "입력";
 "translator.input.placeholder" = "텍스트 입력 …";
 "translator.output.placeholder" = "번역 결과가 여기에 표시됩니다";
 "translator.translate" = "번역";

@@ -28,9 +28,6 @@ struct ReviewSwipeView: View {
                     .buttonStyle(.primary)
                 }
             } else {
-                Text(L("practice.tapToReveal"))
-                    .font(.appCaption)
-                    .foregroundStyle(.secondary)
                 Button { reveal() } label: {
                     Label(L("practice.showAnswer"), systemImage: "eye")
                 }
@@ -43,12 +40,23 @@ struct ReviewSwipeView: View {
         VStack(spacing: Theme.Spacing.m) {
             HStack(spacing: Theme.Spacing.s) {
                 Text(item.prompt())
-                    .font(.appDisplay(44))
+                    .font(.appDisplay(56))
                     .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.5)
                 if item.direction == .wordToMeaning {
                     SpeakButton(text: item.vocab.word, font: .appTitle2, tint: Theme.vermillion)
                 }
+            }
+            if !revealed {
+                Text(L("practice.tapToReveal"))
+                    .font(.appMono(13))
+                    .foregroundStyle(Theme.inkSecondary)
+                    .padding(.horizontal, Theme.Spacing.m)
+                    .padding(.vertical, 6)
+                    .overlay(
+                        Capsule().strokeBorder(Theme.hairlineStrong,
+                                               style: StrokeStyle(lineWidth: 1, dash: [4]))
+                    )
             }
             if revealed {
                 Divider().overlay(Theme.hairline)

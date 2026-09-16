@@ -103,7 +103,7 @@ struct StreakWidgetView: View {
     }
 
     private var flameGradient: AnyShapeStyle {
-        AnyShapeStyle(LinearGradient(colors: [.orange, .red],
+        AnyShapeStyle(LinearGradient(colors: [Color(hex: "#C98A2B"), Color(hex: "#B23A2C")],
                                      startPoint: .top, endPoint: .bottom))
     }
 }
@@ -121,7 +121,7 @@ struct ProgressRing: View {
             Circle()
                 // Mindestlänge, damit auch 0 % ein sichtbarer Punkt bleibt.
                 .trim(from: 0, to: max(0.02, fraction))
-                .stroke(reached ? Color.green : Color.orange,
+                .stroke(reached ? Color(hex: "#4F7043") : Color(hex: "#C98A2B"),
                         style: StrokeStyle(lineWidth: 6, lineCap: .round))
                 .rotationEffect(.degrees(-90))
         }

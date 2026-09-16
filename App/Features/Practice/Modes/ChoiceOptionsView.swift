@@ -36,7 +36,7 @@ struct ChoiceOptionsView: View {
                     .background(background(for: choice), in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous)
-                            .strokeBorder(border(for: choice), lineWidth: 1)
+                            .strokeBorder(border(for: choice), lineWidth: 1.5)
                     )
                     .modifier(OptionShadow(active: showsShadow(for: choice)))
                     .opacity(faded(choice) ? 0.5 : 1)

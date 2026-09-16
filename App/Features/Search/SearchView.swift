@@ -172,8 +172,9 @@ struct SearchView: View {
                 ForEach(LearningStatus.allCases) { status in
                     SelectableChip(
                         title: L(status.titleKey),
-                        systemImage: status.systemImage,
+                        leading: status.gardenStageEmoji,
                         tint: status.color,
+                        monospaced: true,
                         isSelected: selectedStatuses.contains(status)
                     ) { toggle(&selectedStatuses, status) }
                 }
@@ -183,8 +184,9 @@ struct SearchView: View {
                     ForEach(groups) { group in
                         SelectableChip(
                             title: group.name,
-                            systemImage: "rectangle.stack.fill",
+                            dotColor: Color(hex: group.colorHex),
                             tint: Color(hex: group.colorHex),
+                            monospaced: true,
                             isSelected: selectedGroups.contains(group.id)
                         ) { toggle(&selectedGroups, group.id) }
                     }
@@ -212,9 +214,7 @@ struct SearchView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Text(title)
-                    .font(.appCaption.weight(.semibold))
-                    .textCase(.uppercase)
+                SectionLabel(title)
                 if selectedCount > 0 {
                     Text("\(selectedCount)")
                         .font(.appCaption.weight(.bold))
@@ -224,7 +224,6 @@ struct SearchView: View {
                         .background(Capsule().fill(Theme.brandStart))
                 }
             }
-            .foregroundStyle(.secondary)
             .accessibilityElement(children: .combine)
             .accessibilityLabel(
                 selectedCount > 0
@@ -274,6 +273,11 @@ struct SearchView: View {
             }
             .scrollContentBackground(.hidden)
             .scrollDismissesKeyboard(.immediately)
+            .safeAreaInset(edge: .bottom) {
+                HandNote(L("search.swipeHint"), size: 17, color: Theme.inkSecondary, angle: -1)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Theme.Spacing.s)
+            }
         }
     }
 

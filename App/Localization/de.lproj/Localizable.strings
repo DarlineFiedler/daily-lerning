@@ -76,6 +76,10 @@
 "vocab.status" = "Status";
 "vocab.accuracy" = "Genauigkeit";
 "vocab.accuracyDetail" = "%d %% richtig · %d Versuche";
+"vocab.delete" = "Wort löschen";
+"vocab.stat.practiced" = "Geübt";
+"vocab.stat.wrong" = "Davon falsch";
+"vocab.stat.streak" = "Serie";
 "vocab.problemWord" = "Problemwort";
 "vocab.details" = "Details";
 "vocab.widgetToggle" = "Auf dem Lock Screen anzeigen";
@@ -168,6 +172,8 @@
 "practice.boss.toggle" = "Boss-Modus";
 "practice.boss.hint" = "Die Runde als Kampf gegen einen Endgegner: richtige Antworten sind Treffer, Fehler kosten Leben.";
 "practice.boss.generic" = "Endgegner";
+"practice.boss.lives" = "%d Leben";
+"practice.boss.battleLabel" = "Kampf · %@";
 "practice.boss.hp" = "%d / %d HP";
 "practice.boss.victory" = "Boss besiegt!";
 "practice.boss.defeat" = "Vom Boss besiegt";
@@ -188,6 +194,13 @@
 "practice.exam.stat.correct" = "Richtig";
 "practice.exam.stat.level" = "Niveau";
 "practice.exam.a11y.time" = "%d Sekunden verbleibend";
+"practice.exam.titleFormat" = "Prüfung %@";
+"practice.exam.question" = "Frage %1$d/%2$d";
+"practice.exam.rubric" = "So wird bewertet";
+"practice.exam.passMark" = "Bestehensgrenze %@";
+"practice.exam.timePerQuestion" = "Zeit pro Frage";
+"practice.exam.seconds" = "%d s";
+"practice.exam.countsNote" = "Zählt normal für Streak, XP und Wachstum.";
 
 /* Statistik */
 "stats.title" = "Statistik";
@@ -211,6 +224,7 @@
 "search.placeholder" = "Wort oder Bedeutung suchen";
 "search.empty" = "Keine Treffer.";
 "search.prompt" = "Suche über alle Gruppen hinweg.";
+"search.swipeHint" = "Nach links wischen: bearbeiten oder löschen.";
 "search.filter.status" = "Status";
 "search.filter.groups" = "Gruppen";
 "search.filter.selectedSuffix" = "ausgewählt";
@@ -310,6 +324,11 @@
 "streak.detail.longest" = "Rekord";
 "streak.detail.jokers" = "Joker";
 "streak.detail.joker.title" = "Streak-Freeze-Joker";
+"streak.detail.daysInARow" = "Tage in Folge gegossen";
+"streak.detail.recordShort" = "Rekord: %d Tage";
+"streak.detail.joker.covers" = "deckt einen verpassten Tag ab";
+"streak.detail.joker.usedCount" = "%d× eingesetzt";
+"streak.detail.jokerFooter" = "Ein Joker wächst alle 7 gegossenen Tage nach.";
 "streak.detail.joker.explainer" = "Jede Woche bekommst du automatisch einen Joker. Verpasst du einen Tag, rettet ein Joker deine Streak. Du kannst bis zu %d Joker ansammeln.";
 "streak.detail.history" = "Eingesetzte Joker";
 "streak.detail.history.entry" = "Joker eingesetzt am %@";
@@ -528,6 +547,7 @@
 "home.translator.title" = "Übersetzer";
 "home.translator.subtitle" = "Wörter & Sätze übersetzen und anhören";
 "translator.title" = "Übersetzer";
+"translator.inputLabel" = "Dein Wort";
 "translator.input.placeholder" = "Text eingeben …";
 "translator.output.placeholder" = "Übersetzung erscheint hier";
 "translator.translate" = "Übersetzen";

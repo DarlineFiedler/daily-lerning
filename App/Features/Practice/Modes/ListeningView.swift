@@ -33,17 +33,19 @@ struct ListeningView: View {
     /// Große Karte mit Lautsprecher – tippen spielt das Wort erneut ab.
     private var audioCard: some View {
         Button { speak() } label: {
-            VStack(spacing: Theme.Spacing.s) {
+            VStack(spacing: Theme.Spacing.m) {
                 Image(systemName: "speaker.wave.3.fill")
-                    .font(.system(size: 52))
+                    .font(.system(size: 40))
+                    .foregroundStyle(Theme.paper)
+                    .frame(width: 96, height: 96)
+                    .background(Circle().fill(Theme.leaf))
                 Text(L("practice.listen.replay"))
-                    .font(.appSubheadline.weight(.medium))
-                    .opacity(0.9)
+                    .font(.appMono(12))
+                    .foregroundStyle(Theme.inkSecondary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, Theme.Spacing.xl + 8)
             .padding(.horizontal, Theme.Spacing.m)
-            .foregroundStyle(Theme.vermillion)
             .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)

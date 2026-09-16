@@ -25,13 +25,13 @@ struct WritingView: View {
                        spokenText: item.direction == .wordToMeaning ? item.vocab.word : nil)
 
             TextField(L("practice.typeAnswer"), text: $typed)
-                .font(.appTitle3)
-                .padding(Theme.Spacing.m)
-                .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous)
-                        .strokeBorder(Theme.brandStart.opacity(0.3), lineWidth: 1.5)
-                )
+                .font(.appDisplay(30, weight: .regular))
+                .multilineTextAlignment(.center)
+                .tint(Theme.vermillion)
+                .padding(.vertical, Theme.Spacing.s)
+                .overlay(alignment: .bottom) {
+                    Rectangle().fill(Theme.ink).frame(height: 2)
+                }
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
                 .focused($focused)
@@ -96,7 +96,7 @@ struct WritingView: View {
                 Text(L("practice.almostHint", item.answer()))
                     .font(.appSubheadline)
                     .multilineTextAlignment(.center)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.inkSecondary)
             }
             if match != .correct {
                 HStack(spacing: Theme.Spacing.s) {
@@ -112,7 +112,7 @@ struct WritingView: View {
                 Text(L("practice.confusedHint", confused.word, confused.meaning))
                     .font(.appSubheadline)
                     .multilineTextAlignment(.center)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.inkSecondary)
             }
         }
         .frame(maxWidth: .infinity)

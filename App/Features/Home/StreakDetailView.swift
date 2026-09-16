@@ -24,6 +24,10 @@ struct StreakDetailView: View {
                     calendarSection
                     heatmapSection
                     if !history.isEmpty { historySection }
+                    HandNote(L("streak.detail.jokerFooter"), size: 18,
+                             color: Theme.inkSecondary, angle: -1)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, Theme.Spacing.s)
                 }
                 .padding(Theme.Spacing.m)
                 .padding(.bottom, Theme.Spacing.xl)
@@ -42,36 +46,54 @@ struct StreakDetailView: View {
     // MARK: - Streak-Kennzahlen
 
     private var stats: some View {
-        HStack(spacing: Theme.Spacing.s) {
-            StatTile(value: "\(streak)", label: L("streak.detail.current"),
-                     systemImage: "flame.fill", tint: Theme.brandEnd)
-            StatTile(value: "\(longest)", label: L("streak.detail.longest"),
-                     systemImage: "trophy.fill", tint: Theme.brandStart)
-            StatTile(value: "\(jokers)/\(maxJokers)", label: L("streak.detail.jokers"),
-                     systemImage: "snowflake", tint: Theme.statusAlmostLearned)
+        VStack(spacing: Theme.Spacing.xs) {
+            Text("🔥").font(.system(size: 52))
+            Text("\(streak)")
+                .font(.appDisplay(52))
+                .foregroundStyle(Theme.ink)
+            Text(L("streak.detail.daysInARow"))
+                .font(.appMono(12))
+                .tracking(1.5)
+                .textCase(.uppercase)
+                .foregroundStyle(Theme.inkSecondary)
+            HandNote(L("streak.detail.recordShort", longest), color: Theme.vermillion, angle: -1)
         }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Joker-Erklärung
 
     private var jokerCard: some View {
-        HStack(alignment: .top, spacing: Theme.Spacing.m) {
-            Image(systemName: "snowflake")
-                .font(.appTitle2)
-                .foregroundStyle(Theme.statusAlmostLearned)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(L("streak.detail.joker.title"))
-                    .font(.appHeadline)
-                    .foregroundStyle(.primary)
-                Text(L("streak.detail.joker.explainer", maxJokers))
-                    .font(.appSubheadline)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("❄️ " + L("streak.detail.joker.title"))
+                        .font(.appHeadline)
+                        .foregroundStyle(Theme.ink)
+                    Text(L("streak.detail.joker.covers"))
+                        .font(.appMono(11))
+                        .foregroundStyle(Theme.inkSecondary)
+                }
+                Spacer()
+                Text("\(jokers) / \(maxJokers)")
+                    .font(.appMono(15))
+                    .foregroundStyle(Theme.leaf)
             }
-            Spacer(minLength: 0)
+            HStack(spacing: Theme.Spacing.s) {
+                ForEach(0 ..< maxJokers, id: \.self) { i in
+                    Text("❄️")
+                        .font(.system(size: 22))
+                        .opacity(i < jokers ? 1 : 0.22)
+                }
+            }
+            if !history.isEmpty {
+                Text(L("streak.detail.joker.usedCount", history.count))
+                    .font(.appMono(11))
+                    .foregroundStyle(Theme.inkSecondary)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .cardStyle(padding: Theme.Spacing.l)
+        .cardStyle()
     }
 
     // MARK: - Kalender

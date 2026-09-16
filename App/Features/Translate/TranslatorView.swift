@@ -103,41 +103,49 @@ private struct TranslatorContentView: View {
 
     private var languageBar: some View {
         HStack(spacing: Theme.Spacing.s) {
-            Text(TranslationDirection.label(for: pair.source))
-                .frame(maxWidth: .infinity)
+            languagePill(TranslationDirection.label(for: pair.source))
             Button {
                 swap()
             } label: {
                 Image(systemName: "arrow.left.arrow.right")
-                    .font(.appHeadline)
+                    .font(.appSubheadline)
+                    .foregroundStyle(hasFreshTranslation ? Theme.vermillion : Theme.inkMuted)
+                    .frame(width: 34, height: 34)
+                    .overlay(Circle().strokeBorder(Theme.hairlineStrong, lineWidth: 1))
             }
             .buttonStyle(.plain)
-            .foregroundStyle(hasFreshTranslation ? Theme.brandStart : Color.secondary)
             .disabled(!hasFreshTranslation)
             .accessibilityLabel(L("translator.swap.a11y"))
-            Text(TranslationDirection.label(for: pair.target))
-                .frame(maxWidth: .infinity)
+            languagePill(TranslationDirection.label(for: pair.target))
         }
-        .font(.appHeadline)
-        .foregroundStyle(.primary)
-        .cardStyle()
+    }
+
+    private func languagePill(_ text: String) -> some View {
+        Text(text)
+            .font(.appMono(12))
+            .foregroundStyle(Theme.ink)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 9)
+            .overlay(Capsule().strokeBorder(Theme.hairlineStrong, lineWidth: 1))
     }
 
     // MARK: - Eingabe
 
     private var inputCard: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionLabel(L("translator.inputLabel"))
             ZStack(alignment: .topLeading) {
                 if sourceText.isEmpty {
                     Text(L("translator.input.placeholder"))
-                        .font(.appBody)
-                        .foregroundStyle(.tertiary)
+                        .font(.appDisplay(22, weight: .regular))
+                        .foregroundStyle(Theme.inkMuted)
                         .padding(.top, 8)
                         .padding(.leading, 5)
                         .allowsHitTesting(false)
                 }
                 TextEditor(text: $sourceText)
-                    .font(.appBody)
+                    .font(.appDisplay(22, weight: .regular))
+                    .tint(Theme.vermillion)
                     .frame(minHeight: 110)
                     .scrollContentBackground(.hidden)
                     .focused($inputFocused)

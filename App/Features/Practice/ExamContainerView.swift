@@ -43,22 +43,20 @@ struct ExamContainerView: View {
                                onRestart: restart, onClose: onClose)
             } else if let item = session.currentItem {
                 ExamCountdownHeader(remaining: remaining, total: totalSeconds,
-                                    position: session.position, count: session.total)
+                                    position: session.position, count: session.total,
+                                    level: level, onCancel: handleClose)
                 ScrollView {
                     card(for: item)
                         .padding(Theme.Spacing.m)
                         .id(session.index) // erzwingt frische State pro Wort
                 }
+                examRubric
             }
         }
         .paperBackground()
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(L("common.close"), action: handleClose)
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .sensoryFeedback(.success, trigger: session.correctCount)
         .sensoryFeedback(.error, trigger: session.wrongCount)
         .onAppear(perform: startCountdown)
@@ -99,6 +97,42 @@ struct ExamContainerView: View {
     private func handleClose() {
         session.flushProgress()
         onClose()
+    }
+
+    /// Angezeigtes Niveau – konkretes TOPIK-Level oder generisch „TOPIK".
+    private var levelText: String {
+        level.map { L($0.titleKey) } ?? "TOPIK"
+    }
+
+    /// Bewertungs-Panel am unteren Rand (Design-Handoff 2c): gestricheltes Kärtchen mit
+    /// Bestehensgrenze, Zeit pro Frage und einer grünen Handschrift-Notiz.
+    private var examRubric: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionLabel(L("practice.exam.rubric"))
+            HStack {
+                Text(L("practice.exam.passMark", levelText))
+                    .font(.appSubheadline).foregroundStyle(Theme.ink)
+                Spacer()
+                Text("\(ExamRules.passMark(for: level))%")
+                    .font(.appMono(13)).foregroundStyle(Theme.ink)
+            }
+            HStack {
+                Text(L("practice.exam.timePerQuestion"))
+                    .font(.appSubheadline).foregroundStyle(Theme.ink)
+                Spacer()
+                Text(L("practice.exam.seconds", ExamRules.secondsPerWord))
+                    .font(.appMono(13)).foregroundStyle(Theme.ink)
+            }
+            Text(L("practice.exam.countsNote"))
+                .font(.appHand(16)).foregroundStyle(Theme.leaf)
+        }
+        .padding(Theme.Spacing.m)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+            .fill(Theme.card.opacity(0.6)))
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+            .strokeBorder(Theme.hairlineStrong, style: StrokeStyle(lineWidth: 1.5, dash: [4])))
+        .padding(Theme.Spacing.m)
     }
 
     @ViewBuilder
@@ -145,43 +179,71 @@ struct ExamCountdownHeader: View {
     let total: Int
     let position: Int
     let count: Int
+    let level: TopikLevel?
+    var onCancel: () -> Void
 
     /// Ab dieser Restzeit (Sekunden) wird der Countdown warnend rot.
     private static let urgentSeconds = 10
 
     private var isUrgent: Bool { remaining <= Self.urgentSeconds }
-    private var tint: Color { isUrgent ? Theme.wrong : Theme.brandMid }
+    private var timerColor: Color { isUrgent ? Theme.wrong : Theme.vermillion }
 
-    private var fraction: Double {
-        total == 0 ? 0 : Double(remaining) / Double(total)
+    /// Fortschritt = beantwortete Fragen (nicht Restzeit), Design-Handoff 2c.
+    private var questionFraction: Double {
+        count == 0 ? 0 : Double(position) / Double(count)
     }
 
     private var clock: String {
         String(format: "%d:%02d", remaining / 60, remaining % 60)
     }
 
+    private var levelText: String {
+        level.map { L($0.titleKey) } ?? "TOPIK"
+    }
+
     var body: some View {
         VStack(spacing: Theme.Spacing.s) {
+            // Reihe 1: Abbrechen (links) · gerahmter Timer (rechts).
             HStack {
-                Label(clock, systemImage: "timer")
-                    .font(.appSubheadline.weight(.semibold).monospacedDigit())
-                    .foregroundStyle(tint)
-                    .contentTransition(.numericText())
+                Button(action: onCancel) {
+                    Text(L("common.cancel"))
+                        .font(.appCaption)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Theme.inkSecondary)
+                }
+                .buttonStyle(.plain)
                 Spacer()
-                Text("\(position) / \(count)")
-                    .font(.appCaption.weight(.medium))
-                    .foregroundStyle(.secondary)
+                Text(clock)
+                    .font(.appMono(15, bold: true).monospacedDigit())
+                    .foregroundStyle(timerColor)
+                    .contentTransition(.numericText())
+                    .padding(.vertical, 5)
+                    .padding(.horizontal, 12)
+                    .overlay(RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .strokeBorder(timerColor, lineWidth: 1.5))
             }
 
+            // Reihe 2: Serif-Titel (links) · Fragezähler (rechts).
+            HStack(alignment: .firstTextBaseline) {
+                Text(L("practice.exam.titleFormat", levelText))
+                    .font(.appTitle)
+                    .foregroundStyle(Theme.ink)
+                Spacer()
+                Text(L("practice.exam.question", position, count))
+                    .font(.appCaption)
+                    .foregroundStyle(Theme.inkSecondary)
+            }
+
+            // Reihe 3: Frage-Fortschritt (grün).
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Theme.surfaceMuted)
-                    Capsule().fill(tint)
-                        .frame(width: geo.size.width * fraction)
-                        .animation(.linear(duration: 0.5), value: fraction)
+                    Capsule().fill(Theme.hairline)
+                    Capsule().fill(Theme.leaf)
+                        .frame(width: geo.size.width * questionFraction)
+                        .animation(.easeOut(duration: 0.3), value: questionFraction)
                 }
             }
-            .frame(height: 8)
+            .frame(height: 6)
         }
         .padding(.horizontal, Theme.Spacing.m)
         .padding(.top, Theme.Spacing.s)

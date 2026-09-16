@@ -76,6 +76,10 @@
 "vocab.status" = "Status";
 "vocab.accuracy" = "Accuracy";
 "vocab.accuracyDetail" = "%d%% correct · %d attempts";
+"vocab.delete" = "Delete word";
+"vocab.stat.practiced" = "Practiced";
+"vocab.stat.wrong" = "Of those wrong";
+"vocab.stat.streak" = "Streak";
 "vocab.problemWord" = "Problem word";
 "vocab.details" = "Details";
 "vocab.widgetToggle" = "Show on Lock Screen";
@@ -168,6 +172,8 @@
 "practice.boss.toggle" = "Boss mode";
 "practice.boss.hint" = "Frame the round as a fight against a boss: correct answers are hits, mistakes cost lives.";
 "practice.boss.generic" = "Boss";
+"practice.boss.lives" = "%d lives";
+"practice.boss.battleLabel" = "Battle · %@";
 "practice.boss.hp" = "%d / %d HP";
 "practice.boss.victory" = "Boss defeated!";
 "practice.boss.defeat" = "Defeated by the boss";
@@ -188,6 +194,13 @@
 "practice.exam.stat.correct" = "Correct";
 "practice.exam.stat.level" = "Level";
 "practice.exam.a11y.time" = "%d seconds remaining";
+"practice.exam.titleFormat" = "Exam %@";
+"practice.exam.question" = "Question %1$d/%2$d";
+"practice.exam.rubric" = "How it's scored";
+"practice.exam.passMark" = "Pass mark %@";
+"practice.exam.timePerQuestion" = "Time per question";
+"practice.exam.seconds" = "%d s";
+"practice.exam.countsNote" = "Counts normally for streak, XP and growth.";
 
 /* Statistics */
 "stats.title" = "Statistics";
@@ -211,6 +224,7 @@
 "search.placeholder" = "Search word or meaning";
 "search.empty" = "No results.";
 "search.prompt" = "Search across all groups.";
+"search.swipeHint" = "Swipe left to edit or delete.";
 "search.filter.status" = "Status";
 "search.filter.groups" = "Groups";
 "search.filter.selectedSuffix" = "selected";
@@ -310,6 +324,11 @@
 "streak.detail.longest" = "Best";
 "streak.detail.jokers" = "Freezes";
 "streak.detail.joker.title" = "Streak freezes";
+"streak.detail.daysInARow" = "days watered in a row";
+"streak.detail.recordShort" = "Record: %d days";
+"streak.detail.joker.covers" = "covers one missed day";
+"streak.detail.joker.usedCount" = "used %d×";
+"streak.detail.jokerFooter" = "A joker regrows every 7 watered days.";
 "streak.detail.joker.explainer" = "Every week you automatically get one freeze. If you miss a day, a freeze saves your streak. You can stock up to %d freezes.";
 "streak.detail.history" = "Freezes used";
 "streak.detail.history.entry" = "Freeze used on %@";
@@ -528,6 +547,7 @@
 "home.translator.title" = "Translator";
 "home.translator.subtitle" = "Translate words & sentences and listen";
 "translator.title" = "Translator";
+"translator.inputLabel" = "Your word";
 "translator.input.placeholder" = "Enter text …";
 "translator.output.placeholder" = "Translation appears here";
 "translator.translate" = "Translate";

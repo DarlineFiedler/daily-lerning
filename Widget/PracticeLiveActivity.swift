@@ -9,7 +9,9 @@ struct PracticeLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: PracticeActivityAttributes.self) { context in
             LockScreenView(state: context.state)
-                .activityBackgroundTint(Color.black.opacity(0.25))
+                // Papier-&-Tinte-Look (Design-Handoff 2n): warmer Zinnober-Tint statt Schwarz.
+                // Theme lebt im App-Target; hier über die Hex-Werte aus Shared/Color+Hex.
+                .activityBackgroundTint(Color(hex: "#B23A2C").opacity(0.22))
                 .activitySystemActionForegroundColor(.white)
                 .widgetURL(DeepLink.sessionURL)
         } dynamicIsland: { context in
@@ -28,7 +30,7 @@ struct PracticeLiveActivity: Widget {
                                                         total: context.state.total))
                             .font(.caption)
                         ProgressView(value: context.state.progress)
-                            .tint(.white)
+                            .tint(Color(hex: "#C98A2B"))
                     }
                 }
             } compactLeading: {
@@ -67,7 +69,7 @@ private struct LockScreenView: View {
                 .foregroundStyle(.secondary)
 
             ProgressView(value: state.progress)
-                .tint(.white)
+                .tint(Color(hex: "#C98A2B"))
         }
         .padding()
     }
