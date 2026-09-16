@@ -9,6 +9,8 @@ struct SearchView: View {
     @State private var query = ""
     @State private var activeSheet: ActiveSheet?
     @State private var pendingDelete: Vocab?
+    /// Fokus des Suchfelds – zum Schließen der Tastatur (mehr Platz für die Treffer).
+    @FocusState private var searchFocused: Bool
 
     /// Ein einziges, umschaltbares Sheet für Ansehen ↔ Bearbeiten. Bewusst EIN
     /// `.sheet(item:)` (ein Presentation-Controller): der Wechsel vom Ansehen zum
@@ -63,6 +65,12 @@ struct SearchView: View {
             }
             .paperBackground()
             .navigationTitle(L("search.title"))
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button(L("common.done")) { searchFocused = false }
+                }
+            }
             .onChange(of: query) { _, newValue in
                 // Erste echte Sucheingabe schaltet das „Spürnase"-Badge frei.
                 if !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -116,6 +124,8 @@ struct SearchView: View {
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
                 .submitLabel(.search)
+                .focused($searchFocused)
+                .onSubmit { searchFocused = false }
             if !query.isEmpty {
                 Button { query = "" } label: {
                     Image(systemName: "xmark.circle.fill")
@@ -249,6 +259,7 @@ struct SearchView: View {
                 }
             }
             .scrollContentBackground(.hidden)
+            .scrollDismissesKeyboard(.immediately)
         }
     }
 
