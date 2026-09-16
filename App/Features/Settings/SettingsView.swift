@@ -57,6 +57,10 @@ struct SettingsView: View {
 
     /// Steuert den Bestätigungsdialog für „Alles zurücksetzen".
     @State private var showResetConfirm = false
+    /// „Dein Ziel" wird als Sheet präsentiert statt gepusht: Ein dritter NavigationLink-
+    /// Push in den Tab-Stack ließ die App auf iOS 26 im Layout-Update hängen (Watchdog-
+    /// Kill). Ein Sheet öffnet einen eigenen Präsentationskontext und umgeht das.
+    @State private var showGoal = false
 
     var body: some View {
         @Bindable var localization = localization // lokale Bindung fürs Sprach-Segment
@@ -80,6 +84,16 @@ struct SettingsView: View {
         }
         .paperBackground()
         .navigationTitle(L("tab.settings"))
+        .sheet(isPresented: $showGoal) {
+            NavigationStack {
+                GoalSettingsView()
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button(L("common.done")) { showGoal = false }
+                        }
+                    }
+            }
+        }
         .sheet(isPresented: $showImport) { VocabImportView() }
         .sheet(item: $backupFile) { file in ActivityView(items: [file.url]) }
         .sheet(item: $csvFile) { file in ActivityView(items: [file.url]) }
@@ -196,15 +210,14 @@ struct SettingsView: View {
     }
 
     private var goalCard: some View {
-        NavigationLink {
-            GoalSettingsView()
-        } label: {
+        Button { showGoal = true } label: {
             HStack {
                 Text(L("settings.goal.section")).font(.appBody).foregroundStyle(Theme.ink)
                 Spacer()
                 Image(systemName: "chevron.right").font(.appCaption).foregroundStyle(Theme.inkMuted)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
             .cardStyle()
         }
         .buttonStyle(.plain)

@@ -47,13 +47,17 @@ struct RootView: View {
             } else {
                 #if DEBUG
                 if showGoalPushDebug {
-                    // Faithful repro des Absturz-Pfads mit ECHTER Umgebung (wie mainShell):
-                    // Ich → Einstellungen → „Dein Ziel" als dreifacher Push in EINEM Stack.
+                    // Faithful repro des Absturz-Pfads MIT Tab-Leisten-Kontext (safeAreaInset
+                    // wie mainShell): Ich → Einstellungen → „Dein Ziel" als Push in EINEM Stack.
                     NavigationStack(path: .constant([0, 1])) {
                         Color.clear
                             .navigationDestination(for: Int.self) { i in
                                 if i == 0 { SettingsView() } else { GoalSettingsView() }
                             }
+                    }
+                    .safeAreaInset(edge: .bottom, spacing: 0) {
+                        GardenTabBar(selection: .me, dueCount: dueCount,
+                                     onSelect: { _ in }, onPractice: {})
                     }
                 } else {
                     mainShell
@@ -91,6 +95,16 @@ struct RootView: View {
                 if CommandLine.arguments.contains("-uiTestDetail") { showDetailDebug = true }
                 if CommandLine.arguments.contains("-uiTestGoal") { showGoalDebug = true }
                 if CommandLine.arguments.contains("-uiTestGoalPush") { showGoalPushDebug = true }
+                // Gerätenahe Datenmenge: alle mitgelieferten Wortpakete importieren, um
+                // den datenabhängigen „Dein Ziel"-Hänger im Simulator zu reproduzieren.
+                if CommandLine.arguments.contains("-uiTestImportAll") {
+                    let groups = (try? context.fetch(FetchDescriptor<VocabGroup>())) ?? []
+                    for pack in WordPack.loadBundled() {
+                        _ = VocabImporter.importRows(pack.rows, intoGroupNamed: pack.name,
+                                                     context: context, existingGroups: groups)
+                    }
+                    context.saveOrLog()
+                }
                 #endif
             }
             AppContentRefresh.onAppActive(context: context)
