@@ -43,7 +43,9 @@ struct GardenHomeView: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.top, 8)
-                .padding(.bottom, 24)
+                // Genug Luft unten, damit die letzte Sektion (Wochenrückblick) über der
+                // schwebenden Üben-FAB/Tab-Leiste sichtbar bleibt und nicht zurückfedert.
+                .padding(.bottom, 88)
             }
             .paperBackground()
             .navigationBarHidden(true)

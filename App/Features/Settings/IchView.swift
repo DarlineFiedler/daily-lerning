@@ -28,7 +28,8 @@ struct IchView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
-                .padding(.bottom, 24)
+                // Platz für die schwebende Üben-FAB/Tab-Leiste am unteren Rand.
+                .padding(.bottom, 88)
             }
             .paperBackground()
             .navigationTitle(L("tab.me"))
