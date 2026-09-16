@@ -579,3 +579,4 @@
 "onboarding.widget.body" = "A widget shows a word to review at a glance. Add it later via the home screen.";
 "onboarding.widget.enable" = "Prepare words for the widget";
 "onboarding.widget.done" = "Words prepared ✦";
+"search.hits" = "%d hits";

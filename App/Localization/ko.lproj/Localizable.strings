@@ -579,3 +579,4 @@
 "onboarding.widget.body" = "위젯이 복습할 단어를 보여줘요. 나중에 홈 화면에서 추가하세요.";
 "onboarding.widget.enable" = "위젯용 단어 준비하기";
 "onboarding.widget.done" = "단어 준비 완료 ✦";
+"search.hits" = "%d개 결과";

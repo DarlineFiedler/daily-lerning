@@ -19,6 +19,7 @@ struct RootView: View {
     @State private var showPracticeConfig = false
     #if DEBUG
     @State private var showBossDebug = false
+    @State private var showSearchDebug = false
     #endif
     @State private var showStreakDetail = false
     @State private var showStoreError = false
@@ -60,6 +61,7 @@ struct RootView: View {
                 if CommandLine.arguments.contains("-uiTestReview") { showReview = true }
                 if CommandLine.arguments.contains("-uiTestMeTab") { selectedTab = .me }
                 if CommandLine.arguments.contains("-uiTestBoss") { showBossDebug = true }
+                if CommandLine.arguments.contains("-uiTestSearch") { showSearchDebug = true }
                 #endif
             }
             AppContentRefresh.onAppActive(context: context)
@@ -121,6 +123,9 @@ struct RootView: View {
                 )
             }
             .modifier(SheetEnvironment(localization: localization, sessionStore: sessionStore))
+        }
+        .sheet(isPresented: $showSearchDebug) {
+            SearchView().modifier(SheetEnvironment(localization: localization, sessionStore: sessionStore))
         }
         #endif
     }

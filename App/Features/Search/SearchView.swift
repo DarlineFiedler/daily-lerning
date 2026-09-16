@@ -57,12 +57,12 @@ struct SearchView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: Theme.Spacing.s) {
+                searchField
                 if !vocabs.isEmpty { filterBar }
                 content
             }
             .paperBackground()
             .navigationTitle(L("search.title"))
-            .searchable(text: $query, prompt: L("search.placeholder"))
             .onChange(of: query) { _, newValue in
                 // Erste echte Sucheingabe schaltet das „Spürnase"-Badge frei.
                 if !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -97,6 +97,49 @@ struct SearchView: View {
                 Button(L("common.cancel"), role: .cancel) { pendingDelete = nil }
             }
         }
+    }
+
+    // MARK: - Suchfeld (Papier, Screen 2h)
+
+    /// Immer sichtbares Papier-Suchfeld mit Lupe, Eingabe, Löschen-Knopf und
+    /// Treffer-Zähler – ersetzt die System-`.searchable`-Leiste, die im Papier-Look
+    /// nicht erscheint/passt.
+    private var searchField: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .font(.appBody)
+                .foregroundStyle(Theme.inkMuted)
+            TextField(L("search.placeholder"), text: $query)
+                .font(.appDisplay(17, weight: .regular))
+                .foregroundStyle(Theme.ink)
+                .tint(Theme.vermillion)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+                .submitLabel(.search)
+            if !query.isEmpty {
+                Button { query = "" } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(Theme.inkMuted)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L("common.cancel"))
+            }
+            if hasCriteria {
+                Text(L("search.hits", results.count))
+                    .font(.appMono(11))
+                    .foregroundStyle(Theme.inkMuted)
+                    .fixedSize()
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous)
+                .strokeBorder(Theme.hairlineStrong, lineWidth: 1)
+        )
+        .padding(.horizontal, Theme.Spacing.m)
+        .padding(.top, Theme.Spacing.s)
     }
 
     // MARK: - Filter-Chips

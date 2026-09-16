@@ -579,3 +579,4 @@
 "onboarding.widget.body" = "Ein Widget zeigt dir ein Wort zum Wiederholen. Füge es später über den Homescreen hinzu.";
 "onboarding.widget.enable" = "Wörter fürs Widget vorbereiten";
 "onboarding.widget.done" = "Wörter vorbereitet ✦";
+"search.hits" = "%d Treffer";
