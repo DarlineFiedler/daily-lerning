@@ -52,52 +52,65 @@ struct SettingsView: View {
         // (z. B. „Dein Ziel") einfrieren.
         Form {
                 // MARK: Anzeige / Sprache
-                Section(L("settings.display.section")) {
-                    Picker(selection: $localization.language) {
-                        ForEach(LocalizationManager.AppLanguage.allCases) { lang in
-                            Text(L(lang.displayNameKey)).tag(lang)
-                        }
-                    } label: {
-                        Label(L("settings.language"), systemImage: "globe")
-                    }
+                Section {
+                    PaperSegmented(
+                        options: LocalizationManager.AppLanguage.allCases,
+                        title: { L($0.displayNameKey) },
+                        selection: $localization.language
+                    )
+                } header: {
+                    SectionLabel(L("settings.display.section"))
                 }
 
                 // MARK: Widget
                 Section {
-                    Picker(selection: $interval) {
-                        ForEach(WidgetSettings.intervalOptions, id: \.self) { minutes in
-                            Text(intervalLabel(minutes)).tag(minutes)
-                        }
-                    } label: {
-                        Label(L("settings.widget.interval"), systemImage: "clock")
+                    VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                        Text(L("settings.widget.interval"))
+                            .font(.appBody)
+                            .foregroundStyle(Theme.ink)
+                        PaperSegmented(options: WidgetSettings.intervalOptions,
+                                       title: intervalLabel, selection: $interval)
                     }
 
                     Toggle(isOn: $showMeaning) {
-                        Label(L("settings.widget.showMeaning"), systemImage: "text.alignleft")
+                        Text(L("settings.widget.showMeaning"))
+                            .font(.appBody)
+                            .foregroundStyle(Theme.ink)
                     }
+                    .tint(Theme.leaf)
                 } header: {
-                    Text(L("settings.widget.section"))
+                    SectionLabel(L("settings.widget.section"))
                 } footer: {
-                    Text(L("settings.widget.count", widgetVocabs.count) + "\n" + L("settings.widget.hint"))
+                    HandNote(L("settings.widget.count", widgetVocabs.count) + " " + L("settings.widget.hint"),
+                             size: 16, color: Theme.inkSecondary, angle: 0)
                 }
 
                 // MARK: Erinnerung
                 Section {
                     Toggle(isOn: $reminderEnabled) {
-                        Label(L("settings.reminder.enable"), systemImage: "bell.badge")
+                        Text(L("settings.reminder.enable"))
+                            .font(.appBody)
+                            .foregroundStyle(Theme.ink)
                     }
+                    .tint(Theme.leaf)
                     if reminderEnabled {
                         DatePicker(selection: reminderTime, displayedComponents: .hourAndMinute) {
-                            Label(L("settings.reminder.time"), systemImage: "clock.badge")
+                            Text(L("settings.reminder.time"))
+                                .font(.appBody)
+                                .foregroundStyle(Theme.ink)
                         }
                     }
                     Toggle(isOn: $badgeEnabled) {
-                        Label(L("settings.badge.enable"), systemImage: "app.badge")
+                        Text(L("settings.badge.enable"))
+                            .font(.appBody)
+                            .foregroundStyle(Theme.ink)
                     }
+                    .tint(Theme.leaf)
                 } header: {
-                    Text(L("settings.reminder.section"))
+                    SectionLabel(L("settings.reminder.section"))
                 } footer: {
-                    Text(L("settings.reminder.hint") + "\n" + L("settings.badge.hint"))
+                    HandNote(L("settings.reminder.hint") + " " + L("settings.badge.hint"),
+                             size: 16, color: Theme.inkSecondary, angle: 0)
                 }
 
                 // MARK: Ziel
@@ -108,7 +121,9 @@ struct SettingsView: View {
                     NavigationLink {
                         GoalSettingsView()
                     } label: {
-                        Label(L("settings.goal.section"), systemImage: "target")
+                        Text(L("settings.goal.section"))
+                            .font(.appBody)
+                            .foregroundStyle(Theme.ink)
                     }
                 }
 
@@ -135,7 +150,7 @@ struct SettingsView: View {
                             Label(L("wordpacks.importAll"), systemImage: "square.and.arrow.down.on.square")
                         }
                     } header: {
-                        Text(L("wordpacks.section"))
+                        SectionLabel(L("wordpacks.section"))
                     } footer: {
                         Text(L("wordpacks.hint"))
                     }
@@ -156,7 +171,7 @@ struct SettingsView: View {
                         }
                     }
                 } header: {
-                    Text(L("settings.data.section"))
+                    SectionLabel(L("settings.data.section"))
                 } footer: {
                     Text(L("settings.data.hint"))
                 }
@@ -176,14 +191,16 @@ struct SettingsView: View {
                         Label(L("settings.backup.restore"), systemImage: "arrow.up.doc")
                     }
                 } header: {
-                    Text(L("settings.backup.section"))
+                    SectionLabel(L("settings.backup.section"))
                 } footer: {
                     Text(L("settings.backup.hint"))
                 }
 
                 // MARK: Über
-                Section(L("settings.about.section")) {
+                Section {
                     LabeledContent(L("settings.about.version"), value: appVersion)
+                } header: {
+                    SectionLabel(L("settings.about.section"))
                 }
             }
             .sheet(isPresented: $showImport) { VocabImportView() }

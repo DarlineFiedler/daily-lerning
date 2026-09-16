@@ -24,34 +24,36 @@ struct GoalSettingsView: View {
     @State private var customText = ""
 
     var body: some View {
-        Form {
-            Section {
-                Picker(selection: $goalMetricRaw) {
-                    ForEach(GoalMetric.allCases) { metric in
-                        Text(L(metric.labelKey)).tag(metric.rawValue)
-                    }
-                } label: {
-                    Label(L("settings.goal.metric"), systemImage: "target")
+        ScrollView {
+            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
+                SectionLabel(L("settings.goal.section"))
+                VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+                    Text(L("settings.goal.metric"))
+                        .font(.appBody)
+                        .foregroundStyle(Theme.ink)
+                    PaperSegmented(
+                        options: GoalMetric.allCases,
+                        title: { L($0.labelKey) },
+                        selection: Binding(
+                            get: { GoalMetric(rawValue: goalMetricRaw) ?? .practiced },
+                            set: { goalMetricRaw = $0.rawValue }
+                        )
+                    )
                 }
-                goalRow(
-                    titleKey: "settings.goal.weekly",
-                    systemImage: "calendar",
-                    value: $weeklyGoal,
-                    options: GoalOptions.weekly,
-                    field: .weekly
-                )
-                goalRow(
-                    titleKey: "settings.goal.daily",
-                    systemImage: "sun.max",
-                    value: $dailyGoal,
-                    options: GoalOptions.daily,
-                    field: .daily
-                )
-            } footer: {
-                Text(L("settings.goal.footer"))
+                Divider().overlay(Theme.hairline)
+                goalRow(titleKey: "settings.goal.weekly", value: $weeklyGoal,
+                        options: GoalOptions.weekly, field: .weekly)
+                Divider().overlay(Theme.hairline)
+                goalRow(titleKey: "settings.goal.daily", value: $dailyGoal,
+                        options: GoalOptions.daily, field: .daily)
+                HandNote(L("settings.goal.footer"), size: 17,
+                         color: Theme.inkSecondary, angle: 0)
+                    .padding(.top, Theme.Spacing.xs)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .cardStyle()
+            .padding(Theme.Spacing.m)
         }
-        .scrollContentBackground(.hidden)
         .paperBackground()
         .navigationTitle(L("settings.goal.section"))
         .navigationBarTitleDisplayMode(.inline)
@@ -74,7 +76,7 @@ struct GoalSettingsView: View {
     /// Eine Zielzeile: Preset-Auswahl per Menü plus „Eigener Wert…" für freie Eingabe.
     /// Ein bereits gesetzter Wert außerhalb der Presets bleibt korrekt sichtbar, da das
     /// Label immer den tatsächlichen `value` anzeigt.
-    private func goalRow(titleKey: String, systemImage: String,
+    private func goalRow(titleKey: String,
                          value: Binding<Int>, options: [Int], field: GoalField) -> some View {
         Menu {
             Picker(selection: value) {
@@ -89,11 +91,14 @@ struct GoalSettingsView: View {
                 Label(L("settings.goal.custom"), systemImage: "pencil")
             }
         } label: {
-            LabeledContent {
+            HStack {
+                Text(L(titleKey))
+                    .font(.appBody)
+                    .foregroundStyle(Theme.ink)
+                Spacer()
                 Text(goalValueLabel(value.wrappedValue))
-                    .foregroundStyle(Theme.brandStart)
-            } label: {
-                Label(L(titleKey), systemImage: systemImage)
+                    .font(.appMono(13))
+                    .foregroundStyle(Theme.vermillion)
             }
         }
     }
