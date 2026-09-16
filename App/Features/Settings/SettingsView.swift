@@ -260,6 +260,9 @@ struct SettingsView: View {
             }
             .onAppear { wordPacks = WordPack.loadBundled() }
             .scrollContentBackground(.hidden)
+            // Zusätzlicher unterer Rand, damit die letzte Sektion („Alles zurücksetzen")
+            // über der schwebenden Üben-FAB/Tab-Leiste sichtbar bleibt (Issue: verdeckt).
+            .contentMargins(.bottom, 96, for: .scrollContent)
             .paperBackground()
             .navigationTitle(L("tab.settings"))
             .onChange(of: interval) { refreshWidget() }
