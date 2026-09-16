@@ -71,14 +71,10 @@ struct SearchView: View {
         }
             .paperBackground()
             .navigationTitle(L("search.title"))
-            .toolbar {
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button(L("common.done")) { searchFocused = false }
-                        .padding(.trailing, 4)
-                        .padding(.bottom, 18)
-                }
-            }
+            // Kein Tastatur-Toolbar-„Fertig": auf iOS 26 rendert der als frei
+            // schwebende Glas-Kapsel über der Tastatur (unschön). Die Tastatur schließt
+            // ohnehin über die Return-/Suchtaste (siehe `.onSubmit` am Suchfeld) und über
+            // das Scrollen der Trefferliste (`.scrollDismissesKeyboard`).
             .onChange(of: query) { _, newValue in
                 // Erste echte Sucheingabe schaltet das „Spürnase"-Badge frei.
                 if !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {

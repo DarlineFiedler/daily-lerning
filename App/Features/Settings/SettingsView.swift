@@ -3,13 +3,19 @@ import SwiftUI
 import UniformTypeIdentifiers
 import WidgetKit
 
-/// Tab 4: Einstellungen – Sprache (Runtime-Umschaltung) und Lock-Screen-Widget.
+/// Tab „Ich" → Einstellungen: Sprache, Lock-Screen-Widget, Erinnerung, Ziel, Wortpakete,
+/// Daten/Sicherung, Reset.
+///
+/// Bewusst **kein `Form`/`List`**, sondern ein `ScrollView` mit Papier-Karten: Auf iOS 26
+/// führte der Form-eigene Collection-View-Coordinator beim Pushen von Unterseiten
+/// (Ich → Einstellungen → „Dein Ziel") zu einem Layout-Update-Hänger, den der Watchdog
+/// nach 5s abschoss (0x8BADF00D). Der ScrollView-Aufbau umgeht diesen Coordinator ganz
+/// und passt zudem zum Papier-Design (siehe [[IchView]]). Kein eigener NavigationStack –
+/// SettingsView wird aus IchView in dessen Stack gepusht.
 struct SettingsView: View {
-    // Bewusst NICHT via `@Environment(LocalizationManager.self)`: Wird die Umgebung beim
-    // (mehrfach) gepushten Screen kurzzeitig ohne dieses Objekt neu ausgewertet, führt der
-    // fehlende Environment-Eintrag zu einem harten `EnvironmentValues`-Trap (Absturz beim
-    // Öffnen von „Dein Ziel"). Das geteilte Singleton ist ohnehin dieselbe Instanz, die
-    // RootView injiziert – so kann der Zugriff nie ins Leere greifen.
+    // Bewusst NICHT via `@Environment(LocalizationManager.self)`: ein fehlender
+    // Environment-Eintrag beim gepushten Screen führte zu einem harten Trap. Das
+    // geteilte Singleton ist dieselbe Instanz, die RootView injiziert.
     private let localization = LocalizationManager.shared
     @Environment(\.modelContext) private var context
 
@@ -55,255 +61,259 @@ struct SettingsView: View {
     var body: some View {
         @Bindable var localization = localization // lokale Bindung fürs Sprach-Segment
 
-        // Kein eigener NavigationStack: SettingsView wird aus IchView in dessen Stack
-        // gepusht. Ein zweiter, verschachtelter Stack ließ das Pushen von Unterseiten
-        // (z. B. „Dein Ziel") einfrieren.
-        Form {
-                // MARK: Anzeige / Sprache
-                Section {
-                    PaperSegmented(
-                        options: LocalizationManager.AppLanguage.allCases,
-                        title: { L($0.displayNameKey) },
-                        selection: $localization.language
-                    )
-                } header: {
-                    SectionLabel(L("settings.display.section"))
-                }
-
-                // MARK: Widget
-                Section {
-                    VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-                        Text(L("settings.widget.interval"))
-                            .font(.appBody)
-                            .foregroundStyle(Theme.ink)
-                        PaperSegmented(options: WidgetSettings.intervalOptions,
-                                       title: intervalLabel, selection: $interval)
-                    }
-
-                    Toggle(isOn: $showMeaning) {
-                        Text(L("settings.widget.showMeaning"))
-                            .font(.appBody)
-                            .foregroundStyle(Theme.ink)
-                    }
-                    .tint(Theme.leaf)
-                } header: {
-                    SectionLabel(L("settings.widget.section"))
-                } footer: {
-                    HandNote(L("settings.widget.count", widgetVocabs.count) + " " + L("settings.widget.hint"),
-                             size: 16, color: Theme.inkSecondary, angle: 0)
-                }
-
-                // MARK: Erinnerung
-                Section {
-                    Toggle(isOn: $reminderEnabled) {
-                        Text(L("settings.reminder.enable"))
-                            .font(.appBody)
-                            .foregroundStyle(Theme.ink)
-                    }
-                    .tint(Theme.leaf)
-                    if reminderEnabled {
-                        DatePicker(selection: reminderTime, displayedComponents: .hourAndMinute) {
-                            Text(L("settings.reminder.time"))
-                                .font(.appBody)
-                                .foregroundStyle(Theme.ink)
-                        }
-                    }
-                    Toggle(isOn: $badgeEnabled) {
-                        Text(L("settings.badge.enable"))
-                            .font(.appBody)
-                            .foregroundStyle(Theme.ink)
-                    }
-                    .tint(Theme.leaf)
-                } header: {
-                    SectionLabel(L("settings.reminder.section"))
-                } footer: {
-                    HandNote(L("settings.reminder.hint") + " " + L("settings.badge.hint"),
-                             size: 16, color: Theme.inkSecondary, angle: 0)
-                }
-
-                // MARK: Ziel
-                // Nur der Einstieg; die Picker und ihre Erklärung (Footer) leben in
-                // GoalSettingsView, damit „Wert 0 = deaktiviert" dort steht, wo auch
-                // die Picker sind (siehe [[GoalSettingsView]]).
-                Section {
-                    NavigationLink {
-                        GoalSettingsView()
-                    } label: {
-                        Text(L("settings.goal.section"))
-                            .font(.appBody)
-                            .foregroundStyle(Theme.ink)
-                    }
-                }
-
-                // MARK: Wortpakete
-                if !wordPacks.isEmpty {
-                    Section {
-                        ForEach(wordPacks) { pack in
-                            HStack {
-                                Text(pack.name)
-                                Spacer()
-                                Text(L("wordpacks.count", pack.count))
-                                    .foregroundStyle(.secondary)
-                                Button {
-                                    importPacks([pack])
-                                } label: {
-                                    Image(systemName: "plus.circle.fill")
-                                }
-                                .buttonStyle(.borderless)
-                            }
-                        }
-                        Button {
-                            importPacks(wordPacks)
-                        } label: {
-                            Label(L("wordpacks.importAll"), systemImage: "square.and.arrow.down.on.square")
-                        }
-                    } header: {
-                        SectionLabel(L("wordpacks.section"))
-                    } footer: {
-                        Text(L("wordpacks.hint"))
-                    }
-                }
-
-                // MARK: Daten
-                Section {
-                    Button {
-                        showImport = true
-                    } label: {
-                        Label(L("settings.data.import"), systemImage: "square.and.arrow.down")
-                    }
-                    if !allVocabs.isEmpty {
-                        Button {
-                            exportCSV()
-                        } label: {
-                            Label(L("settings.data.export"), systemImage: "square.and.arrow.up")
-                        }
-                    }
-                } header: {
-                    SectionLabel(L("settings.data.section"))
-                } footer: {
-                    Text(L("settings.data.hint"))
-                }
-
-                // MARK: Sicherung
-                Section {
-                    if !allVocabs.isEmpty {
-                        Button {
-                            exportBackup()
-                        } label: {
-                            Label(L("settings.backup.export"), systemImage: "arrow.down.doc")
-                        }
-                    }
-                    Button {
-                        showRestore = true
-                    } label: {
-                        Label(L("settings.backup.restore"), systemImage: "arrow.up.doc")
-                    }
-                } header: {
-                    SectionLabel(L("settings.backup.section"))
-                } footer: {
-                    Text(L("settings.backup.hint"))
-                }
-
-                // MARK: Über
-                Section {
-                    LabeledContent(L("settings.about.version"), value: appVersion)
-                } header: {
-                    SectionLabel(L("settings.about.section"))
-                }
-
-                // MARK: Zurücksetzen (ganz unten)
-                Section {
-                    Button(role: .destructive) {
-                        showResetConfirm = true
-                    } label: {
-                        Text(L("settings.reset.button"))
-                            .font(.appBody)
-                            .frame(maxWidth: .infinity)
-                    }
-                } footer: {
-                    HandNote(L("settings.reset.hint"), size: 16,
-                             color: Theme.inkSecondary, angle: 0)
-                }
+        ScrollView {
+            VStack(spacing: Theme.Spacing.m) {
+                languageCard(localization: $localization.language)
+                widgetCard
+                reminderCard
+                goalCard
+                if !wordPacks.isEmpty { wordPacksCard }
+                dataCard
+                backupCard
+                aboutCard
+                resetSection
             }
-            .sheet(isPresented: $showImport) { VocabImportView() }
-            .sheet(item: $backupFile) { file in
-                ActivityView(items: [file.url])
+            .padding(Theme.Spacing.m)
+            // Genug Luft unten, damit die letzte Karte über der schwebenden Üben-FAB/
+            // Tab-Leiste sichtbar bleibt.
+            .padding(.bottom, Theme.Spacing.xl * 2)
+        }
+        .paperBackground()
+        .navigationTitle(L("tab.settings"))
+        .sheet(isPresented: $showImport) { VocabImportView() }
+        .sheet(item: $backupFile) { file in ActivityView(items: [file.url]) }
+        .sheet(item: $csvFile) { file in ActivityView(items: [file.url]) }
+        .fileImporter(isPresented: $showRestore,
+                      allowedContentTypes: [.json],
+                      allowsMultipleSelection: false) { result in
+            restoreBackup(result)
+        }
+        .alert(restoreMessage ?? "", isPresented: restoreAlertBinding) {
+            Button(L("common.done"), role: .cancel) { restoreMessage = nil }
+        }
+        .confirmationDialog(L("settings.backup.restore"),
+                            isPresented: pendingRestoreBinding,
+                            titleVisibility: .visible,
+                            presenting: pendingRestore) { pending in
+            Button(L("settings.backup.confirm.action"), role: .destructive) { confirmRestore(pending.backup) }
+            Button(L("common.cancel"), role: .cancel) { pendingRestore = nil }
+        } message: { pending in
+            Text(L("settings.backup.confirm",
+                   pending.backup.vocabs.count, pending.backup.groups.count))
+        }
+        .alert(packMessage ?? "", isPresented: packAlertBinding) {
+            Button(L("common.done"), role: .cancel) { packMessage = nil }
+        }
+        .confirmationDialog(L("settings.reset.confirm"),
+                            isPresented: $showResetConfirm,
+                            titleVisibility: .visible) {
+            Button(L("settings.reset.action"), role: .destructive) {
+                AppReset.factoryReset(context: context)
             }
-            .sheet(item: $csvFile) { file in
-                ActivityView(items: [file.url])
-            }
-            .fileImporter(isPresented: $showRestore,
-                          allowedContentTypes: [.json],
-                          allowsMultipleSelection: false) { result in
-                restoreBackup(result)
-            }
-            .alert(restoreMessage ?? "", isPresented: restoreAlertBinding) {
-                Button(L("common.done"), role: .cancel) { restoreMessage = nil }
-            }
-            .confirmationDialog(L("settings.backup.restore"),
-                                isPresented: pendingRestoreBinding,
-                                titleVisibility: .visible,
-                                presenting: pendingRestore) { pending in
-                Button(L("settings.backup.confirm.action"), role: .destructive) { confirmRestore(pending.backup) }
-                Button(L("common.cancel"), role: .cancel) { pendingRestore = nil }
-            } message: { pending in
-                Text(L("settings.backup.confirm",
-                       pending.backup.vocabs.count, pending.backup.groups.count))
-            }
-            .alert(packMessage ?? "", isPresented: packAlertBinding) {
-                Button(L("common.done"), role: .cancel) { packMessage = nil }
-            }
-            .confirmationDialog(L("settings.reset.confirm"),
-                                isPresented: $showResetConfirm,
-                                titleVisibility: .visible) {
-                Button(L("settings.reset.action"), role: .destructive) {
-                    AppReset.factoryReset(context: context)
-                }
-                Button(L("common.cancel"), role: .cancel) {}
-            } message: {
-                Text(L("settings.reset.message"))
-            }
-            .onAppear { wordPacks = WordPack.loadBundled() }
-            .scrollContentBackground(.hidden)
-            // Zusätzlicher unterer Rand, damit die letzte Sektion („Alles zurücksetzen")
-            // über der schwebenden Üben-FAB/Tab-Leiste sichtbar bleibt (Issue: verdeckt).
-            .contentMargins(.bottom, 96, for: .scrollContent)
-            .paperBackground()
-            .navigationTitle(L("tab.settings"))
-            .onChange(of: interval) { refreshWidget() }
-            .onChange(of: showMeaning) { refreshWidget() }
-            .onChange(of: localization.language) {
-                AchievementService.recordEvent(\.languageChanged, context: context) // „Einstellungs-Entdecker"
-            }
-            .onChange(of: reminderEnabled) { _, enabled in
-                if enabled {
-                    Task {
-                        if await NotificationScheduler.requestAuthorization() {
-                            NotificationScheduler.schedule(hour: reminderHour, minute: reminderMinute)
-                        } else {
-                            reminderEnabled = false // Berechtigung verweigert
-                        }
+            Button(L("common.cancel"), role: .cancel) {}
+        } message: {
+            Text(L("settings.reset.message"))
+        }
+        .onAppear { wordPacks = WordPack.loadBundled() }
+        .onChange(of: interval) { refreshWidget() }
+        .onChange(of: showMeaning) { refreshWidget() }
+        .onChange(of: localization.language) {
+            AchievementService.recordEvent(\.languageChanged, context: context) // „Einstellungs-Entdecker"
+        }
+        .onChange(of: reminderEnabled) { _, enabled in
+            if enabled {
+                Task {
+                    if await NotificationScheduler.requestAuthorization() {
+                        NotificationScheduler.schedule(hour: reminderHour, minute: reminderMinute)
+                    } else {
+                        reminderEnabled = false // Berechtigung verweigert
                     }
-                } else {
-                    NotificationScheduler.cancel()
                 }
+            } else {
+                NotificationScheduler.cancel()
             }
-            .onChange(of: reminderHour) { rescheduleReminder() }
-            .onChange(of: reminderMinute) { rescheduleReminder() }
-            .onChange(of: badgeEnabled) { _, enabled in
-                if enabled {
-                    Task {
-                        if await NotificationScheduler.requestAuthorization() {
-                            BadgeUpdater.refresh(context: context)
-                        } else {
-                            badgeEnabled = false // Berechtigung verweigert
-                        }
+        }
+        .onChange(of: reminderHour) { rescheduleReminder() }
+        .onChange(of: reminderMinute) { rescheduleReminder() }
+        .onChange(of: badgeEnabled) { _, enabled in
+            if enabled {
+                Task {
+                    if await NotificationScheduler.requestAuthorization() {
+                        BadgeUpdater.refresh(context: context)
+                    } else {
+                        badgeEnabled = false // Berechtigung verweigert
                     }
-                } else {
-                    BadgeUpdater.setBadge(0)
                 }
+            } else {
+                BadgeUpdater.setBadge(0)
             }
+        }
     }
+
+    // MARK: - Karten
+
+    private func languageCard(localization: Binding<LocalizationManager.AppLanguage>) -> some View {
+        card(L("settings.display.section")) {
+            PaperSegmented(options: LocalizationManager.AppLanguage.allCases,
+                           title: { L($0.displayNameKey) },
+                           selection: localization)
+        }
+    }
+
+    private var widgetCard: some View {
+        card(L("settings.widget.section"),
+             note: L("settings.widget.count", widgetVocabs.count) + " " + L("settings.widget.hint")) {
+            Text(L("settings.widget.interval")).font(.appBody).foregroundStyle(Theme.ink)
+            PaperSegmented(options: WidgetSettings.intervalOptions,
+                           title: intervalLabel, selection: $interval)
+            hairline
+            Toggle(isOn: $showMeaning) {
+                Text(L("settings.widget.showMeaning")).font(.appBody).foregroundStyle(Theme.ink)
+            }
+            .tint(Theme.leaf)
+        }
+    }
+
+    private var reminderCard: some View {
+        card(L("settings.reminder.section"),
+             note: L("settings.reminder.hint") + " " + L("settings.badge.hint")) {
+            Toggle(isOn: $reminderEnabled) {
+                Text(L("settings.reminder.enable")).font(.appBody).foregroundStyle(Theme.ink)
+            }
+            .tint(Theme.leaf)
+            if reminderEnabled {
+                hairline
+                DatePicker(selection: reminderTime, displayedComponents: .hourAndMinute) {
+                    Text(L("settings.reminder.time")).font(.appBody).foregroundStyle(Theme.ink)
+                }
+            }
+            hairline
+            Toggle(isOn: $badgeEnabled) {
+                Text(L("settings.badge.enable")).font(.appBody).foregroundStyle(Theme.ink)
+            }
+            .tint(Theme.leaf)
+        }
+    }
+
+    private var goalCard: some View {
+        NavigationLink {
+            GoalSettingsView()
+        } label: {
+            HStack {
+                Text(L("settings.goal.section")).font(.appBody).foregroundStyle(Theme.ink)
+                Spacer()
+                Image(systemName: "chevron.right").font(.appCaption).foregroundStyle(Theme.inkMuted)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .cardStyle()
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var wordPacksCard: some View {
+        card(L("wordpacks.section") + " · \(wordPacks.count)", note: L("wordpacks.hint")) {
+            ForEach(wordPacks) { pack in
+                HStack {
+                    Text(pack.name).font(.appBody).foregroundStyle(Theme.ink)
+                    Spacer()
+                    Text("\(pack.count)").font(.appMono(12)).foregroundStyle(Theme.inkSecondary)
+                    Button { importPacks([pack]) } label: {
+                        Text("+").font(.appMono(18)).foregroundStyle(Theme.vermillion)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            hairline
+            Button { importPacks(wordPacks) } label: {
+                Text(L("wordpacks.importAll")).font(.appBody).foregroundStyle(Theme.vermillion)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var dataCard: some View {
+        card(L("settings.data.section"), note: L("settings.data.hint")) {
+            actionRow(L("settings.data.import")) { showImport = true }
+            if !allVocabs.isEmpty {
+                hairline
+                actionRow(L("settings.data.export")) { exportCSV() }
+            }
+        }
+    }
+
+    private var backupCard: some View {
+        card(L("settings.backup.section"), note: L("settings.backup.hint")) {
+            if !allVocabs.isEmpty {
+                actionRow(L("settings.backup.export")) { exportBackup() }
+                hairline
+            }
+            actionRow(L("settings.backup.restore"), tint: Theme.vermillion) { showRestore = true }
+        }
+    }
+
+    private var aboutCard: some View {
+        HStack {
+            Text(L("settings.about.version")).font(.appBody).foregroundStyle(Theme.inkSecondary)
+            Spacer()
+            Text(appVersion).font(.appMono(13)).foregroundStyle(Theme.inkMuted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardStyle()
+    }
+
+    private var resetSection: some View {
+        VStack(spacing: Theme.Spacing.s) {
+            Button(role: .destructive) { showResetConfirm = true } label: {
+                Text(L("settings.reset.button"))
+                    .font(.appBody)
+                    .foregroundStyle(Theme.vermillion)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Theme.Spacing.s)
+                    .cardStyle()
+            }
+            .buttonStyle(.plain)
+            HandNote(L("settings.reset.hint"), size: 16, color: Theme.inkSecondary, angle: 0)
+                .frame(maxWidth: .infinity)
+        }
+    }
+
+    // MARK: - Bausteine
+
+    /// Papier-Karte mit Mono-Label und optionaler Handschrift-Fußnote.
+    private func card<Content: View>(_ title: String, note: String? = nil,
+                                     @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionLabel(title)
+            content()
+            if let note {
+                HandNote(note, size: 16, color: Theme.inkSecondary, angle: 0)
+                    .padding(.top, 2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardStyle()
+    }
+
+    /// Tippbare Aktionszeile mit Chevron (Import/Export/Sicherung).
+    private func actionRow(_ title: String, tint: Color = Theme.ink,
+                           action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack {
+                Text(title).font(.appBody).foregroundStyle(tint)
+                Spacer()
+                Image(systemName: "chevron.right").font(.appCaption).foregroundStyle(Theme.inkFaint)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var hairline: some View {
+        Divider().overlay(Theme.hairline)
+    }
+
+    // MARK: - Ableitungen & Aktionen
 
     /// DatePicker-Brücke: speichert nur Stunde/Minute, kein volles Datum.
     private var reminderTime: Binding<Date> {
