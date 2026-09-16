@@ -580,3 +580,4 @@
 "onboarding.widget.enable" = "Prepare words for the widget";
 "onboarding.widget.done" = "Words prepared ✦";
 "search.hits" = "%d hits";
+"search.filter.widget" = "Lock Screen";

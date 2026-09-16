@@ -31,28 +31,33 @@ struct SearchView: View {
     /// Bewusst pro Öffnen zurückgesetzt (nicht persistiert).
     @State private var selectedGroups: Set<UUID> = []
     @State private var selectedStatuses: Set<LearningStatus> = []
+    /// Nur Wörter im Sperrbildschirm-Pool (`includeInWidget`) anzeigen.
+    @State private var widgetOnly = false
 
     private var results: [Vocab] {
-        Self.filter(vocabs, query: query, groups: selectedGroups, statuses: selectedStatuses)
+        Self.filter(vocabs, query: query, groups: selectedGroups,
+                    statuses: selectedStatuses, widgetOnly: widgetOnly)
     }
 
-    /// Ist überhaupt eine Eingrenzung aktiv (Text ODER Gruppe ODER Status)?
+    /// Ist überhaupt eine Eingrenzung aktiv (Text ODER Gruppe ODER Status ODER Widget)?
     private var hasCriteria: Bool {
         !query.trimmingCharacters(in: .whitespaces).isEmpty
-            || !selectedGroups.isEmpty || !selectedStatuses.isEmpty
+            || !selectedGroups.isEmpty || !selectedStatuses.isEmpty || widgetOnly
     }
 
     /// Kombinierte Filterung: Textmatch UND Gruppenfilter UND Statusfilter, jeweils
     /// leere Menge = keine Einschränkung. Ohne jegliche Kriterien leer (Startzustand).
     /// Pure & `static`, damit die Logik testbar ist.
     static func filter(_ vocabs: [Vocab], query: String,
-                       groups: Set<UUID>, statuses: Set<LearningStatus>) -> [Vocab] {
+                       groups: Set<UUID>, statuses: Set<LearningStatus>,
+                       widgetOnly: Bool = false) -> [Vocab] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty || !groups.isEmpty || !statuses.isEmpty else { return [] }
+        guard !trimmed.isEmpty || !groups.isEmpty || !statuses.isEmpty || widgetOnly else { return [] }
         return vocabs.filter { vocab in
             (trimmed.isEmpty || vocab.word.matches(trimmed) || vocab.meaning.matches(trimmed))
                 && (groups.isEmpty || (vocab.group.map { groups.contains($0.id) } ?? false))
                 && (statuses.isEmpty || statuses.contains(vocab.status))
+                && (!widgetOnly || vocab.includeInWidget)
         }
     }
 
@@ -184,6 +189,14 @@ struct SearchView: View {
                         ) { toggle(&selectedGroups, group.id) }
                     }
                 }
+            }
+            chipRow(title: L("search.filter.widget"), selectedCount: widgetOnly ? 1 : 0) {
+                SelectableChip(
+                    title: L("search.filter.widget"),
+                    systemImage: "lock.iphone",
+                    tint: Theme.leaf,
+                    isSelected: widgetOnly
+                ) { widgetOnly.toggle() }
             }
         }
         .padding(.top, Theme.Spacing.s)

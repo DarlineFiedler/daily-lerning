@@ -55,8 +55,9 @@ final class SearchFilterTests: XCTestCase {
     }
 
     private func filter(query: String = "", groups: Set<UUID> = [],
-                        statuses: Set<LearningStatus> = []) -> Set<String> {
-        Set(SearchView.filter(all, query: query, groups: groups, statuses: statuses).map(\.word))
+                        statuses: Set<LearningStatus> = [], widgetOnly: Bool = false) -> Set<String> {
+        Set(SearchView.filter(all, query: query, groups: groups,
+                              statuses: statuses, widgetOnly: widgetOnly).map(\.word))
     }
 
     /// Ohne jegliches Kriterium bleibt die Suche leer (Startzustand).
@@ -94,5 +95,21 @@ final class SearchFilterTests: XCTestCase {
     func testAllThreeCombined() {
         XCTAssertEqual(filter(query: "Reis", groups: [food.id], statuses: [.learned]), ["밥"])
         XCTAssertTrue(filter(query: "Reis", groups: [verbs.id], statuses: [.learned]).isEmpty)
+    }
+
+    /// Sperrbildschirm-Filter: nur Wörter mit `includeInWidget` – allein und kombiniert.
+    func testWidgetOnlyFilter() {
+        // Zwei Wörter in den Widget-Pool aufnehmen.
+        for vocab in all where vocab.word == "가다" || vocab.word == "밥" {
+            vocab.includeInWidget = true
+        }
+        try? context.save()
+
+        XCTAssertEqual(filter(widgetOnly: true), ["가다", "밥"])
+        // Kombiniert mit Gruppe bzw. Status.
+        XCTAssertEqual(filter(groups: [food.id], widgetOnly: true), ["밥"])
+        XCTAssertEqual(filter(statuses: [.learned], widgetOnly: true), ["가다", "밥"])
+        // Ohne Widget-Filter bleibt der Startzustand (kein Kriterium ⇒ leer).
+        XCTAssertTrue(filter(widgetOnly: false).isEmpty)
     }
 }

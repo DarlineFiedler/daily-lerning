@@ -580,3 +580,4 @@
 "onboarding.widget.enable" = "Wörter fürs Widget vorbereiten";
 "onboarding.widget.done" = "Wörter vorbereitet ✦";
 "search.hits" = "%d Treffer";
+"search.filter.widget" = "Sperrbildschirm";

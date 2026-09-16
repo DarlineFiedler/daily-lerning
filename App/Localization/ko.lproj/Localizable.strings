@@ -580,3 +580,4 @@
 "onboarding.widget.enable" = "위젯용 단어 준비하기";
 "onboarding.widget.done" = "단어 준비 완료 ✦";
 "search.hits" = "%d개 결과";
+"search.filter.widget" = "잠금 화면";
