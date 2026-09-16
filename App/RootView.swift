@@ -67,6 +67,8 @@ struct RootView: View {
                 }
                 if CommandLine.arguments.contains("-uiTestReview") { showReview = true }
                 if CommandLine.arguments.contains("-uiTestPracticeConfig") { showPracticeConfig = true }
+                // Vollständigen Reset testen: wischt alles und muss zur Begrüßung zurückführen.
+                if CommandLine.arguments.contains("-uiTestReset") { AppReset.factoryReset(context: context) }
                 if CommandLine.arguments.contains("-uiTestMeTab") { selectedTab = .me }
                 if CommandLine.arguments.contains("-uiTestBoss") { showBossDebug = true }
                 if CommandLine.arguments.contains("-uiTestSearch") { showSearchDebug = true }

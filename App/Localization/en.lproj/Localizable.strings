@@ -240,6 +240,11 @@
 "settings.widget.hint" = "Enable words via the widget icon on each vocabulary card.";
 "settings.about.section" = "About";
 "settings.about.version" = "Version";
+"settings.reset.button" = "Reset everything";
+"settings.reset.hint" = "Deletes all words, beds and progress. The app then starts like a first launch.";
+"settings.reset.confirm" = "Really reset everything?";
+"settings.reset.message" = "All words, beds and progress are deleted for good. The app starts again from the welcome screen.";
+"settings.reset.action" = "Delete everything";
 
 /* Languages */
 "lang.system" = "System";

@@ -240,6 +240,11 @@
 "settings.widget.hint" = "각 단어 카드의 위젯 아이콘으로 활성화하세요.";
 "settings.about.section" = "정보";
 "settings.about.version" = "버전";
+"settings.reset.button" = "모두 초기화";
+"settings.reset.hint" = "모든 단어, 화단, 진행 상황을 삭제해요. 이후 앱이 처음 실행처럼 시작돼요.";
+"settings.reset.confirm" = "정말 모두 초기화할까요?";
+"settings.reset.message" = "모든 단어, 화단, 진행 상황이 영구적으로 삭제되고 앱이 환영 화면부터 다시 시작돼요.";
+"settings.reset.action" = "모두 삭제";
 
 /* Languages */
 "lang.system" = "시스템";

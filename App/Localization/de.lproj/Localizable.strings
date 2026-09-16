@@ -240,6 +240,11 @@
 "settings.widget.hint" = "Aktiviere Wörter über das Widget-Symbol auf der Vokabelkarte.";
 "settings.about.section" = "Über";
 "settings.about.version" = "Version";
+"settings.reset.button" = "Alles zurücksetzen";
+"settings.reset.hint" = "Löscht alle Wörter, Beete und den Fortschritt. Die App startet danach wie beim ersten Öffnen.";
+"settings.reset.confirm" = "Wirklich alles zurücksetzen?";
+"settings.reset.message" = "Alle Wörter, Beete und Fortschritte werden unwiderruflich gelöscht. Die App beginnt wieder mit der Begrüßung.";
+"settings.reset.action" = "Alles löschen";
 
 /* Sprachen */
 "lang.system" = "System";

@@ -44,6 +44,9 @@ struct SettingsView: View {
     @AppStorage(BadgeKeys.enabled, store: AppGroup.defaults)
     private var badgeEnabled = false
 
+    /// Steuert den Bestätigungsdialog für „Alles zurücksetzen".
+    @State private var showResetConfirm = false
+
     var body: some View {
         @Bindable var localization = localization
 
@@ -202,6 +205,20 @@ struct SettingsView: View {
                 } header: {
                     SectionLabel(L("settings.about.section"))
                 }
+
+                // MARK: Zurücksetzen (ganz unten)
+                Section {
+                    Button(role: .destructive) {
+                        showResetConfirm = true
+                    } label: {
+                        Text(L("settings.reset.button"))
+                            .font(.appBody)
+                            .frame(maxWidth: .infinity)
+                    }
+                } footer: {
+                    HandNote(L("settings.reset.hint"), size: 16,
+                             color: Theme.inkSecondary, angle: 0)
+                }
             }
             .sheet(isPresented: $showImport) { VocabImportView() }
             .sheet(item: $backupFile) { file in
@@ -230,6 +247,16 @@ struct SettingsView: View {
             }
             .alert(packMessage ?? "", isPresented: packAlertBinding) {
                 Button(L("common.done"), role: .cancel) { packMessage = nil }
+            }
+            .confirmationDialog(L("settings.reset.confirm"),
+                                isPresented: $showResetConfirm,
+                                titleVisibility: .visible) {
+                Button(L("settings.reset.action"), role: .destructive) {
+                    AppReset.factoryReset(context: context)
+                }
+                Button(L("common.cancel"), role: .cancel) {}
+            } message: {
+                Text(L("settings.reset.message"))
             }
             .onAppear { wordPacks = WordPack.loadBundled() }
             .scrollContentBackground(.hidden)
