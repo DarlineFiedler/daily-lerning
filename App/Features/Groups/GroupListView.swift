@@ -16,8 +16,9 @@ struct GroupListView: View {
     private var archivedGroups: [VocabGroup] { groups.filter { $0.isArchived } }
 
     var body: some View {
-        NavigationStack {
-            Group {
+        // Kein eigener NavigationStack: aus IchView in dessen Stack gepusht (verschachtelte
+        // Stacks ließen das Pushen der Beet-Detailansicht einfrieren).
+        Group {
                 if groups.isEmpty {
                     emptyState
                 } else {
@@ -60,7 +61,6 @@ struct GroupListView: View {
                 }
                 Button(L("common.cancel"), role: .cancel) { pendingDelete = nil }
             }
-        }
     }
 
     /// Eine Gruppenkarte mit Navigation und Kontextmenü. Archivierte Karten werden
@@ -293,6 +293,6 @@ struct MasteryBar: View {
 }
 
 #Preview {
-    GroupListView()
+    NavigationStack { GroupListView() }
         .modelContainer(PersistenceController.preview)
 }

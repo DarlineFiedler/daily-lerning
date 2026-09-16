@@ -9,8 +9,8 @@ struct StatisticsView: View {
     @State private var showAchievements = false
 
     var body: some View {
-        NavigationStack {
-            Group {
+        // Kein eigener NavigationStack: aus IchView in dessen Stack gepusht.
+        Group {
                 if vocabs.isEmpty {
                     emptyState
                 } else {
@@ -41,8 +41,7 @@ struct StatisticsView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showAchievements) { AchievementsView() }
-        }
+            .sheet(isPresented: $showAchievements) { NavigationStack { AchievementsView() } }
     }
 
     // MARK: - Gesamt
@@ -146,6 +145,6 @@ private struct GroupStatRow: View {
 }
 
 #Preview {
-    StatisticsView()
+    NavigationStack { StatisticsView() }
         .modelContainer(PersistenceController.preview)
 }

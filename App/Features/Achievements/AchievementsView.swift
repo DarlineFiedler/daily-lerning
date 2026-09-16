@@ -19,8 +19,9 @@ struct AchievementsView: View {
                            GridItem(.flexible(), spacing: Theme.Spacing.s)]
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
+        // Kein eigener NavigationStack: aus IchView gepusht bzw. aus der Statistik als
+        // Sheet mit eigenem Stack präsentiert.
+        ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Spacing.l) {
                     summaryCard
                     ForEach(Achievement.Category.allCases) { category in
@@ -38,7 +39,6 @@ struct AchievementsView: View {
                     Button(L("common.done")) { dismiss() }
                 }
             }
-        }
         .onAppear(perform: refresh)
     }
 
@@ -153,6 +153,6 @@ struct AchievementBadge: View {
 }
 
 #Preview {
-    AchievementsView()
+    NavigationStack { AchievementsView() }
         .modelContainer(PersistenceController.preview)
 }

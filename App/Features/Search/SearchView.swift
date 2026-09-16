@@ -62,12 +62,13 @@ struct SearchView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: Theme.Spacing.s) {
-                searchField
-                if !vocabs.isEmpty { filterBar }
-                content
-            }
+        // Kein eigener NavigationStack: aus IchView in dessen Stack gepusht (sonst
+        // verschachtelte Stacks → Push-Freeze).
+        VStack(spacing: Theme.Spacing.s) {
+            searchField
+            if !vocabs.isEmpty { filterBar }
+            content
+        }
             .paperBackground()
             .navigationTitle(L("search.title"))
             .toolbar {
@@ -110,7 +111,6 @@ struct SearchView: View {
                 }
                 Button(L("common.cancel"), role: .cancel) { pendingDelete = nil }
             }
-        }
     }
 
     // MARK: - Suchfeld (Papier, Screen 2h)
@@ -297,6 +297,6 @@ private extension String {
 }
 
 #Preview {
-    SearchView()
+    NavigationStack { SearchView() }
         .modelContainer(PersistenceController.preview)
 }

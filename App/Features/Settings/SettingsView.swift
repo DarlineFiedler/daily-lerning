@@ -47,8 +47,10 @@ struct SettingsView: View {
     var body: some View {
         @Bindable var localization = localization
 
-        NavigationStack {
-            Form {
+        // Kein eigener NavigationStack: SettingsView wird aus IchView in dessen Stack
+        // gepusht. Ein zweiter, verschachtelter Stack ließ das Pushen von Unterseiten
+        // (z. B. „Dein Ziel") einfrieren.
+        Form {
                 // MARK: Anzeige / Sprache
                 Section(L("settings.display.section")) {
                     Picker(selection: $localization.language) {
@@ -249,7 +251,6 @@ struct SettingsView: View {
                     BadgeUpdater.setBadge(0)
                 }
             }
-        }
     }
 
     /// DatePicker-Brücke: speichert nur Stunde/Minute, kein volles Datum.
@@ -385,7 +386,7 @@ private struct ShareFile: Identifiable {
 }
 
 #Preview {
-    SettingsView()
+    NavigationStack { SettingsView() }
         .environment(LocalizationManager.shared)
         .modelContainer(PersistenceController.preview)
 }

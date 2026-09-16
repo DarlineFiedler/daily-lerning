@@ -9,25 +9,19 @@ struct TranslatorView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if #available(iOS 18.0, *) {
-                    TranslatorContentView()
-                } else {
-                    ContentUnavailableView(L("translator.unavailable"),
-                                           systemImage: "character.bubble",
-                                           description: Text(L("translator.unavailable.detail")))
-                }
-            }
-            .paperBackground()
-            .navigationTitle(L("translator.title"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(L("common.done")) { dismiss() }
-                }
+        // Kein eigener NavigationStack: aus IchView in dessen Stack gepusht.
+        Group {
+            if #available(iOS 18.0, *) {
+                TranslatorContentView()
+            } else {
+                ContentUnavailableView(L("translator.unavailable"),
+                                       systemImage: "character.bubble",
+                                       description: Text(L("translator.unavailable.detail")))
             }
         }
+        .paperBackground()
+        .navigationTitle(L("translator.title"))
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

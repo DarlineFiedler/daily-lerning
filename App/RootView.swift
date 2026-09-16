@@ -26,6 +26,7 @@ struct RootView: View {
     @State private var showBossDebug = false
     @State private var showSearchDebug = false
     @State private var showDetailDebug = false
+    @State private var showGoalDebug = false
     #endif
     @State private var showStreakDetail = false
     @State private var showStoreError = false
@@ -69,6 +70,7 @@ struct RootView: View {
                 if CommandLine.arguments.contains("-uiTestBoss") { showBossDebug = true }
                 if CommandLine.arguments.contains("-uiTestSearch") { showSearchDebug = true }
                 if CommandLine.arguments.contains("-uiTestDetail") { showDetailDebug = true }
+                if CommandLine.arguments.contains("-uiTestGoal") { showGoalDebug = true }
                 #endif
             }
             AppContentRefresh.onAppActive(context: context)
@@ -132,13 +134,18 @@ struct RootView: View {
             .modifier(SheetEnvironment(localization: localization, sessionStore: sessionStore))
         }
         .sheet(isPresented: $showSearchDebug) {
-            SearchView().modifier(SheetEnvironment(localization: localization, sessionStore: sessionStore))
+            NavigationStack { SearchView() }
+                .modifier(SheetEnvironment(localization: localization, sessionStore: sessionStore))
         }
         .sheet(isPresented: $showDetailDebug) {
             if let vocab = try? context.fetch(FetchDescriptor<Vocab>()).first {
                 VocabDetailView(vocab: vocab, onEdit: {})
                     .modifier(SheetEnvironment(localization: localization, sessionStore: sessionStore))
             }
+        }
+        .sheet(isPresented: $showGoalDebug) {
+            NavigationStack { GoalSettingsView() }
+                .modifier(SheetEnvironment(localization: localization, sessionStore: sessionStore))
         }
         #endif
     }
