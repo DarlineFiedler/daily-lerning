@@ -66,6 +66,7 @@ struct RootView: View {
                     onboardingDone = true // andere Debug-Screens am Erststart vorbei
                 }
                 if CommandLine.arguments.contains("-uiTestReview") { showReview = true }
+                if CommandLine.arguments.contains("-uiTestPracticeConfig") { showPracticeConfig = true }
                 if CommandLine.arguments.contains("-uiTestMeTab") { selectedTab = .me }
                 if CommandLine.arguments.contains("-uiTestBoss") { showBossDebug = true }
                 if CommandLine.arguments.contains("-uiTestSearch") { showSearchDebug = true }

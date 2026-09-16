@@ -105,11 +105,15 @@
 
 /* Practice */
 "practice.start" = "Start Practice";
-"practice.config.title" = "Practice";
-"practice.config.groups" = "Groups";
-"practice.config.statuses" = "Which words?";
-"practice.config.topik" = "TOPIK level";
+"practice.config.title" = "Prepare round";
+"practice.config.groups" = "Beds";
+"practice.config.statuses" = "Growth";
+"practice.config.topik" = "TOPIK";
 "practice.config.focus" = "Focus";
+"practice.config.start" = "Let's go";
+"practice.config.combatNote" = "Boss and exam are mutually exclusive. The exam needs exactly one TOPIK level.";
+"practice.config.wordCountOfPool" = "%1$d of %2$d matching words";
+"practice.exam.card" = "Exam";
 "practice.problems.title" = "Problem words";
 "practice.problems.start" = "Practice problem words";
 "practice.config.direction" = "Direction";
@@ -132,7 +136,7 @@
 "practice.config.savePreset" = "Save as preset";
 "practice.preset.namePrompt" = "Preset name";
 "practice.config.allGroups" = "All groups";
-"practice.config.count" = "How many words?";
+"practice.config.count" = "How many";
 "practice.count.all" = "All";
 "practice.listen.replay" = "Tap to listen";
 "practice.retryWrong" = "Practice mistakes";

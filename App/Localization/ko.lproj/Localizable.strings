@@ -105,15 +105,19 @@
 
 /* Practice */
 "practice.start" = "학습 시작";
-"practice.config.title" = "학습";
-"practice.config.groups" = "그룹";
-"practice.config.statuses" = "어떤 단어?";
-"practice.config.topik" = "TOPIK 등급";
+"practice.config.title" = "라운드 준비";
+"practice.config.groups" = "화단";
+"practice.config.statuses" = "성장";
+"practice.config.topik" = "TOPIK";
 "practice.config.focus" = "집중";
+"practice.config.start" = "시작하기";
+"practice.config.combatNote" = "보스전과 시험은 함께 쓸 수 없어요. 시험은 정확히 하나의 TOPIK 등급이 필요해요.";
+"practice.config.wordCountOfPool" = "일치하는 단어 %2$d개 중 %1$d개";
+"practice.exam.card" = "시험";
 "practice.problems.title" = "문제 단어";
 "practice.problems.start" = "문제 단어 연습";
 "practice.config.direction" = "방향";
-"practice.config.modes" = "학습 모드";
+"practice.config.modes" = "모드";
 "practice.config.modesHint" = "여러 개 선택 가능 (= 혼합). 미선택 시 전체 사용.";
 "practice.config.meaningLanguage" = "의미 언어";
 "practice.config.meaningLanguage.default" = "기본";
@@ -128,11 +132,11 @@
 "practice.cloze.typeWord" = "빠진 단어를 입력하세요";
 "practice.cloze.meaningHint" = "뜻: %@";
 "practice.cloze.empty" = "이 단어들에는 아직 예문이 없습니다. 단어 편집기에서 예문을 추가하면 빈칸 채우기를 연습할 수 있어요.";
-"practice.config.presets" = "저장된 설정";
+"practice.config.presets" = "템플릿";
 "practice.config.savePreset" = "설정으로 저장";
 "practice.preset.namePrompt" = "설정 이름";
 "practice.config.allGroups" = "모든 그룹";
-"practice.config.count" = "몇 개 단어?";
+"practice.config.count" = "몇 개";
 "practice.count.all" = "전체";
 "practice.listen.replay" = "탭하여 듣기";
 "practice.retryWrong" = "틀린 단어 다시";

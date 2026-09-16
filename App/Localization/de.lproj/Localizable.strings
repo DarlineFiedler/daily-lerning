@@ -105,15 +105,19 @@
 
 /* Lernen */
 "practice.start" = "Lernen starten";
-"practice.config.title" = "Lernvorgang";
-"practice.config.groups" = "Gruppen";
-"practice.config.statuses" = "Welche Wörter?";
-"practice.config.topik" = "TOPIK-Niveau";
+"practice.config.title" = "Runde vorbereiten";
+"practice.config.groups" = "Beete";
+"practice.config.statuses" = "Wachstum";
+"practice.config.topik" = "TOPIK";
 "practice.config.focus" = "Fokus";
+"practice.config.start" = "Los geht's";
+"practice.config.combatNote" = "Endgegner und Prüfung schließen sich aus. Prüfung braucht genau ein TOPIK-Niveau.";
+"practice.config.wordCountOfPool" = "%1$d von %2$d passenden Wörtern";
+"practice.exam.card" = "Prüfung";
 "practice.problems.title" = "Problemwörter";
 "practice.problems.start" = "Problemwörter üben";
 "practice.config.direction" = "Richtung";
-"practice.config.modes" = "Lernmodi";
+"practice.config.modes" = "Modi";
 "practice.config.modesHint" = "Mehrere wählbar (= Mix). Ohne Auswahl wird alles genutzt.";
 "practice.config.meaningLanguage" = "Bedeutungssprache";
 "practice.config.meaningLanguage.default" = "Standard";
@@ -128,11 +132,11 @@
 "practice.cloze.typeWord" = "Fehlendes Wort eintippen";
 "practice.cloze.meaningHint" = "Bedeutung: %@";
 "practice.cloze.empty" = "Keines dieser Wörter hat bisher einen Beispielsatz. Ergänze einen im Wort-Editor, um Lückentext zu üben.";
-"practice.config.presets" = "Voreinstellungen";
+"practice.config.presets" = "Vorlagen";
 "practice.config.savePreset" = "Als Voreinstellung sichern";
 "practice.preset.namePrompt" = "Name der Voreinstellung";
 "practice.config.allGroups" = "Alle Gruppen";
-"practice.config.count" = "Wie viele Wörter?";
+"practice.config.count" = "Wie viele";
 "practice.count.all" = "Alle";
 "practice.listen.replay" = "Zum Anhören tippen";
 "practice.retryWrong" = "Falsche wiederholen";
