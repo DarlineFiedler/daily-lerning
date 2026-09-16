@@ -27,7 +27,6 @@ struct RootView: View {
     @State private var showSearchDebug = false
     @State private var showDetailDebug = false
     @State private var showGoalDebug = false
-    @State private var showGoalPushDebug = false
     #endif
     @State private var showStreakDetail = false
     @State private var showStoreError = false
@@ -45,26 +44,7 @@ struct RootView: View {
             if !onboardingDone {
                 OnboardingView(onFinish: { onboardingDone = true })
             } else {
-                #if DEBUG
-                if showGoalPushDebug {
-                    // Faithful repro des Absturz-Pfads MIT Tab-Leisten-Kontext (safeAreaInset
-                    // wie mainShell): Ich → Einstellungen → „Dein Ziel" als Push in EINEM Stack.
-                    NavigationStack(path: .constant([0, 1])) {
-                        Color.clear
-                            .navigationDestination(for: Int.self) { i in
-                                if i == 0 { SettingsView() } else { GoalSettingsView() }
-                            }
-                    }
-                    .safeAreaInset(edge: .bottom, spacing: 0) {
-                        GardenTabBar(selection: .me, dueCount: dueCount,
-                                     onSelect: { _ in }, onPractice: {})
-                    }
-                } else {
-                    mainShell
-                }
-                #else
                 mainShell
-                #endif
             }
         }
         .tint(Theme.vermillion)
@@ -94,17 +74,6 @@ struct RootView: View {
                 if CommandLine.arguments.contains("-uiTestSearch") { showSearchDebug = true }
                 if CommandLine.arguments.contains("-uiTestDetail") { showDetailDebug = true }
                 if CommandLine.arguments.contains("-uiTestGoal") { showGoalDebug = true }
-                if CommandLine.arguments.contains("-uiTestGoalPush") { showGoalPushDebug = true }
-                // Gerätenahe Datenmenge: alle mitgelieferten Wortpakete importieren, um
-                // den datenabhängigen „Dein Ziel"-Hänger im Simulator zu reproduzieren.
-                if CommandLine.arguments.contains("-uiTestImportAll") {
-                    let groups = (try? context.fetch(FetchDescriptor<VocabGroup>())) ?? []
-                    for pack in WordPack.loadBundled() {
-                        _ = VocabImporter.importRows(pack.rows, intoGroupNamed: pack.name,
-                                                     context: context, existingGroups: groups)
-                    }
-                    context.saveOrLog()
-                }
                 #endif
             }
             AppContentRefresh.onAppActive(context: context)
