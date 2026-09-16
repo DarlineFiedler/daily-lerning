@@ -48,6 +48,10 @@ private struct TranslatorContentView: View {
     /// Löst die Übersetzung aus; wird bei jeder (Neu-)Anforderung gesetzt bzw. invalidiert.
     @State private var configuration: TranslationSession.Configuration?
 
+    /// Fokus des Eingabefelds – zum gezielten Schließen der Tastatur (beim Übersetzen
+    /// bzw. über den „Fertig"-Knopf auf der Tastatur), damit das Ergebnis sichtbar wird.
+    @FocusState private var inputFocused: Bool
+
     /// Nicht-korenische Gegenseite, abgeleitet aus der UI-/System-Sprache. Ändert sich
     /// während der Lebensdauer des Sheets nicht – daher einmalig bei Init berechnet.
     private let appLang = TranslationDirection.resolvedAppLang(
@@ -82,6 +86,12 @@ private struct TranslatorContentView: View {
             .padding(Theme.Spacing.m)
         }
         .scrollDismissesKeyboard(.interactively)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button(L("common.done")) { inputFocused = false }
+            }
+        }
         .translationTask(configuration) { session in
             await runTranslation(with: session)
         }
@@ -136,6 +146,7 @@ private struct TranslatorContentView: View {
                     .font(.appBody)
                     .frame(minHeight: 110)
                     .scrollContentBackground(.hidden)
+                    .focused($inputFocused)
             }
             HStack {
                 SpeakButton(text: sourceText, language: pair.sourceTTS)
@@ -218,10 +229,13 @@ private struct TranslatorContentView: View {
     private func translate() {
         guard !trimmedInput.isEmpty else { return }
         errorText = nil
-        // Bei Hangul explizit Koreanisch als Quelle; sonst Quelle automatisch erkennen
-        // lassen (nil), damit auch andere Eingabesprachen korrekt nach Ko übersetzt werden.
+        inputFocused = false // Tastatur schließen, damit das Ergebnis sichtbar wird
+        // Richtung ist stets Koreanisch ↔ App-Sprache: bei Hangul Quelle = Koreanisch,
+        // sonst Quelle = App-Sprache. Beide Seiten EXPLIZIT setzen (kein nil/Auto-Erkennen),
+        // sonst scheitert Apples Spracherkennung an kurzen Wörtern ("Hallo!") und zeigt den
+        // „Sprache konnte nicht erkannt werden"-Dialog – obwohl die Richtung feststeht.
         let koreanIsSource = TranslationDirection.containsHangul(trimmedInput)
-        let source: Locale.Language? = koreanIsSource ? Locale.Language(identifier: "ko") : nil
+        let source = Locale.Language(identifier: koreanIsSource ? "ko" : appLang)
         let target = Locale.Language(identifier: koreanIsSource ? appLang : "ko")
         // Gleiches Sprachpaar wie zuletzt? Dann nur neu anstoßen statt neu konfigurieren.
         if var config = configuration, config.source == source, config.target == target {
