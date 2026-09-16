@@ -2,8 +2,8 @@ import SwiftData
 import SwiftUI
 
 /// Wurzel-View der v3-Optik: eigene 3-Tab-Navigation (Garten · Üben-FAB · Ich) statt
-/// der bisherigen fünf System-Tabs. Der zentrale FAB startet die heutige Runde bzw.
-/// öffnet die Rundenkonfiguration. Wird bei Sprachwechsel komplett neu aufgebaut
+/// der bisherigen fünf System-Tabs. Der zentrale FAB öffnet immer die ausführliche
+/// Rundenkonfiguration. Wird bei Sprachwechsel komplett neu aufgebaut
 /// (`.id(localization.language)`), damit alle Texte aktualisieren.
 struct RootView: View {
     @Environment(\.modelContext) private var context
@@ -175,14 +175,12 @@ struct RootView: View {
         }
     }
 
-    /// Üben-FAB: liegen fällige Wörter an, startet direkt die heutige Runde; sonst
-    /// öffnet sich die Rundenkonfiguration zum freien Üben.
+    /// Üben-FAB: öffnet immer die ausführliche Rundenkonfiguration („Runde vorbereiten")
+    /// mit voller Auswahl (Beete, Wachstum, TOPIK, Richtung, Modi, Anzahl …). Die heutige
+    /// Runde („Heute gießen", nur Pensum-Wörter mit Gelernt-Fallback) wird stattdessen über
+    /// die Gieß-Karte im Garten gestartet.
     private func startPractice() {
-        if dueCount > 0 {
-            showReview = true
-        } else {
-            showPracticeConfig = true
-        }
+        showPracticeConfig = true
     }
 }
 
