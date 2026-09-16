@@ -75,7 +75,8 @@ struct SearchView: View {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
                     Button(L("common.done")) { searchFocused = false }
-                        .padding(.bottom, 8)
+                        .padding(.trailing, 4)
+                        .padding(.bottom, 18)
                 }
             }
             .onChange(of: query) { _, newValue in
