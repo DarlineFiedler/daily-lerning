@@ -10,8 +10,11 @@ enum GardenTab: Hashable {
 /// zentraler, runder **Üben-FAB**, der die Anzahl fälliger Wörter zeigt und leicht
 /// nach unten übersteht (Screen 1a).
 struct GardenTabBar: View {
-    @Binding var selection: GardenTab
+    let selection: GardenTab
     let dueCount: Int
+    /// Tipp auf einen Seiten-Tab. Der Aufrufer entscheidet: Wechsel zum Tab – oder,
+    /// wenn der Tab schon aktiv ist, dessen Navigation zurück zur Übersicht poppen.
+    let onSelect: (GardenTab) -> Void
     let onPractice: () -> Void
 
     var body: some View {
@@ -36,7 +39,7 @@ struct GardenTabBar: View {
     private func tab(_ tab: GardenTab, emoji: String, title: String) -> some View {
         let active = selection == tab
         return Button {
-            selection = tab
+            onSelect(tab)
         } label: {
             VStack(spacing: 3) {
                 Text(emoji).font(.system(size: 20))

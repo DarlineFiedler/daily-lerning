@@ -14,6 +14,11 @@ struct RootView: View {
     @State private var localization = LocalizationManager.shared
     @State private var sessionStore = ActiveSessionStore()
     @State private var selectedTab: GardenTab = .garden
+    /// Wird pro Tab hochgezählt, wenn der bereits aktive Tab erneut getippt wird –
+    /// über `.id(…)` baut das die Tab-Ansicht neu auf und setzt ihre Navigation zurück
+    /// auf die Übersicht (poppt gepushte Screens wie Suche/Gruppen/Übersetzer).
+    @State private var gardenResetID = 0
+    @State private var meResetID = 0
     @State private var deepLink: IdentifiableID?
     @State private var showReview = false
     @State private var showPracticeConfig = false
@@ -134,13 +139,24 @@ struct RootView: View {
     private var mainShell: some View {
         Group {
             switch selectedTab {
-            case .garden: GardenHomeView()
-            case .me: IchView()
+            case .garden: GardenHomeView().id(gardenResetID)
+            case .me: IchView().id(meResetID)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            GardenTabBar(selection: $selectedTab, dueCount: dueCount, onPractice: startPractice)
+            GardenTabBar(selection: selectedTab, dueCount: dueCount,
+                         onSelect: selectTab, onPractice: startPractice)
+        }
+    }
+
+    /// Tipp auf einen Seiten-Tab: ist er schon aktiv, zurück zur Übersicht (Navigation
+    /// zurücksetzen); sonst zu ihm wechseln.
+    private func selectTab(_ tab: GardenTab) {
+        guard tab == selectedTab else { selectedTab = tab; return }
+        switch tab {
+        case .garden: gardenResetID += 1
+        case .me: meResetID += 1
         }
     }
 
