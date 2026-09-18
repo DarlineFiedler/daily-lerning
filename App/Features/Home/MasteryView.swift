@@ -29,7 +29,7 @@ struct MasteryView: View {
             }
             .padding(Theme.Spacing.m)
         }
-        .background(Theme.background.ignoresSafeArea())
+        .paperBackground()
         .navigationTitle(L("mastery.title"))
         .navigationBarTitleDisplayMode(.inline)
     }

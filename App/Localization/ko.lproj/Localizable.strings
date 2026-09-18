@@ -76,6 +76,10 @@
 "vocab.status" = "상태";
 "vocab.accuracy" = "정확도";
 "vocab.accuracyDetail" = "%d%% 정답 · %d회 시도";
+"vocab.delete" = "단어 삭제";
+"vocab.stat.practiced" = "연습";
+"vocab.stat.wrong" = "틀림";
+"vocab.stat.streak" = "연속";
 "vocab.problemWord" = "문제 단어";
 "vocab.details" = "세부 정보";
 "vocab.widgetToggle" = "잠금 화면에 표시";
@@ -105,15 +109,19 @@
 
 /* Practice */
 "practice.start" = "학습 시작";
-"practice.config.title" = "학습";
-"practice.config.groups" = "그룹";
-"practice.config.statuses" = "어떤 단어?";
-"practice.config.topik" = "TOPIK 등급";
+"practice.config.title" = "라운드 준비";
+"practice.config.groups" = "화단";
+"practice.config.statuses" = "성장";
+"practice.config.topik" = "TOPIK";
 "practice.config.focus" = "집중";
+"practice.config.start" = "시작하기";
+"practice.config.combatNote" = "보스전과 시험은 함께 쓸 수 없어요. 시험은 정확히 하나의 TOPIK 등급이 필요해요.";
+"practice.config.wordCountOfPool" = "일치하는 단어 %2$d개 중 %1$d개";
+"practice.exam.card" = "시험";
 "practice.problems.title" = "문제 단어";
 "practice.problems.start" = "문제 단어 연습";
 "practice.config.direction" = "방향";
-"practice.config.modes" = "학습 모드";
+"practice.config.modes" = "모드";
 "practice.config.modesHint" = "여러 개 선택 가능 (= 혼합). 미선택 시 전체 사용.";
 "practice.config.meaningLanguage" = "의미 언어";
 "practice.config.meaningLanguage.default" = "기본";
@@ -128,11 +136,11 @@
 "practice.cloze.typeWord" = "빠진 단어를 입력하세요";
 "practice.cloze.meaningHint" = "뜻: %@";
 "practice.cloze.empty" = "이 단어들에는 아직 예문이 없습니다. 단어 편집기에서 예문을 추가하면 빈칸 채우기를 연습할 수 있어요.";
-"practice.config.presets" = "저장된 설정";
+"practice.config.presets" = "템플릿";
 "practice.config.savePreset" = "설정으로 저장";
 "practice.preset.namePrompt" = "설정 이름";
 "practice.config.allGroups" = "모든 그룹";
-"practice.config.count" = "몇 개 단어?";
+"practice.config.count" = "몇 개";
 "practice.count.all" = "전체";
 "practice.listen.replay" = "탭하여 듣기";
 "practice.retryWrong" = "틀린 단어 다시";
@@ -164,6 +172,8 @@
 "practice.boss.toggle" = "보스 모드";
 "practice.boss.hint" = "라운드를 보스와의 전투로: 정답은 공격, 오답은 생명이 줄어듭니다.";
 "practice.boss.generic" = "보스";
+"practice.boss.lives" = "목숨 %d";
+"practice.boss.battleLabel" = "전투 · %@";
 "practice.boss.hp" = "%d / %d HP";
 "practice.boss.victory" = "보스 격파!";
 "practice.boss.defeat" = "보스에게 패배";
@@ -184,6 +194,13 @@
 "practice.exam.stat.correct" = "정답";
 "practice.exam.stat.level" = "등급";
 "practice.exam.a11y.time" = "%d초 남음";
+"practice.exam.titleFormat" = "%@ 시험";
+"practice.exam.question" = "문제 %1$d/%2$d";
+"practice.exam.rubric" = "채점 방식";
+"practice.exam.passMark" = "합격 기준 %@";
+"practice.exam.timePerQuestion" = "문제당 시간";
+"practice.exam.seconds" = "%d초";
+"practice.exam.countsNote" = "스트릭, XP, 성장에 정상 반영돼요.";
 
 /* Statistics */
 "stats.title" = "통계";
@@ -207,6 +224,7 @@
 "search.placeholder" = "단어 또는 뜻 검색";
 "search.empty" = "결과가 없습니다.";
 "search.prompt" = "모든 그룹에서 검색합니다.";
+"search.swipeHint" = "왼쪽으로 밀어 편집하거나 삭제하세요.";
 "search.filter.status" = "상태";
 "search.filter.groups" = "그룹";
 "search.filter.selectedSuffix" = "선택됨";
@@ -222,6 +240,11 @@
 "settings.widget.hint" = "각 단어 카드의 위젯 아이콘으로 활성화하세요.";
 "settings.about.section" = "정보";
 "settings.about.version" = "버전";
+"settings.reset.button" = "모두 초기화";
+"settings.reset.hint" = "모든 단어, 화단, 진행 상황을 삭제해요. 이후 앱이 처음 실행처럼 시작돼요.";
+"settings.reset.confirm" = "정말 모두 초기화할까요?";
+"settings.reset.message" = "모든 단어, 화단, 진행 상황이 영구적으로 삭제되고 앱이 환영 화면부터 다시 시작돼요.";
+"settings.reset.action" = "모두 삭제";
 
 /* Languages */
 "lang.system" = "시스템";
@@ -276,6 +299,7 @@
 "home.goal.reached" = "목표 달성 🏁";
 "home.goal.edit.hint" = "목표를 조정하려면 탭하세요";
 "home.goal.stats.hint" = "목표 통계를 보려면 탭하세요";
+"home.streak.detail.hint" = "연속 기록을 보려면 탭하세요";
 /* 목표 통계 화면 */
 "goalstats.title" = "목표 통계";
 "goalstats.settings.open" = "목표 설정";
@@ -285,6 +309,7 @@
 "goalstats.rate" = "달성률 (월)";
 "goalstats.weekly.reached" = "주간 목표";
 "goalstats.practiced" = "연습 (기록)";
+"goalstats.learned.days" = "학습한 날";
 "goalstats.accuracy" = "정답률";
 "goalstats.calendar.title" = "목표 캘린더";
 "goalstats.calendar.legend.reached" = "달성";
@@ -306,6 +331,11 @@
 "streak.detail.longest" = "최고 기록";
 "streak.detail.jokers" = "프리즈";
 "streak.detail.joker.title" = "스트릭 프리즈";
+"streak.detail.daysInARow" = "일 연속 물 주기";
+"streak.detail.recordShort" = "최고 기록: %d일";
+"streak.detail.joker.covers" = "놓친 하루를 보완해요";
+"streak.detail.joker.usedCount" = "%d회 사용";
+"streak.detail.jokerFooter" = "물 준 7일마다 조커가 하나 자라나요.";
 "streak.detail.joker.explainer" = "매주 자동으로 프리즈 1개를 받습니다. 하루를 놓쳐도 프리즈가 연속 학습을 지켜줍니다. 최대 %d개까지 모을 수 있습니다.";
 "streak.detail.history" = "사용한 프리즈";
 "streak.detail.history.entry" = "%@에 프리즈 사용";
@@ -524,6 +554,7 @@
 "home.translator.title" = "번역기";
 "home.translator.subtitle" = "단어와 문장을 번역하고 들어보세요";
 "translator.title" = "번역기";
+"translator.inputLabel" = "입력";
 "translator.input.placeholder" = "텍스트 입력 …";
 "translator.output.placeholder" = "번역 결과가 여기에 표시됩니다";
 "translator.translate" = "번역";
@@ -534,3 +565,57 @@
 "translator.error" = "번역에 실패했습니다. 다시 시도해 주세요.";
 "translator.unavailable" = "iOS 18부터 사용 가능";
 "translator.unavailable.detail" = "번역기는 iOS 18 이상이 필요한 온디바이스 번역을 사용합니다.";
+
+/* --- v3 Garden Redesign --- */
+"tab.garden" = "정원";
+"tab.practice" = "연습";
+"tab.me" = "나";
+"garden.title" = "내 정원";
+"garden.beds.count" = "화단 · %d";
+"garden.streak.days" = "일";
+"garden.water.title" = "오늘 물주기";
+"garden.water.subtitle" = "%d개 복습 · 약 %d분";
+"garden.water.none.title" = "정원에 물을 다 줬어요";
+"garden.water.none.subtitle" = "복습할 단어가 없어요 — 내일 다시 오세요.";
+"garden.fallow" = "휴경";
+"garden.fallow.note" = "%1$@ 화단이 %2$d일째 물을 기다리고 있어요!";
+"garden.learned.count" = "%1$d / %2$d";
+"garden.learned.label" = "완료";
+"garden.empty.title" = "정원이 아직 비어 있어요.";
+"garden.empty.cta" = "첫 화단 만들기";
+"practice.fab.due" = "%d개";
+"practice.fab.none" = "연습";
+"practice.understood" = "확인 — 다음";
+
+/* --- v3 Onboarding (Issue 117) --- */
+"onboarding.step" = "%1$d / %2$d";
+"onboarding.skip" = "건너뛰기";
+"onboarding.next" = "다음";
+"onboarding.start" = "시작하기";
+"onboarding.finish" = "내 정원으로";
+"onboarding.welcome.title" = "정원에 오신 것을 환영해요";
+"onboarding.welcome.body" = "정원을 가꾸듯 한국어 단어를 배워요 — 모든 단어는 연습할수록 자라는 식물이에요.";
+"onboarding.pack.title" = "첫 화단 만들기";
+"onboarding.pack.body" = "시작할 단어 팩을 골라요. 나중에 더 추가할 수 있어요.";
+"onboarding.pack.imported" = "%d개 단어를 심었어요 🌱";
+"onboarding.goal.title" = "하루 목표";
+"onboarding.goal.body" = "하루에 몇 개의 단어에 물을 줄까요?";
+"onboarding.goal.words" = "하루 %d개";
+"onboarding.goal.none" = "목표 없음";
+"onboarding.reminder.title" = "부드러운 알림";
+"onboarding.reminder.body" = "정원이 마르지 않도록 매일 알림을 받아요.";
+"onboarding.reminder.enable" = "알림 켜기";
+"onboarding.reminder.time" = "시간";
+"onboarding.widget.title" = "홈 화면 속 정원";
+"onboarding.widget.body" = "위젯이 복습할 단어를 보여줘요. 나중에 홈 화면에서 추가하세요.";
+"onboarding.widget.enable" = "위젯용 단어 준비하기";
+"onboarding.widget.done" = "단어 준비 완료 ✦";
+"search.hits" = "%d개 결과";
+"search.filter.widget" = "잠금 화면";
+"garden.streak.note" = "%d일 연속 물주기.";
+"garden.streak.note.one" = "1일 연속 물주기.";
+"garden.today" = "오늘";
+"garden.week.practiced" = "%d개 연습";
+"garden.week.bloomed" = "%d개 개화";
+"garden.week.delta.up" = "↗ %d %% 증가";
+"garden.week.delta.down" = "↘ %d %% 감소";

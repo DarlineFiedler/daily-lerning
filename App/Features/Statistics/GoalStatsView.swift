@@ -24,7 +24,7 @@ struct GoalStatsView: View {
                 }
                 .padding(Theme.Spacing.m)
             }
-            .background(Theme.background.ignoresSafeArea())
+            .paperBackground()
             .navigationTitle(L("goalstats.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -65,6 +65,8 @@ struct GoalStatsView: View {
         let answered = correct + wrong
         let accuracy = answered == 0 ? nil : Int((Double(correct) / Double(answered) * 100).rounded())
         let practiced = days.reduce(0) { $0 + $1.practicedIDs.count }
+        // Gesamtzahl der Kalendertage, an denen mindestens ein Wort geübt wurde.
+        let learnedDays = days.filter { !$0.practicedIDs.isEmpty }.count
 
         return VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             SectionHeader(L("goalstats.overview"))
@@ -83,6 +85,14 @@ struct GoalStatsView: View {
                          systemImage: "checkmark.circle.fill", tint: Theme.brandStart)
                 StatTile(value: accuracy.map { "\($0)%" } ?? "–", label: L("goalstats.accuracy"),
                          systemImage: "target", tint: Theme.brandEnd)
+            }
+            HStack(spacing: Theme.Spacing.s) {
+                StatTile(value: "\(learnedDays)", label: L("goalstats.learned.days"),
+                         systemImage: "calendar", tint: LearningStatus.learned.color)
+                // Zwei unsichtbare Platzhalter, damit die Kachel wie im 3er-Raster
+                // links auf Drittel-Breite bleibt statt die ganze Zeile zu füllen.
+                Color.clear.frame(maxWidth: .infinity)
+                Color.clear.frame(maxWidth: .infinity)
             }
         }
     }

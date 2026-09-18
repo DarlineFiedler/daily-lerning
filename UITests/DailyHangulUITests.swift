@@ -9,22 +9,24 @@ final class DailyHangulUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    /// App startet und die Haupt-Navigation (Tab-Leiste) ist da.
-    /// Bewusst NICHT an eine feste Tab-Anzahl gekoppelt – das Hinzufügen eines Tabs
-    /// soll keinen "Regressions"-Fehlschlag auslösen. Geprüft wird das Smoke-Signal:
-    /// App läuft und zeigt eine bediente Tab-Leiste.
-    func testAppLaunchesWithTabBar() {
+    /// App startet und zeigt bediente Inhalte (kein Crash, keine leere Fläche).
+    /// Der Erststart wird über das Debug-Startargument `-uiTestSeed` übersprungen (setzt
+    /// zugleich Beispiel-Daten), damit der Smoke-Test das Garten-Gerüst erreicht.
+    /// Bewusst layout-/lokalisierungs-unabhängig: die eigene 3-Tab-Navigation ist keine
+    /// System-`UITabBar`, daher wird auf „App im Vordergrund + mindestens ein Button"
+    /// geprüft statt auf `app.tabBars`.
+    func testAppLaunchesWithGardenShell() {
         let app = XCUIApplication()
+        app.launchArguments = ["-uiTestSeed"]
         app.launch()
 
-        let tabBar = app.tabBars.firstMatch
         XCTAssertTrue(
-            tabBar.waitForExistence(timeout: 15),
-            "Die Tab-Leiste sollte nach dem Start sichtbar sein."
+            app.wait(for: .runningForeground, timeout: 15),
+            "Die App sollte nach dem Start im Vordergrund laufen."
         )
-        XCTAssertGreaterThan(
-            tabBar.buttons.count, 0,
-            "Die Tab-Leiste sollte mindestens einen Tab zeigen."
+        XCTAssertTrue(
+            app.buttons.firstMatch.waitForExistence(timeout: 15),
+            "Nach dem Start sollte bediente Navigation (mindestens ein Button) sichtbar sein."
         )
     }
 }

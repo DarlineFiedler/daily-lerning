@@ -51,6 +51,11 @@ enum PracticePresetStore {
         persist(all().filter { $0.id != preset.id })
     }
 
+    /// Entfernt alle gespeicherten Presets (für den vollständigen App-Reset).
+    static func resetAll() {
+        d.removeObject(forKey: key)
+    }
+
     /// Wählt die `id` für ein unter `name` zu speicherndes Preset: übernimmt die
     /// eines bereits vorhandenen, gleichnamigen (Groß-/Kleinschreibung egal)
     /// Presets, damit Speichern es überschreibt statt zu duplizieren – sonst eine

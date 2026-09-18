@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// Weiche, abgerundete Karten-Fläche mit Schatten – ersetzt die grauen
-/// `Color.gray.opacity(0.12)`-Boxen der ursprünglichen Optik.
+/// Papierkarte mit Haarlinien-Rahmen und hartem Offset-Schatten (Print-Look).
 struct CardBackground: ViewModifier {
     var padding: CGFloat = Theme.Spacing.m
     var radius: CGFloat = Theme.Radius.card
@@ -10,7 +9,11 @@ struct CardBackground: ViewModifier {
         content
             .padding(padding)
             .background(Theme.surface, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .shadow(color: Theme.Shadow.color, radius: Theme.Shadow.radius, y: Theme.Shadow.y)
+            .overlay(
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .strokeBorder(Theme.hairline, lineWidth: 1)
+            )
+            .hardShadow()
     }
 }
 
@@ -30,9 +33,13 @@ struct HeroCardBackground: ViewModifier {
             .frame(maxWidth: .infinity)
             .padding(.vertical, Theme.Spacing.xl + 16)
             .padding(.horizontal, Theme.Spacing.m)
-            .background(Theme.brandGradientSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-            .foregroundStyle(.white)
-            .shadow(color: Theme.brandStart.opacity(0.3), radius: 16, y: 8)
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+                    .strokeBorder(Theme.hairline, lineWidth: 1)
+            )
+            .foregroundStyle(Theme.ink)
+            .hardShadow(x: 3, y: 4)
     }
 }
 
@@ -55,6 +62,6 @@ struct GradientCard<Content: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(gradient, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .foregroundStyle(.white)
-            .shadow(color: Theme.Shadow.color, radius: Theme.Shadow.radius, y: Theme.Shadow.y)
+            .hardShadow()
     }
 }

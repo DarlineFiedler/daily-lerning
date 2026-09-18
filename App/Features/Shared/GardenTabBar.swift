@@ -1,0 +1,78 @@
+import SwiftUI
+
+/// Die drei Ziele der v3-Navigation.
+enum GardenTab: Hashable {
+    case garden
+    case me
+}
+
+/// Individuelle Tabbar im Papier-Look: zwei seitliche Tabs (Garten · Ich) und ein
+/// zentraler, runder **Üben-FAB**, der die Anzahl fälliger Wörter zeigt und leicht
+/// nach unten übersteht (Screen 1a).
+struct GardenTabBar: View {
+    let selection: GardenTab
+    let dueCount: Int
+    /// Tipp auf einen Seiten-Tab. Der Aufrufer entscheidet: Wechsel zum Tab – oder,
+    /// wenn der Tab schon aktiv ist, dessen Navigation zurück zur Übersicht poppen.
+    let onSelect: (GardenTab) -> Void
+    let onPractice: () -> Void
+
+    var body: some View {
+        HStack(alignment: .bottom) {
+            tab(.garden, emoji: "🌿", title: L("tab.garden"))
+            Spacer()
+            practiceFAB
+            Spacer()
+            tab(.me, emoji: "✦", title: L("tab.me"))
+        }
+        .padding(.horizontal, 30)
+        .padding(.top, 10)
+        .padding(.bottom, 6)
+        .background(
+            Theme.paper
+                .overlay(Rectangle().fill(Theme.hairline).frame(height: 1), alignment: .top)
+                .ignoresSafeArea(edges: .bottom)
+        )
+        .accessibilityIdentifier("gardenTabBar")
+    }
+
+    private func tab(_ tab: GardenTab, emoji: String, title: String) -> some View {
+        let active = selection == tab
+        return Button {
+            onSelect(tab)
+        } label: {
+            VStack(spacing: 3) {
+                Text(emoji).font(.system(size: 20))
+                Text(title)
+                    .font(.appMono(10))
+                    .tracking(0.5)
+            }
+            .foregroundStyle(active ? Theme.ink : Theme.inkMuted)
+            .frame(width: 64)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
+    }
+
+    private var practiceFAB: some View {
+        Button(action: onPractice) {
+            VStack(spacing: 1) {
+                Text(L("tab.practice"))
+                    .font(.appDisplay(15))
+                if dueCount > 0 {
+                    Text(L("practice.fab.due", dueCount))
+                        .font(.appMono(9))
+                        .opacity(0.85)
+                }
+            }
+            .foregroundStyle(Color(hex: "#FBF5EA"))
+            .frame(width: 66, height: 66)
+            .background(Theme.vermillion, in: Circle())
+            .buttonHardShadow(Theme.vermillionDark, y: 5)
+            .offset(y: -4)
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("practiceFAB")
+        .accessibilityLabel("\(L("tab.practice")), \(dueCount > 0 ? L("practice.fab.due", dueCount) : "")")
+    }
+}

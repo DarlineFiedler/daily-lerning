@@ -76,6 +76,10 @@
 "vocab.status" = "Status";
 "vocab.accuracy" = "Genauigkeit";
 "vocab.accuracyDetail" = "%d %% richtig · %d Versuche";
+"vocab.delete" = "Wort löschen";
+"vocab.stat.practiced" = "Geübt";
+"vocab.stat.wrong" = "Davon falsch";
+"vocab.stat.streak" = "Serie";
 "vocab.problemWord" = "Problemwort";
 "vocab.details" = "Details";
 "vocab.widgetToggle" = "Auf dem Lock Screen anzeigen";
@@ -105,15 +109,19 @@
 
 /* Lernen */
 "practice.start" = "Lernen starten";
-"practice.config.title" = "Lernvorgang";
-"practice.config.groups" = "Gruppen";
-"practice.config.statuses" = "Welche Wörter?";
-"practice.config.topik" = "TOPIK-Niveau";
+"practice.config.title" = "Runde vorbereiten";
+"practice.config.groups" = "Beete";
+"practice.config.statuses" = "Wachstum";
+"practice.config.topik" = "TOPIK";
 "practice.config.focus" = "Fokus";
+"practice.config.start" = "Los geht's";
+"practice.config.combatNote" = "Endgegner und Prüfung schließen sich aus. Prüfung braucht genau ein TOPIK-Niveau.";
+"practice.config.wordCountOfPool" = "%1$d von %2$d passenden Wörtern";
+"practice.exam.card" = "Prüfung";
 "practice.problems.title" = "Problemwörter";
 "practice.problems.start" = "Problemwörter üben";
 "practice.config.direction" = "Richtung";
-"practice.config.modes" = "Lernmodi";
+"practice.config.modes" = "Modi";
 "practice.config.modesHint" = "Mehrere wählbar (= Mix). Ohne Auswahl wird alles genutzt.";
 "practice.config.meaningLanguage" = "Bedeutungssprache";
 "practice.config.meaningLanguage.default" = "Standard";
@@ -128,11 +136,11 @@
 "practice.cloze.typeWord" = "Fehlendes Wort eintippen";
 "practice.cloze.meaningHint" = "Bedeutung: %@";
 "practice.cloze.empty" = "Keines dieser Wörter hat bisher einen Beispielsatz. Ergänze einen im Wort-Editor, um Lückentext zu üben.";
-"practice.config.presets" = "Voreinstellungen";
+"practice.config.presets" = "Vorlagen";
 "practice.config.savePreset" = "Als Voreinstellung sichern";
 "practice.preset.namePrompt" = "Name der Voreinstellung";
 "practice.config.allGroups" = "Alle Gruppen";
-"practice.config.count" = "Wie viele Wörter?";
+"practice.config.count" = "Wie viele";
 "practice.count.all" = "Alle";
 "practice.listen.replay" = "Zum Anhören tippen";
 "practice.retryWrong" = "Falsche wiederholen";
@@ -164,6 +172,8 @@
 "practice.boss.toggle" = "Boss-Modus";
 "practice.boss.hint" = "Die Runde als Kampf gegen einen Endgegner: richtige Antworten sind Treffer, Fehler kosten Leben.";
 "practice.boss.generic" = "Endgegner";
+"practice.boss.lives" = "%d Leben";
+"practice.boss.battleLabel" = "Kampf · %@";
 "practice.boss.hp" = "%d / %d HP";
 "practice.boss.victory" = "Boss besiegt!";
 "practice.boss.defeat" = "Vom Boss besiegt";
@@ -184,6 +194,13 @@
 "practice.exam.stat.correct" = "Richtig";
 "practice.exam.stat.level" = "Niveau";
 "practice.exam.a11y.time" = "%d Sekunden verbleibend";
+"practice.exam.titleFormat" = "Prüfung %@";
+"practice.exam.question" = "Frage %1$d/%2$d";
+"practice.exam.rubric" = "So wird bewertet";
+"practice.exam.passMark" = "Bestehensgrenze %@";
+"practice.exam.timePerQuestion" = "Zeit pro Frage";
+"practice.exam.seconds" = "%d s";
+"practice.exam.countsNote" = "Zählt normal für Streak, XP und Wachstum.";
 
 /* Statistik */
 "stats.title" = "Statistik";
@@ -207,6 +224,7 @@
 "search.placeholder" = "Wort oder Bedeutung suchen";
 "search.empty" = "Keine Treffer.";
 "search.prompt" = "Suche über alle Gruppen hinweg.";
+"search.swipeHint" = "Nach links wischen: bearbeiten oder löschen.";
 "search.filter.status" = "Status";
 "search.filter.groups" = "Gruppen";
 "search.filter.selectedSuffix" = "ausgewählt";
@@ -222,6 +240,11 @@
 "settings.widget.hint" = "Aktiviere Wörter über das Widget-Symbol auf der Vokabelkarte.";
 "settings.about.section" = "Über";
 "settings.about.version" = "Version";
+"settings.reset.button" = "Alles zurücksetzen";
+"settings.reset.hint" = "Löscht alle Wörter, Beete und den Fortschritt. Die App startet danach wie beim ersten Öffnen.";
+"settings.reset.confirm" = "Wirklich alles zurücksetzen?";
+"settings.reset.message" = "Alle Wörter, Beete und Fortschritte werden unwiderruflich gelöscht. Die App beginnt wieder mit der Begrüßung.";
+"settings.reset.action" = "Alles löschen";
 
 /* Sprachen */
 "lang.system" = "System";
@@ -276,6 +299,7 @@
 "home.goal.reached" = "Ziel erreicht 🏁";
 "home.goal.edit.hint" = "Tippen, um dein Ziel anzupassen";
 "home.goal.stats.hint" = "Tippen, um deine Ziel-Statistik zu sehen";
+"home.streak.detail.hint" = "Tippen, um deine Streak-Übersicht zu sehen";
 /* Ziel-Statistik-Screen */
 "goalstats.title" = "Ziel-Statistik";
 "goalstats.settings.open" = "Ziel-Einstellungen";
@@ -285,6 +309,7 @@
 "goalstats.rate" = "Quote (Monat)";
 "goalstats.weekly.reached" = "Wochenziele";
 "goalstats.practiced" = "Geübt (Verlauf)";
+"goalstats.learned.days" = "Tage gelernt";
 "goalstats.accuracy" = "Trefferquote";
 "goalstats.calendar.title" = "Ziel-Kalender";
 "goalstats.calendar.legend.reached" = "Erreicht";
@@ -306,6 +331,11 @@
 "streak.detail.longest" = "Rekord";
 "streak.detail.jokers" = "Joker";
 "streak.detail.joker.title" = "Streak-Freeze-Joker";
+"streak.detail.daysInARow" = "Tage in Folge gegossen";
+"streak.detail.recordShort" = "Rekord: %d Tage";
+"streak.detail.joker.covers" = "deckt einen verpassten Tag ab";
+"streak.detail.joker.usedCount" = "%d× eingesetzt";
+"streak.detail.jokerFooter" = "Ein Joker wächst alle 7 gegossenen Tage nach.";
 "streak.detail.joker.explainer" = "Jede Woche bekommst du automatisch einen Joker. Verpasst du einen Tag, rettet ein Joker deine Streak. Du kannst bis zu %d Joker ansammeln.";
 "streak.detail.history" = "Eingesetzte Joker";
 "streak.detail.history.entry" = "Joker eingesetzt am %@";
@@ -524,6 +554,7 @@
 "home.translator.title" = "Übersetzer";
 "home.translator.subtitle" = "Wörter & Sätze übersetzen und anhören";
 "translator.title" = "Übersetzer";
+"translator.inputLabel" = "Dein Wort";
 "translator.input.placeholder" = "Text eingeben …";
 "translator.output.placeholder" = "Übersetzung erscheint hier";
 "translator.translate" = "Übersetzen";
@@ -534,3 +565,57 @@
 "translator.error" = "Übersetzung fehlgeschlagen. Bitte erneut versuchen.";
 "translator.unavailable" = "Ab iOS 18 verfügbar";
 "translator.unavailable.detail" = "Der Übersetzer nutzt die geräteinterne Übersetzung, die iOS 18 oder neuer benötigt.";
+
+/* --- v3 Garden Redesign --- */
+"tab.garden" = "Garten";
+"tab.practice" = "Üben";
+"tab.me" = "Ich";
+"garden.title" = "Mein Garten";
+"garden.beds.count" = "BEETE · %d";
+"garden.streak.days" = "TAGE";
+"garden.water.title" = "Heute gießen";
+"garden.water.subtitle" = "%d Wörter fällig · ca. %d Min";
+"garden.water.none.title" = "Garten gegossen";
+"garden.water.none.subtitle" = "Nichts fällig — komm morgen wieder.";
+"garden.fallow" = "brachliegend";
+"garden.fallow.note" = "%1$@ wartet seit %2$d Tagen auf Wasser!";
+"garden.learned.count" = "%1$d / %2$d";
+"garden.learned.label" = "gelernt";
+"garden.empty.title" = "Dein Garten ist noch leer.";
+"garden.empty.cta" = "Erstes Beet anlegen";
+"practice.fab.due" = "%d fällig";
+"practice.fab.none" = "üben";
+"practice.understood" = "Verstanden — weiter";
+
+/* --- v3 Onboarding (Issue 117) --- */
+"onboarding.step" = "%1$d von %2$d";
+"onboarding.skip" = "Überspringen";
+"onboarding.next" = "Weiter";
+"onboarding.start" = "Los geht's";
+"onboarding.finish" = "In meinen Garten";
+"onboarding.welcome.title" = "Willkommen in deinem Garten";
+"onboarding.welcome.body" = "Lerne koreanische Wörter wie beim Gärtnern — jedes Wort ist eine Pflanze, die mit dem Üben wächst.";
+"onboarding.pack.title" = "Leg dein erstes Beet an";
+"onboarding.pack.body" = "Wähle ein Wortpaket zum Starten. Weitere kannst du später hinzufügen.";
+"onboarding.pack.imported" = "%d Wörter eingepflanzt 🌱";
+"onboarding.goal.title" = "Dein Tagesziel";
+"onboarding.goal.body" = "Wie viele Wörter möchtest du täglich gießen?";
+"onboarding.goal.words" = "%d / Tag";
+"onboarding.goal.none" = "Kein Ziel";
+"onboarding.reminder.title" = "Ein sanfter Anstupser";
+"onboarding.reminder.body" = "Bekomme eine tägliche Erinnerung, damit dein Garten nie austrocknet.";
+"onboarding.reminder.enable" = "Erinnerung einschalten";
+"onboarding.reminder.time" = "Uhrzeit";
+"onboarding.widget.title" = "Dein Garten auf dem Homescreen";
+"onboarding.widget.body" = "Ein Widget zeigt dir ein Wort zum Wiederholen. Füge es später über den Homescreen hinzu.";
+"onboarding.widget.enable" = "Wörter fürs Widget vorbereiten";
+"onboarding.widget.done" = "Wörter vorbereitet ✦";
+"search.hits" = "%d Treffer";
+"search.filter.widget" = "Sperrbildschirm";
+"garden.streak.note" = "%d Tage am Stück gegossen.";
+"garden.streak.note.one" = "1 Tag am Stück gegossen.";
+"garden.today" = "HEUTE";
+"garden.week.practiced" = "%d geübt";
+"garden.week.bloomed" = "%d neu erblüht";
+"garden.week.delta.up" = "↗ %d %% mehr";
+"garden.week.delta.down" = "↘ %d %% weniger";

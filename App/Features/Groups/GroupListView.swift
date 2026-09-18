@@ -16,8 +16,9 @@ struct GroupListView: View {
     private var archivedGroups: [VocabGroup] { groups.filter { $0.isArchived } }
 
     var body: some View {
-        NavigationStack {
-            Group {
+        // Kein eigener NavigationStack: aus IchView in dessen Stack gepusht (verschachtelte
+        // Stacks ließen das Pushen der Beet-Detailansicht einfrieren).
+        Group {
                 if groups.isEmpty {
                     emptyState
                 } else {
@@ -34,7 +35,7 @@ struct GroupListView: View {
                     }
                 }
             }
-            .background(Theme.background.ignoresSafeArea())
+            .paperBackground()
             .navigationTitle(L("tab.groups"))
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
@@ -60,7 +61,6 @@ struct GroupListView: View {
                 }
                 Button(L("common.cancel"), role: .cancel) { pendingDelete = nil }
             }
-        }
     }
 
     /// Eine Gruppenkarte mit Navigation und Kontextmenü. Archivierte Karten werden
@@ -239,7 +239,8 @@ struct GroupListView: View {
     }
 }
 
-/// Bunte Gruppenkarte mit Farbverlauf, Wortzahl und Fortschrittsbalken.
+/// Beet-Karte im Papier-Look: 4px-Farbbalken links, Name (Serif), Wortzahl (Mono),
+/// Pflanzenreihe und Fortschrittsbalken (Screen 1d).
 struct GroupCard: View {
     let group: VocabGroup
 
@@ -249,33 +250,32 @@ struct GroupCard: View {
     }
 
     var body: some View {
-        GradientCard(gradient: .forHex(group.colorHex), padding: Theme.Spacing.l) {
-            VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-                HStack {
-                    Image(systemName: "rectangle.stack.fill")
-                        .font(.appTitle3)
-                    Text(group.name)
-                        .font(.appTitle3)
-                        .lineLimit(1)
-                    Spacer()
-                    Text(L("group.wordCount", group.vocabCount))
-                        .font(.appCaption.weight(.semibold))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(.white.opacity(0.22), in: Capsule())
-                }
-                if group.vocabCount > 0 {
-                    MasteryBar(fraction: fraction)
-                    Text("\(learned) / \(group.vocabCount) · \(L("status.learned"))")
-                        .font(.appCaption)
-                        .opacity(0.9)
-                }
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(group.name)
+                    .font(.appDisplay(17))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                Spacer()
+                Text(L("group.wordCount", group.vocabCount))
+                    .font(.appMono(11))
+                    .foregroundStyle(Theme.inkMuted)
+            }
+            if group.vocabCount > 0 {
+                PlantRow(group: group)
+                MasteryBar(fraction: fraction)
+                Text("\(learned) / \(group.vocabCount) · \(L("status.learned"))")
+                    .font(.appMono(11))
+                    .foregroundStyle(Theme.inkSecondary)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .paperCard(padding: 14)
+        .groupAccent(Color(hex: group.colorHex))
     }
 }
 
-/// Schmaler weißer Fortschrittsbalken für farbige Karten.
+/// Schmaler Fortschrittsbalken im Papier-Look: Blattgrün auf gedämpfter Fläche.
 struct MasteryBar: View {
     let fraction: Double
     var height: CGFloat = 8
@@ -283,8 +283,8 @@ struct MasteryBar: View {
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                Capsule().fill(.white.opacity(0.25))
-                Capsule().fill(.white)
+                Capsule().fill(Theme.surfaceMuted)
+                Capsule().fill(Theme.leaf)
                     .frame(width: geo.size.width * max(0, min(fraction, 1)))
             }
         }
@@ -293,6 +293,6 @@ struct MasteryBar: View {
 }
 
 #Preview {
-    GroupListView()
+    NavigationStack { GroupListView() }
         .modelContainer(PersistenceController.preview)
 }

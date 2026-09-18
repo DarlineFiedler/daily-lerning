@@ -32,7 +32,7 @@ struct GroupEditView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(Theme.background.ignoresSafeArea())
+            .paperBackground()
             .navigationTitle(group == nil ? L("group.new") : L("group.edit"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -3,6 +3,10 @@ import SwiftUI
 /// Die vier Antwort-Optionen samt Auswahl-/Feedback-Logik. Geteilt von
 /// Multiple Choice und Hör-Modus – der einzige Unterschied dieser Modi ist der
 /// Prompt (Text vs. Audio), die Optionen sind identisch.
+///
+/// Papier-Optik (Screen 1b): neutrale Karten (#FBF5EA, 1px Rahmen, harter Schatten);
+/// nach der Wahl wird die richtige grün, die falsch gewählte zinnoberrot getönt, alle
+/// übrigen auf 50 % Deckkraft ohne Schatten.
 struct ChoiceOptionsView: View {
     let item: PracticeItem
     @Binding var selected: Vocab?
@@ -17,13 +21,14 @@ struct ChoiceOptionsView: View {
                 } label: {
                     HStack {
                         Text(item.optionText(choice))
-                            .font(.appBody.weight(.medium))
-                            .foregroundStyle(.primary)
+                            .font(.appBody)
+                            .foregroundStyle(textColor(for: choice))
                             .multilineTextAlignment(.leading)
                         Spacer()
-                        if answered, let icon = icon(for: choice) {
-                            Image(systemName: icon.name)
-                                .foregroundStyle(icon.color)
+                        if answered, let mark = mark(for: choice) {
+                            Text(mark.symbol)
+                                .font(.appHeadline)
+                                .foregroundStyle(mark.color)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -31,8 +36,10 @@ struct ChoiceOptionsView: View {
                     .background(background(for: choice), in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous)
-                            .strokeBorder(border(for: choice), lineWidth: 2)
+                            .strokeBorder(border(for: choice), lineWidth: 1.5)
                     )
+                    .modifier(OptionShadow(active: showsShadow(for: choice)))
+                    .opacity(faded(choice) ? 0.5 : 1)
                 }
                 .buttonStyle(.plain)
                 .disabled(answered)
@@ -41,24 +48,49 @@ struct ChoiceOptionsView: View {
     }
 
     private func isRight(_ choice: Vocab) -> Bool { choice.id == item.vocab.id }
+    private func isChosen(_ choice: Vocab) -> Bool { choice.id == selected?.id }
 
-    private func icon(for choice: Vocab) -> (name: String, color: Color)? {
-        if isRight(choice) { return ("checkmark.circle.fill", LearningStatus.learned.color) }
-        if choice.id == selected?.id { return ("xmark.circle.fill", Theme.wrong) }
+    /// Übrige (nicht richtige, nicht gewählte) Optionen verblassen nach der Antwort.
+    private func faded(_ choice: Vocab) -> Bool {
+        answered && !isRight(choice) && !isChosen(choice)
+    }
+
+    private func showsShadow(for choice: Vocab) -> Bool {
+        !answered || isRight(choice) || isChosen(choice)
+    }
+
+    private func mark(for choice: Vocab) -> (symbol: String, color: Color)? {
+        if isRight(choice) { return ("✓", Theme.leaf) }
+        if isChosen(choice) { return ("✕", Theme.vermillion) }
         return nil
     }
 
+    private func textColor(for choice: Vocab) -> Color {
+        guard answered else { return Theme.ink }
+        if isRight(choice) { return Theme.leafText }
+        if isChosen(choice) { return Theme.vermillionDark }
+        return Theme.ink
+    }
+
     private func background(for choice: Vocab) -> Color {
-        guard answered else { return Theme.surfaceMuted }
-        if isRight(choice) { return LearningStatus.learned.color.opacity(0.18) }
-        if choice.id == selected?.id { return Theme.wrong.opacity(0.15) }
-        return Theme.surfaceMuted
+        guard answered else { return Theme.card }
+        if isRight(choice) { return Theme.leaf.opacity(0.14) }
+        if isChosen(choice) { return Theme.vermillion.opacity(0.10) }
+        return Theme.card
     }
 
     private func border(for choice: Vocab) -> Color {
-        guard answered else { return .clear }
-        if isRight(choice) { return LearningStatus.learned.color }
-        if choice.id == selected?.id { return Theme.wrong }
-        return .clear
+        guard answered else { return Theme.hairlineStrong }
+        if isRight(choice) { return Theme.leaf }
+        if isChosen(choice) { return Theme.vermillion }
+        return Theme.hairline
+    }
+}
+
+/// Harter Print-Schatten nur für aktive Optionskarten (nicht für verblasste).
+private struct OptionShadow: ViewModifier {
+    let active: Bool
+    func body(content: Content) -> some View {
+        if active { content.hardShadow() } else { content }
     }
 }

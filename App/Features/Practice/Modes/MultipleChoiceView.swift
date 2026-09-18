@@ -18,13 +18,31 @@ struct MultipleChoiceView: View {
             ChoiceOptionsView(item: item, selected: $selected)
 
             if answered {
+                if !isCorrect, let note = mnemonic {
+                    HStack(alignment: .top, spacing: Theme.Spacing.s) {
+                        Text("📝")
+                        Text(note)
+                            .font(.appBody)
+                            .foregroundStyle(Theme.inkSecondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .paperCard(padding: Theme.Spacing.m)
+                }
                 Button {
                     onAnswer(isCorrect)
                 } label: {
-                    Label(L("common.next"), systemImage: "arrow.right")
+                    Label(isCorrect ? L("common.next") : L("practice.understood"),
+                          systemImage: "arrow.right")
                 }
-                .buttonStyle(.primary)
+                .buttonStyle(isCorrect ? .forward : .acknowledge)
             }
         }
+    }
+
+    /// Merknotiz nach falscher Antwort: Beispielsatz, sonst die Bedeutung.
+    private var mnemonic: String? {
+        if let example = item.vocab.example, !example.isEmpty { return example }
+        let meaning = item.vocab.meaning
+        return meaning.isEmpty ? nil : meaning
     }
 }

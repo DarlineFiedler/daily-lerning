@@ -1,33 +1,38 @@
 import SwiftUI
 
-/// Gefüllter Marken-Gradient-Button mit Press-Animation und Haptik.
-/// Ersetzt `.buttonStyle(.borderedProminent)` für alle Haupt-Aktionen.
+/// Gefüllter Primär-Button im Papier-Look: satte Füllfarbe (Standard Zinnober),
+/// Serifen-Schrift auf hellem Papierton und ein **harter Schatten in der dunklen
+/// Variante der Füllfarbe** (`0 4px 0`). Beim Drücken „sinkt" der Button ins Papier
+/// (kein Bounce, kurzer ease-out). Ersetzt `.borderedProminent` für Haupt-Aktionen.
 struct PrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
+    var fill: Color = Theme.vermillion
+    var shadowColor: Color = Theme.vermillionDark
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
+        let pressed = configuration.isPressed
+        return configuration.label
             .font(.appHeadline)
-            .foregroundStyle(.white)
+            .foregroundStyle(Color(hex: "#FBF5EA"))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .background {
                 RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous)
-                    .fill(Theme.brandGradient)
+                    .fill(fill)
             }
             .opacity(isEnabled ? 1 : 0.4)
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .shadow(color: Theme.brandEnd.opacity(isEnabled ? 0.35 : 0),
-                    radius: 12, y: 6)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
-            .sensoryFeedbackOnPress(configuration.isPressed)
+            .offset(y: pressed ? 3 : 0)
+            .buttonHardShadow(isEnabled ? shadowColor : .clear, y: pressed ? 1 : 4)
+            .animation(.easeOut(duration: 0.12), value: pressed)
+            .sensoryFeedbackOnPress(pressed)
     }
 }
 
-/// Getönter, umrandeter Sekundär-Button (gleiche Form, dezenter).
+/// Getönter, umrandeter Sekundär-Button (gleiche Form, dezenter): Tönung der Tintfarbe
+/// als Fläche, 1px Rahmen, kein harter Schatten.
 struct SecondaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
-    var tint: Color = Theme.brandStart
+    var tint: Color = Theme.ink
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -37,16 +42,29 @@ struct SecondaryButtonStyle: ButtonStyle {
             .padding(.vertical, 14)
             .background {
                 RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous)
-                    .fill(tint.opacity(0.14))
+                    .fill(tint.opacity(0.10))
             }
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous)
+                    .strokeBorder(tint.opacity(0.20), lineWidth: 1)
+            )
             .opacity(isEnabled ? 1 : 0.4)
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
+            .offset(y: configuration.isPressed ? 2 : 0)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
 
 extension ButtonStyle where Self == PrimaryButtonStyle {
+    /// Zinnober-Primär-Button („Üben").
     static var primary: PrimaryButtonStyle { PrimaryButtonStyle() }
+    /// Primär-Button in beliebiger Füllfarbe (z.B. Blattgrün „Weiter", Tinte „Verstanden").
+    static func primary(fill: Color, shadow: Color) -> PrimaryButtonStyle {
+        PrimaryButtonStyle(fill: fill, shadowColor: shadow)
+    }
+    /// „Weiter"-Button (richtig): Blattgrün.
+    static var forward: PrimaryButtonStyle { PrimaryButtonStyle(fill: Theme.leaf, shadowColor: Theme.leafDark) }
+    /// „Verstanden"-Button (falsch): Tinte.
+    static var acknowledge: PrimaryButtonStyle { PrimaryButtonStyle(fill: Theme.ink, shadowColor: .black) }
 }
 
 extension ButtonStyle where Self == SecondaryButtonStyle {

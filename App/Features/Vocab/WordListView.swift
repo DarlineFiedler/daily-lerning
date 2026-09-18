@@ -72,7 +72,7 @@ struct WordListView: View {
             }
             .padding(Theme.Spacing.m)
         }
-        .background(Theme.background.ignoresSafeArea())
+        .paperBackground()
         .navigationTitle(L(titleKey))
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $query, prompt: L("search.placeholder"))

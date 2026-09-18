@@ -1,0 +1,18 @@
+# gitleaks-Konfiguration
+#
+# Behält alle Standard-Regeln bei (useDefault = true) und ergänzt nur eine
+# eng gefasste Allowlist für bekannte False Positives. Wir listen bewusst
+# KEINE ganzen Dateien auf, damit echte Secrets weiterhin gefunden werden –
+# nur die konkrete, harmlose Zeichenkette aus einem deutschen Doc-Kommentar.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Bekannte False Positives (deutsche Code-Kommentare)"
+# gitleaks' generic-api-key-Regel hält das hyphenierte Wort „4px-Farbbalken"
+# in einem Doc-Kommentar (GroupListView.swift) wegen seiner Entropie für
+# einen API-Key. Nur diese Zeichenkette wird ausgenommen.
+regexes = [
+  '''4px-Farbbalken''',
+]

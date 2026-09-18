@@ -12,21 +12,27 @@ struct XPLevelUpBanner: View {
         HStack(spacing: Theme.Spacing.m) {
             Image(systemName: "star.circle.fill")
                 .font(.system(size: 36))
+                .foregroundStyle(Theme.ocher)
                 .scaleEffect(appeared ? 1 : 0.4)
                 .rotationEffect(.degrees(appeared ? 0 : -20))
             VStack(alignment: .leading, spacing: 2) {
                 Text(L("xp.levelUp.title", level.level))
                     .font(.appHeadline)
+                    .foregroundStyle(Theme.ink)
                 Text(L(level.rankKey))
                     .font(.appTitle3)
+                    .foregroundStyle(Theme.vermillion)
             }
             Spacer(minLength: 0)
         }
-        .foregroundStyle(.white)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Theme.Spacing.m)
-        .background(Theme.brandGradientSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .shadow(color: Theme.brandStart.opacity(0.35), radius: 14, y: 8)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+                .strokeBorder(Theme.ocher.opacity(0.5), lineWidth: 1.5)
+        )
+        .hardShadow(x: 3, y: 4)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(L("xp.levelUp.a11y", level.level, L(level.rankKey)))
         .onAppear {

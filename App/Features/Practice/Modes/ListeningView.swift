@@ -33,19 +33,25 @@ struct ListeningView: View {
     /// Große Karte mit Lautsprecher – tippen spielt das Wort erneut ab.
     private var audioCard: some View {
         Button { speak() } label: {
-            VStack(spacing: Theme.Spacing.s) {
+            VStack(spacing: Theme.Spacing.m) {
                 Image(systemName: "speaker.wave.3.fill")
-                    .font(.system(size: 52))
+                    .font(.system(size: 40))
+                    .foregroundStyle(Theme.paper)
+                    .frame(width: 96, height: 96)
+                    .background(Circle().fill(Theme.leaf))
                 Text(L("practice.listen.replay"))
-                    .font(.appSubheadline.weight(.medium))
-                    .opacity(0.9)
+                    .font(.appMono(12))
+                    .foregroundStyle(Theme.inkSecondary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, Theme.Spacing.xl + 8)
             .padding(.horizontal, Theme.Spacing.m)
-            .background(Theme.brandGradientSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-            .foregroundStyle(.white)
-            .shadow(color: Theme.brandStart.opacity(0.3), radius: 16, y: 8)
+            .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+                    .strokeBorder(Theme.hairline, lineWidth: 1)
+            )
+            .hardShadow(x: 3, y: 4)
         }
         .buttonStyle(.plain)
         // Nach dem Beantworten das Wort einblenden – dann verrät es nichts mehr.
@@ -53,7 +59,7 @@ struct ListeningView: View {
             if answered {
                 Text(item.vocab.word)
                     .font(.appHeadline)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.ink)
                     .padding(.bottom, Theme.Spacing.m)
             }
         }

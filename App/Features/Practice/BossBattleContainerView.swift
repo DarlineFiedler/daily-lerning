@@ -20,6 +20,7 @@ struct BossBattleContainerView: View {
                                onRestart: { withAnimation { session.restart() } },
                                onClose: onClose)
             } else if let item = session.currentItem {
+                bossTopBar
                 BossBattleHeader(battle: session.battle,
                                  bossGroup: session.bossGroup,
                                  hitTrigger: session.correctCount)
@@ -31,17 +32,24 @@ struct BossBattleContainerView: View {
                 // Gegenschlag des Bosses: Screen-Shake bei jeder falschen Antwort.
                 .modifier(ShakeEffect(animatableData: CGFloat(session.wrongCount)))
                 .animation(.linear(duration: 0.4), value: session.wrongCount)
-                giveUpBar
             }
         }
-        .background(Theme.background.ignoresSafeArea())
+        // Endgegner ist ein dunkler Screen (#14120F) mit rotem Radial-Glow. Durch das
+        // Erzwingen des Dark-Modus lösen alle adaptiven Theme-Farben (Karten, Tinte,
+        // Rahmen) ihre Dark-Varianten auf – die Modus-Karten werden so zu dunklen Karten
+        // auf Nachtgrund, ohne dass jede Teilansicht eigene Farben braucht.
+        .background {
+            Theme.night.ignoresSafeArea()
+                .overlay(
+                    RadialGradient(colors: [Theme.vermillion.opacity(0.30), .clear],
+                                   center: UnitPoint(x: 0.5, y: 0.2), startRadius: 0, endRadius: 440)
+                        .ignoresSafeArea()
+                )
+        }
+        .environment(\.colorScheme, .dark)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(L("common.close"), action: onClose)
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .sensoryFeedback(.success, trigger: session.correctCount)
         .sensoryFeedback(.error, trigger: session.wrongCount)
         .overlay(alignment: .top) {
@@ -68,13 +76,29 @@ struct BossBattleContainerView: View {
         }
     }
 
-    private var giveUpBar: some View {
-        Button(role: .destructive) { showGiveUpConfirm = true } label: {
-            Label(L("practice.boss.giveUp"), systemImage: "flag.fill")
-                .font(.appSubheadline.weight(.medium))
+    /// Boss-Name (einzige Gruppe oder generisch) für die Kopf-Metazeile.
+    private var bossName: String {
+        session.bossGroup?.name ?? L("practice.boss.generic")
+    }
+
+    /// Obere Zeile: links „Aufgeben" (Mono-Link), rechts „KAMPF · <Beet>" (Mono-Meta).
+    private var bossTopBar: some View {
+        HStack {
+            Button { showGiveUpConfirm = true } label: {
+                Text(L("practice.boss.giveUp"))
+                    .font(.appCaption)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Theme.inkSecondary)
+            }
+            .buttonStyle(.plain)
+            Spacer()
+            Text(L("practice.boss.battleLabel", bossName))
+                .font(.appCaption)
+                .textCase(.uppercase)
+                .foregroundStyle(Theme.inkSecondary)
         }
-        .tint(Theme.wrong)
-        .padding(.vertical, Theme.Spacing.s)
+        .padding(.horizontal, Theme.Spacing.m)
+        .padding(.top, Theme.Spacing.s)
         .confirmationDialog(L("practice.boss.giveUp.confirm"), isPresented: $showGiveUpConfirm, titleVisibility: .visible) {
             Button(L("practice.boss.giveUp"), role: .destructive) { withAnimation { session.giveUp() } }
             Button(L("common.cancel"), role: .cancel) {}
@@ -144,43 +168,38 @@ struct BossBattleHeader: View {
     /// Ab dieser Lebenszahl wird kompakt „❤️ ×N" statt einzelner Herzen gezeigt.
     private static let heartsThreshold = 6
 
-    private var tint: Color {
-        bossGroup.map { Color(hex: $0.colorHex) } ?? Theme.brandStart
-    }
-
     private var bossName: String {
         bossGroup?.name ?? L("practice.boss.generic")
     }
 
     var body: some View {
         VStack(spacing: Theme.Spacing.s) {
-            HStack(spacing: Theme.Spacing.s) {
-                Text("🐲")
-                    .font(.system(size: 34))
-                    .phaseAnimator([1.0, 0.82, 1.0], trigger: hitTrigger) { view, scale in
-                        view.scaleEffect(scale)
-                    }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(bossName)
-                        .font(.appHeadline)
-                        .lineLimit(1)
-                    Text(L("practice.boss.hp", battle.currentHP, battle.maxHP))
-                        .font(.appCaption)
-                        .foregroundStyle(.secondary)
+            Text(bossName)
+                .font(.appTitle2)
+                .lineLimit(1)
+            Text("👹")
+                .font(.system(size: 60))
+                .phaseAnimator([1.0, 0.82, 1.0], trigger: hitTrigger) { view, scale in
+                    view.scaleEffect(scale)
                 }
-                Spacer()
-                lives
-            }
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Theme.surfaceMuted)
-                    Capsule().fill(tint)
+                    Capsule().fill(Theme.hairlineStrong)
+                    Capsule().fill(LinearGradient(colors: [Theme.vermillion, Theme.ocher],
+                                                  startPoint: .leading, endPoint: .trailing))
                         .frame(width: geo.size.width * battle.hpFraction)
                         .animation(.easeOut(duration: 0.3), value: battle.currentHP)
                 }
             }
-            .frame(height: 10)
+            .frame(height: 14)
+            .overlay(Capsule().strokeBorder(Theme.hairlineStrong, lineWidth: 1))
+
+            Text(L("practice.boss.hp", battle.currentHP, battle.maxHP))
+                .font(.appCaption)
+                .foregroundStyle(Theme.inkSecondary)
+
+            lives
         }
         .padding(.horizontal, Theme.Spacing.m)
         .padding(.top, Theme.Spacing.s)
@@ -190,21 +209,26 @@ struct BossBattleHeader: View {
                                battle.currentHP, battle.maxHP, battle.livesRemaining))
     }
 
-    /// Verbleibende Leben – einzelne Herzen bei kleinen Runden, sonst kompakt.
+    /// Verbleibende Leben – zentrierte Herz-Emoji-Reihe (verbrauchte gedämpft) plus
+    /// Anzahl-Label; bei langen Runden kompakt „❤️ ×N".
     @ViewBuilder
     private var lives: some View {
-        if battle.maxLives > Self.heartsThreshold {
-            Label("\(battle.livesRemaining)", systemImage: "heart.fill")
-                .font(.appCaption.weight(.semibold))
-                .foregroundStyle(Theme.wrong)
-        } else {
-            HStack(spacing: 2) {
-                ForEach(0 ..< battle.maxLives, id: \.self) { i in
-                    Image(systemName: i < battle.livesRemaining ? "heart.fill" : "heart")
-                        .font(.appCaption)
-                        .foregroundStyle(Theme.wrong)
+        VStack(spacing: 2) {
+            if battle.maxLives > Self.heartsThreshold {
+                Text("❤️ ×\(battle.livesRemaining)")
+                    .font(.system(size: 16))
+            } else {
+                HStack(spacing: 3) {
+                    ForEach(0 ..< battle.maxLives, id: \.self) { i in
+                        Text("❤️")
+                            .font(.system(size: 16))
+                            .opacity(i < battle.livesRemaining ? 1 : 0.25)
+                    }
                 }
             }
+            Text(L("practice.boss.lives", battle.livesRemaining))
+                .font(.appCaption)
+                .foregroundStyle(Theme.inkSecondary)
         }
     }
 }

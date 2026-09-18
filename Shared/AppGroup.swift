@@ -3,7 +3,11 @@ import Foundation
 /// Zentrale Konstanten für den Datenaustausch zwischen App und Widget-Extension.
 enum AppGroup {
     /// Muss identisch mit den Einträgen in den .entitlements beider Targets sein.
-    static let identifier = "group.com.darlinefiedler.dailyhangul"
+    ///
+    /// v3 „Hangul Garten" nutzt eine EIGENE App-Group, damit die neue App neben der
+    /// alten DailyHangul-App installiert werden kann, ohne deren geteilte Daten
+    /// (Widget-Snapshot, UserDefaults) zu überschreiben.
+    static let identifier = "group.com.darlinefiedler.hangulgarten"
 
     /// Gemeinsamer UserDefaults-Container (Widget-Einstellungen).
     ///
@@ -28,7 +32,9 @@ enum AppGroup {
     }
 
     /// Custom URL-Scheme für Deep-Links aus dem Widget.
-    static let urlScheme = "dailyhangul"
+    /// Eigener Scheme für v3, damit Links eindeutig „Hangul Garten" öffnen und nicht
+    /// die parallel installierte alte App.
+    static let urlScheme = "hangulgarten"
 }
 
 /// `kind`-Identifikatoren der Home-Screen-Widgets. Geteilt zwischen Widget-Target

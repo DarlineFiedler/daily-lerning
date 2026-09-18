@@ -28,7 +28,7 @@ struct AchievementUnlockBanner: View {
             Text(L("ach.new.title"))
                 .font(.appCaption.weight(.bold))
                 .textCase(.uppercase)
-                .opacity(0.9)
+                .foregroundStyle(Theme.leaf)
             ForEach(achievements) { achievement in
                 HStack(spacing: Theme.Spacing.s) {
                     Text(achievement.emoji)
@@ -36,20 +36,24 @@ struct AchievementUnlockBanner: View {
                     VStack(alignment: .leading, spacing: 1) {
                         Text(L(achievement.titleKey))
                             .font(.appHeadline)
+                            .foregroundStyle(Theme.ink)
                         Text(L(achievement.detailKey))
                             .font(.appCaption)
-                            .opacity(0.9)
+                            .foregroundStyle(Theme.inkSecondary)
                             .lineLimit(1)
                     }
                     Spacer(minLength: 0)
                 }
             }
         }
-        .foregroundStyle(.white)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Theme.Spacing.m)
-        .background(Theme.brandGradientSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .shadow(color: Theme.brandStart.opacity(0.35), radius: 14, y: 8)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+                .strokeBorder(Theme.leaf.opacity(0.5), lineWidth: 1.5)
+        )
+        .hardShadow(x: 3, y: 4)
         .padding(.horizontal, Theme.Spacing.m)
         .padding(.top, Theme.Spacing.s)
         .accessibilityElement(children: .combine)

@@ -9,6 +9,8 @@ struct SearchView: View {
     @State private var query = ""
     @State private var activeSheet: ActiveSheet?
     @State private var pendingDelete: Vocab?
+    /// Fokus des Suchfelds – zum Schließen der Tastatur (mehr Platz für die Treffer).
+    @FocusState private var searchFocused: Bool
 
     /// Ein einziges, umschaltbares Sheet für Ansehen ↔ Bearbeiten. Bewusst EIN
     /// `.sheet(item:)` (ein Presentation-Controller): der Wechsel vom Ansehen zum
@@ -29,40 +31,50 @@ struct SearchView: View {
     /// Bewusst pro Öffnen zurückgesetzt (nicht persistiert).
     @State private var selectedGroups: Set<UUID> = []
     @State private var selectedStatuses: Set<LearningStatus> = []
+    /// Nur Wörter im Sperrbildschirm-Pool (`includeInWidget`) anzeigen.
+    @State private var widgetOnly = false
 
     private var results: [Vocab] {
-        Self.filter(vocabs, query: query, groups: selectedGroups, statuses: selectedStatuses)
+        Self.filter(vocabs, query: query, groups: selectedGroups,
+                    statuses: selectedStatuses, widgetOnly: widgetOnly)
     }
 
-    /// Ist überhaupt eine Eingrenzung aktiv (Text ODER Gruppe ODER Status)?
+    /// Ist überhaupt eine Eingrenzung aktiv (Text ODER Gruppe ODER Status ODER Widget)?
     private var hasCriteria: Bool {
         !query.trimmingCharacters(in: .whitespaces).isEmpty
-            || !selectedGroups.isEmpty || !selectedStatuses.isEmpty
+            || !selectedGroups.isEmpty || !selectedStatuses.isEmpty || widgetOnly
     }
 
     /// Kombinierte Filterung: Textmatch UND Gruppenfilter UND Statusfilter, jeweils
     /// leere Menge = keine Einschränkung. Ohne jegliche Kriterien leer (Startzustand).
     /// Pure & `static`, damit die Logik testbar ist.
     static func filter(_ vocabs: [Vocab], query: String,
-                       groups: Set<UUID>, statuses: Set<LearningStatus>) -> [Vocab] {
+                       groups: Set<UUID>, statuses: Set<LearningStatus>,
+                       widgetOnly: Bool = false) -> [Vocab] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty || !groups.isEmpty || !statuses.isEmpty else { return [] }
+        guard !trimmed.isEmpty || !groups.isEmpty || !statuses.isEmpty || widgetOnly else { return [] }
         return vocabs.filter { vocab in
             (trimmed.isEmpty || vocab.word.matches(trimmed) || vocab.meaning.matches(trimmed))
                 && (groups.isEmpty || (vocab.group.map { groups.contains($0.id) } ?? false))
                 && (statuses.isEmpty || statuses.contains(vocab.status))
+                && (!widgetOnly || vocab.includeInWidget)
         }
     }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: Theme.Spacing.s) {
-                if !vocabs.isEmpty { filterBar }
-                content
-            }
-            .background(Theme.background.ignoresSafeArea())
+        // Kein eigener NavigationStack: aus IchView in dessen Stack gepusht (sonst
+        // verschachtelte Stacks → Push-Freeze).
+        VStack(spacing: Theme.Spacing.s) {
+            searchField
+            if !vocabs.isEmpty { filterBar }
+            content
+        }
+            .paperBackground()
             .navigationTitle(L("search.title"))
-            .searchable(text: $query, prompt: L("search.placeholder"))
+            // Kein Tastatur-Toolbar-„Fertig": auf iOS 26 rendert der als frei
+            // schwebende Glas-Kapsel über der Tastatur (unschön). Die Tastatur schließt
+            // ohnehin über die Return-/Suchtaste (siehe `.onSubmit` am Suchfeld) und über
+            // das Scrollen der Trefferliste (`.scrollDismissesKeyboard`).
             .onChange(of: query) { _, newValue in
                 // Erste echte Sucheingabe schaltet das „Spürnase"-Badge frei.
                 if !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -96,7 +108,51 @@ struct SearchView: View {
                 }
                 Button(L("common.cancel"), role: .cancel) { pendingDelete = nil }
             }
+    }
+
+    // MARK: - Suchfeld (Papier, Screen 2h)
+
+    /// Immer sichtbares Papier-Suchfeld mit Lupe, Eingabe, Löschen-Knopf und
+    /// Treffer-Zähler – ersetzt die System-`.searchable`-Leiste, die im Papier-Look
+    /// nicht erscheint/passt.
+    private var searchField: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .font(.appBody)
+                .foregroundStyle(Theme.inkMuted)
+            TextField(L("search.placeholder"), text: $query)
+                .font(.appDisplay(17, weight: .regular))
+                .foregroundStyle(Theme.ink)
+                .tint(Theme.vermillion)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+                .submitLabel(.search)
+                .focused($searchFocused)
+                .onSubmit { searchFocused = false }
+            if !query.isEmpty {
+                Button { query = "" } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(Theme.inkMuted)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L("common.cancel"))
+            }
+            if hasCriteria {
+                Text(L("search.hits", results.count))
+                    .font(.appMono(11))
+                    .foregroundStyle(Theme.inkMuted)
+                    .fixedSize()
+            }
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous)
+                .strokeBorder(Theme.hairlineStrong, lineWidth: 1)
+        )
+        .padding(.horizontal, Theme.Spacing.m)
+        .padding(.top, Theme.Spacing.s)
     }
 
     // MARK: - Filter-Chips
@@ -113,8 +169,9 @@ struct SearchView: View {
                 ForEach(LearningStatus.allCases) { status in
                     SelectableChip(
                         title: L(status.titleKey),
-                        systemImage: status.systemImage,
+                        leading: status.gardenStageEmoji,
                         tint: status.color,
+                        monospaced: true,
                         isSelected: selectedStatuses.contains(status)
                     ) { toggle(&selectedStatuses, status) }
                 }
@@ -124,12 +181,21 @@ struct SearchView: View {
                     ForEach(groups) { group in
                         SelectableChip(
                             title: group.name,
-                            systemImage: "rectangle.stack.fill",
+                            dotColor: Color(hex: group.colorHex),
                             tint: Color(hex: group.colorHex),
+                            monospaced: true,
                             isSelected: selectedGroups.contains(group.id)
                         ) { toggle(&selectedGroups, group.id) }
                     }
                 }
+            }
+            chipRow(title: L("search.filter.widget"), selectedCount: widgetOnly ? 1 : 0) {
+                SelectableChip(
+                    title: L("search.filter.widget"),
+                    systemImage: "lock.iphone",
+                    tint: Theme.leaf,
+                    isSelected: widgetOnly
+                ) { widgetOnly.toggle() }
             }
         }
         .padding(.top, Theme.Spacing.s)
@@ -145,9 +211,7 @@ struct SearchView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Text(title)
-                    .font(.appCaption.weight(.semibold))
-                    .textCase(.uppercase)
+                SectionLabel(title)
                 if selectedCount > 0 {
                     Text("\(selectedCount)")
                         .font(.appCaption.weight(.bold))
@@ -157,7 +221,6 @@ struct SearchView: View {
                         .background(Capsule().fill(Theme.brandStart))
                 }
             }
-            .foregroundStyle(.secondary)
             .accessibilityElement(children: .combine)
             .accessibilityLabel(
                 selectedCount > 0
@@ -206,6 +269,12 @@ struct SearchView: View {
                 }
             }
             .scrollContentBackground(.hidden)
+            .scrollDismissesKeyboard(.immediately)
+            .safeAreaInset(edge: .bottom) {
+                HandNote(L("search.swipeHint"), size: 17, color: Theme.inkSecondary, angle: -1)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Theme.Spacing.s)
+            }
         }
     }
 
@@ -229,6 +298,6 @@ private extension String {
 }
 
 #Preview {
-    SearchView()
+    NavigationStack { SearchView() }
         .modelContainer(PersistenceController.preview)
 }

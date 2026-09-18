@@ -53,9 +53,16 @@ struct ReviewSessionView: View {
                     configStep
                 }
             }
-            .background(Theme.background.ignoresSafeArea())
+            .paperBackground()
         }
-        .onAppear(perform: loadSelection)
+        .onAppear {
+            loadSelection()
+            #if DEBUG
+            if CommandLine.arguments.contains("-uiTestAutoStart"), sessionStore.active == nil {
+                start()
+            }
+            #endif
+        }
     }
 
     // MARK: - Auswahl-Schritt
@@ -88,11 +95,13 @@ struct ReviewSessionView: View {
             .buttonStyle(.primary)
 
             Text(L("group.wordCount", effectiveCount))
-                .font(.appCaption)
-                .foregroundStyle(.secondary)
+                .font(.appMono(12))
+                .foregroundStyle(Theme.inkSecondary)
         }
         .padding(Theme.Spacing.m)
-        .background(.ultraThinMaterial)
+        .background(
+            Theme.paper.overlay(Rectangle().fill(Theme.hairline).frame(height: 1), alignment: .top)
+        )
     }
 
     /// Lädt die gemerkte Auswahl. Nicht (mehr) verfügbare Modi – z.B. Hören ohne

@@ -6,28 +6,20 @@ import Translation
 /// Sprachausgabe über den vorhandenen [[SpeakButton]]. Richtung Koreanisch ↔ App-Sprache,
 /// automatisch erkannt via [[TranslationDirection]] mit Tausch-Möglichkeit.
 struct TranslatorView: View {
-    @Environment(\.dismiss) private var dismiss
-
     var body: some View {
-        NavigationStack {
-            Group {
-                if #available(iOS 18.0, *) {
-                    TranslatorContentView()
-                } else {
-                    ContentUnavailableView(L("translator.unavailable"),
-                                           systemImage: "character.bubble",
-                                           description: Text(L("translator.unavailable.detail")))
-                }
-            }
-            .background(Theme.background.ignoresSafeArea())
-            .navigationTitle(L("translator.title"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(L("common.done")) { dismiss() }
-                }
+        // Kein eigener NavigationStack: aus IchView in dessen Stack gepusht.
+        Group {
+            if #available(iOS 18.0, *) {
+                TranslatorContentView()
+            } else {
+                ContentUnavailableView(L("translator.unavailable"),
+                                       systemImage: "character.bubble",
+                                       description: Text(L("translator.unavailable.detail")))
             }
         }
+        .paperBackground()
+        .navigationTitle(L("translator.title"))
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -47,6 +39,10 @@ private struct TranslatorContentView: View {
 
     /// Löst die Übersetzung aus; wird bei jeder (Neu-)Anforderung gesetzt bzw. invalidiert.
     @State private var configuration: TranslationSession.Configuration?
+
+    /// Fokus des Eingabefelds – zum gezielten Schließen der Tastatur (beim Übersetzen
+    /// bzw. über den „Fertig"-Knopf auf der Tastatur), damit das Ergebnis sichtbar wird.
+    @FocusState private var inputFocused: Bool
 
     /// Nicht-korenische Gegenseite, abgeleitet aus der UI-/System-Sprache. Ändert sich
     /// während der Lebensdauer des Sheets nicht – daher einmalig bei Init berechnet.
@@ -82,6 +78,12 @@ private struct TranslatorContentView: View {
             .padding(Theme.Spacing.m)
         }
         .scrollDismissesKeyboard(.interactively)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button(L("common.done")) { inputFocused = false }
+            }
+        }
         .translationTask(configuration) { session in
             await runTranslation(with: session)
         }
@@ -99,43 +101,52 @@ private struct TranslatorContentView: View {
 
     private var languageBar: some View {
         HStack(spacing: Theme.Spacing.s) {
-            Text(TranslationDirection.label(for: pair.source))
-                .frame(maxWidth: .infinity)
+            languagePill(TranslationDirection.label(for: pair.source))
             Button {
                 swap()
             } label: {
                 Image(systemName: "arrow.left.arrow.right")
-                    .font(.appHeadline)
+                    .font(.appSubheadline)
+                    .foregroundStyle(hasFreshTranslation ? Theme.vermillion : Theme.inkMuted)
+                    .frame(width: 34, height: 34)
+                    .overlay(Circle().strokeBorder(Theme.hairlineStrong, lineWidth: 1))
             }
             .buttonStyle(.plain)
-            .foregroundStyle(hasFreshTranslation ? Theme.brandStart : Color.secondary)
             .disabled(!hasFreshTranslation)
             .accessibilityLabel(L("translator.swap.a11y"))
-            Text(TranslationDirection.label(for: pair.target))
-                .frame(maxWidth: .infinity)
+            languagePill(TranslationDirection.label(for: pair.target))
         }
-        .font(.appHeadline)
-        .foregroundStyle(.primary)
-        .cardStyle()
+    }
+
+    private func languagePill(_ text: String) -> some View {
+        Text(text)
+            .font(.appMono(12))
+            .foregroundStyle(Theme.ink)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 9)
+            .overlay(Capsule().strokeBorder(Theme.hairlineStrong, lineWidth: 1))
     }
 
     // MARK: - Eingabe
 
     private var inputCard: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+            SectionLabel(L("translator.inputLabel"))
             ZStack(alignment: .topLeading) {
                 if sourceText.isEmpty {
                     Text(L("translator.input.placeholder"))
-                        .font(.appBody)
-                        .foregroundStyle(.tertiary)
+                        .font(.appDisplay(22, weight: .regular))
+                        .foregroundStyle(Theme.inkMuted)
                         .padding(.top, 8)
                         .padding(.leading, 5)
                         .allowsHitTesting(false)
                 }
                 TextEditor(text: $sourceText)
-                    .font(.appBody)
+                    .font(.appDisplay(22, weight: .regular))
+                    .tint(Theme.vermillion)
                     .frame(minHeight: 110)
                     .scrollContentBackground(.hidden)
+                    .focused($inputFocused)
             }
             HStack {
                 SpeakButton(text: sourceText, language: pair.sourceTTS)
@@ -218,10 +229,13 @@ private struct TranslatorContentView: View {
     private func translate() {
         guard !trimmedInput.isEmpty else { return }
         errorText = nil
-        // Bei Hangul explizit Koreanisch als Quelle; sonst Quelle automatisch erkennen
-        // lassen (nil), damit auch andere Eingabesprachen korrekt nach Ko übersetzt werden.
+        inputFocused = false // Tastatur schließen, damit das Ergebnis sichtbar wird
+        // Richtung ist stets Koreanisch ↔ App-Sprache: bei Hangul Quelle = Koreanisch,
+        // sonst Quelle = App-Sprache. Beide Seiten EXPLIZIT setzen (kein nil/Auto-Erkennen),
+        // sonst scheitert Apples Spracherkennung an kurzen Wörtern ("Hallo!") und zeigt den
+        // „Sprache konnte nicht erkannt werden"-Dialog – obwohl die Richtung feststeht.
         let koreanIsSource = TranslationDirection.containsHangul(trimmedInput)
-        let source: Locale.Language? = koreanIsSource ? Locale.Language(identifier: "ko") : nil
+        let source = Locale.Language(identifier: koreanIsSource ? "ko" : appLang)
         let target = Locale.Language(identifier: koreanIsSource ? appLang : "ko")
         // Gleiches Sprachpaar wie zuletzt? Dann nur neu anstoßen statt neu konfigurieren.
         if var config = configuration, config.source == source, config.target == target {

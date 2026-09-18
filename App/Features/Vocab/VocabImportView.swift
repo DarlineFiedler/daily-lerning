@@ -98,7 +98,7 @@ struct VocabImportView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(Theme.background.ignoresSafeArea())
+            .paperBackground()
             .navigationTitle(L("settings.data.import"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

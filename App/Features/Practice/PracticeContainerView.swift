@@ -13,6 +13,15 @@ struct PracticeContainerView: View {
     /// (nur der „Heute"-Fluss).
     var resumable = false
 
+    /// Sperrt die Eingaben kurz, bis eine neu eingeblendete Karte fertig da ist –
+    /// verhindert, dass ein Tipp (etwa noch für „Weiter" gedacht) versehentlich schon
+    /// die Antwort der nächsten Karte auslöst und ein Wort überspringt.
+    @State private var inputArmed = false
+
+    /// Wie lange nach dem Kartenwechsel Eingaben ignoriert werden. Deckt den
+    /// Standard-Übergang (~0,35 s) ab, bleibt aber für den Lernfluss unauffällig.
+    private static let armDelay: Duration = .milliseconds(400)
+
     var body: some View {
         VStack(spacing: 0) {
             if session.total == 0 {
@@ -26,22 +35,26 @@ struct PracticeContainerView: View {
                     onClose: handleClose
                 )
             } else if let item = session.currentItem {
-                PracticeProgressHeader(session: session)
+                PracticeProgressHeader(session: session, onClose: handleClose)
                 ScrollView {
                     modeView(for: item)
                         .padding(Theme.Spacing.m)
                         .id(session.index) // erzwingt frische State pro Wort
+                        // Frisch eingeblendete Karte erst nach einem kurzen Moment
+                        // annehmen; blockiert nur die Karte selbst, das Scrollen bleibt.
+                        .allowsHitTesting(inputArmed)
+                        .task(id: session.index) {
+                            inputArmed = false
+                            try? await Task.sleep(for: Self.armDelay)
+                            inputArmed = true
+                        }
                 }
             }
         }
-        .background(Theme.background.ignoresSafeArea())
+        .paperBackground()
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(L("common.close"), action: handleClose)
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         // Haptik für die wichtigsten Lern-Momente (richtig/falsch).
         .sensoryFeedback(.success, trigger: session.correctCount)
         .sensoryFeedback(.error, trigger: session.wrongCount)
@@ -96,7 +109,7 @@ struct PracticeContainerView: View {
                 .foregroundStyle(Theme.brandStart)
             Text(L(session.isClozeOnly ? "practice.cloze.empty" : "practice.noWords"))
                 .font(.appBody)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.inkSecondary)
                 .multilineTextAlignment(.center)
             Button(L("common.done"), action: onClose)
                 .buttonStyle(.primary)
@@ -126,9 +139,11 @@ struct PracticeContainerView: View {
     }
 }
 
-/// Fortschrittsleiste eines Lernvorgangs (Position, Treffer/Fehler, Balken).
+/// Fortschrittsleiste eines Lernvorgangs: inline-Schließen (✕), Balken, Zähler und
+/// darunter ein Mono-Label des aktuellen Modus (Papier-Design-Handoff 2d–2g).
 struct PracticeProgressHeader: View {
     let session: PracticeSession
+    var onClose: () -> Void
 
     private var progress: Double {
         Double(session.index) / Double(max(session.total, 1))
@@ -136,25 +151,30 @@ struct PracticeProgressHeader: View {
 
     var body: some View {
         VStack(spacing: Theme.Spacing.s) {
-            HStack {
-                Text("\(session.position) / \(session.total)")
-                    .font(.appSubheadline.weight(.semibold))
-                Spacer()
-                Label("\(session.correctCount)", systemImage: "checkmark")
-                    .foregroundStyle(LearningStatus.learned.color)
-                Label("\(session.wrongCount)", systemImage: "xmark")
-                    .foregroundStyle(Theme.wrong)
-            }
-            .font(.appCaption.weight(.medium))
-
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Theme.surfaceMuted)
-                    Capsule().fill(Theme.brandGradient)
-                        .frame(width: geo.size.width * progress)
+            HStack(spacing: Theme.Spacing.m) {
+                Button(action: onClose) {
+                    Text("✕")
+                        .font(.appTitle3)
+                        .foregroundStyle(Theme.ink.opacity(0.5))
                 }
+                .buttonStyle(.plain)
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Theme.ink.opacity(0.10))
+                        Capsule().fill(Theme.leaf)
+                            .frame(width: geo.size.width * progress)
+                    }
+                }
+                .frame(height: 8)
+                Text("\(session.position)/\(session.total)")
+                    .font(.appMono(12))
+                    .foregroundStyle(Theme.inkSecondary)
+                    .fixedSize()
             }
-            .frame(height: 8)
+            if let mode = session.currentItem?.mode {
+                SectionLabel(L(mode.titleKey))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .padding(.horizontal, Theme.Spacing.m)
         .padding(.top, Theme.Spacing.s)
@@ -176,13 +196,13 @@ struct PracticeSummaryView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.Spacing.l) {
-                Image(systemName: "party.popper.fill")
-                    .font(.system(size: 64))
-                    .foregroundStyle(Theme.brandGradient)
+                Text("🌷🌸🌼")
+                    .font(.system(size: 56))
                     .scaleEffect(appeared ? 1 : 0.4)
                     .rotationEffect(.degrees(appeared ? 0 : -20))
                 Text(L("practice.finished"))
                     .font(.appLargeTitle)
+                    .foregroundStyle(Theme.ink)
 
                 if let newLevel = session.newLevel {
                     XPLevelUpBanner(level: newLevel)
@@ -309,32 +329,41 @@ struct PracticeSummaryView: View {
 struct PromptCard: View {
     let text: String
     var subtitle: String?
+    /// Optionales Mono-Mikro-Label über dem Wort (z.B. „BEDEUTUNG WÄHLEN"), Handoff 2b/2c.
+    var topLabel: String?
     /// Wenn gesetzt, erscheint ein Vorlese-Button (koreanisches Wort). Nur übergeben,
     /// wenn der Prompt selbst das Wort ist – sonst würde er die Antwort verraten.
     var spokenText: String?
 
     var body: some View {
         VStack(spacing: Theme.Spacing.s) {
+            if let topLabel {
+                SectionLabel(topLabel)
+            }
             HStack(spacing: Theme.Spacing.s) {
                 Text(text)
-                    .font(.appDisplay(44))
+                    .font(.appDisplay(52))
+                    .foregroundStyle(Theme.ink)
                     .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.5)
                 if let spokenText {
-                    SpeakButton(text: spokenText, font: .appTitle2, tint: .white)
+                    SpeakButton(text: spokenText, font: .appTitle2, tint: Theme.vermillion)
                 }
             }
             if let subtitle {
                 Text(subtitle)
-                    .font(.appHeadline)
-                    .opacity(0.9)
+                    .font(.appMono(14))
+                    .foregroundStyle(Theme.inkSecondary)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, Theme.Spacing.xl + 8)
+        .padding(.vertical, Theme.Spacing.xl + 12)
         .padding(.horizontal, Theme.Spacing.m)
-        .background(Theme.brandGradientSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .foregroundStyle(.white)
-        .shadow(color: Theme.brandStart.opacity(0.3), radius: 16, y: 8)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+                .strokeBorder(Theme.hairline, lineWidth: 1)
+        )
+        .hardShadow(x: 3, y: 4)
     }
 }

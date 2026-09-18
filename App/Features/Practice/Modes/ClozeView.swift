@@ -27,13 +27,13 @@ struct ClozeView: View {
             clozeCard
 
             TextField(L("practice.cloze.typeWord"), text: $typed)
-                .font(.appTitle3)
-                .padding(Theme.Spacing.m)
-                .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous)
-                        .strokeBorder(Theme.brandStart.opacity(0.3), lineWidth: 1.5)
-                )
+                .font(.appDisplay(30, weight: .regular))
+                .multilineTextAlignment(.center)
+                .tint(Theme.vermillion)
+                .padding(.vertical, Theme.Spacing.s)
+                .overlay(alignment: .bottom) {
+                    Rectangle().fill(Theme.vermillion).frame(height: 2)
+                }
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
                 .focused($focused)
@@ -64,19 +64,23 @@ struct ClozeView: View {
     private var clozeCard: some View {
         VStack(spacing: Theme.Spacing.s) {
             Text(sentence)
-                .font(.appTitle2)
+                .font(.appDisplay(28, weight: .regular))
+                .foregroundStyle(Theme.ink)
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.5)
             Text(L("practice.cloze.meaningHint", item.vocab.meaning))
-                .font(.appHeadline)
-                .opacity(0.9)
+                .font(.appHand(19))
+                .foregroundStyle(Theme.inkSecondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, Theme.Spacing.xl + 8)
         .padding(.horizontal, Theme.Spacing.m)
-        .background(Theme.brandGradientSoft, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .foregroundStyle(.white)
-        .shadow(color: Theme.brandStart.opacity(0.3), radius: 16, y: 8)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+                .strokeBorder(Theme.hairline, lineWidth: 1)
+        )
+        .hardShadow(x: 3, y: 4)
     }
 
     private var resultBanner: some View {

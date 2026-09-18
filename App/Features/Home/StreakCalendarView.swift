@@ -50,9 +50,7 @@ struct StreakCalendarView: View {
             }
             .accessibilityLabel(L("streak.calendar.prev"))
             Spacer()
-            Text(monthTitle)
-                .font(.appHeadline)
-                .foregroundStyle(.primary)
+            SectionLabel(monthTitle)
             Spacer()
             Button { shiftMonth(1) } label: {
                 Image(systemName: "chevron.right").font(.appHeadline)
@@ -84,10 +82,11 @@ struct StreakCalendarView: View {
             .background(background(status))
             .overlay {
                 if status == .today {
-                    Circle().strokeBorder(Theme.brandStart, lineWidth: 1.5)
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .strokeBorder(Theme.brandStart, lineWidth: 1.5)
                 }
             }
-            .clipShape(Circle())
+            .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
             .accessibilityLabel(accessibilityLabel(for: day, status: status))
     }
 

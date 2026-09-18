@@ -186,7 +186,7 @@ struct VocabEditView: View {
             .onChange(of: word) { refreshDuplicateMatch() }
             .onChange(of: selectedGroup) { refreshDuplicateMatch() }
             .scrollContentBackground(.hidden)
-            .background(Theme.background.ignoresSafeArea())
+            .paperBackground()
             .navigationTitle(vocab == nil ? L("vocab.new") : L("vocab.edit"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
