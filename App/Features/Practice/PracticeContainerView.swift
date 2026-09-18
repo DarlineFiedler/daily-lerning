@@ -13,6 +13,15 @@ struct PracticeContainerView: View {
     /// (nur der „Heute"-Fluss).
     var resumable = false
 
+    /// Sperrt die Eingaben kurz, bis eine neu eingeblendete Karte fertig da ist –
+    /// verhindert, dass ein Tipp (etwa noch für „Weiter" gedacht) versehentlich schon
+    /// die Antwort der nächsten Karte auslöst und ein Wort überspringt.
+    @State private var inputArmed = false
+
+    /// Wie lange nach dem Kartenwechsel Eingaben ignoriert werden. Deckt den
+    /// Standard-Übergang (~0,35 s) ab, bleibt aber für den Lernfluss unauffällig.
+    private static let armDelay: Duration = .milliseconds(400)
+
     var body: some View {
         VStack(spacing: 0) {
             if session.total == 0 {
@@ -31,6 +40,14 @@ struct PracticeContainerView: View {
                     modeView(for: item)
                         .padding(Theme.Spacing.m)
                         .id(session.index) // erzwingt frische State pro Wort
+                        // Frisch eingeblendete Karte erst nach einem kurzen Moment
+                        // annehmen; blockiert nur die Karte selbst, das Scrollen bleibt.
+                        .allowsHitTesting(inputArmed)
+                        .task(id: session.index) {
+                            inputArmed = false
+                            try? await Task.sleep(for: Self.armDelay)
+                            inputArmed = true
+                        }
                 }
             }
         }
