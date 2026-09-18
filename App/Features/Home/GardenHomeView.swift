@@ -67,7 +67,11 @@ struct GardenHomeView: View {
     // MARK: - Kopf (Datum + Titel + Streak-Notiz + Ziel-Ring)
 
     private var header: some View {
-        let streak = StreakStore.displayStreak()
+        // Ist ein Tagesziel gesetzt, zeigen Ring und Notiz denselben Ziel-Streak wie die
+        // Ziel-Statistik („Tage in Folge"); ohne Ziel fällt beides auf den Aktivitäts-
+        // Streak (jeder Übungstag) zurück – sonst widersprechen sich Home und Statistik.
+        let hasGoal = dailyGoal > 0
+        let streak = hasGoal ? GoalStats.current().goalStreak() : StreakStore.displayStreak()
         return HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(dateText)
@@ -77,17 +81,26 @@ struct GardenHomeView: View {
                     .font(.appDisplay(30))
                     .foregroundStyle(Theme.ink)
                 if streak > 0 {
-                    HandNote(L("garden.streak.note", streak), size: 17)
-                        .padding(.top, 2)
+                    // Antippen führt zur selben Übersicht wie der Ring daneben.
+                    Button { openStreakOverview(hasGoal: hasGoal) } label: {
+                        HandNote(streak == 1 ? L("garden.streak.note.one") : L("garden.streak.note", streak), size: 17)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 2)
+                    .accessibilityHint(hasGoal ? L("home.goal.stats.hint") : L("home.streak.detail.hint"))
                 }
             }
             Spacer()
             // Ist ein Tagesziel gesetzt, zeigt der Kreis den heutigen Ziel-Fortschritt;
             // sonst fällt er auf den Streak-Kreis zurück.
-            if dailyGoal > 0 { goalRing(streak: streak) } else { streakCircle(streak) }
+            if hasGoal { goalRing(streak: streak) } else { streakCircle(streak) }
         }
         .padding(.horizontal, 6)
         .padding(.top, 4)
+    }
+
+    private func openStreakOverview(hasGoal: Bool) {
+        if hasGoal { showGoalStats = true } else { showStreakDetail = true }
     }
 
     /// Tagesziel-Ring: gefüllter Bogen = heute erreichter Anteil, innen „erledigt/Ziel".

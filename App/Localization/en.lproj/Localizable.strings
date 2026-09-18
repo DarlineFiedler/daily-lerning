@@ -299,6 +299,7 @@
 "home.goal.reached" = "Goal reached 🏁";
 "home.goal.edit.hint" = "Tap to adjust your goal";
 "home.goal.stats.hint" = "Tap to see your goal statistics";
+"home.streak.detail.hint" = "Tap to see your streak overview";
 /* Goal statistics screen */
 "goalstats.title" = "Goal Stats";
 "goalstats.settings.open" = "Goal Settings";
@@ -611,6 +612,7 @@
 "search.hits" = "%d hits";
 "search.filter.widget" = "Lock Screen";
 "garden.streak.note" = "%d-day watering streak.";
+"garden.streak.note.one" = "1-day watering streak.";
 "garden.today" = "TODAY";
 "garden.week.practiced" = "%d practiced";
 "garden.week.bloomed" = "%d newly bloomed";

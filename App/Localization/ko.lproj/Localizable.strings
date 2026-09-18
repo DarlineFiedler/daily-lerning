@@ -299,6 +299,7 @@
 "home.goal.reached" = "목표 달성 🏁";
 "home.goal.edit.hint" = "목표를 조정하려면 탭하세요";
 "home.goal.stats.hint" = "목표 통계를 보려면 탭하세요";
+"home.streak.detail.hint" = "연속 기록을 보려면 탭하세요";
 /* 목표 통계 화면 */
 "goalstats.title" = "목표 통계";
 "goalstats.settings.open" = "목표 설정";
@@ -611,6 +612,7 @@
 "search.hits" = "%d개 결과";
 "search.filter.widget" = "잠금 화면";
 "garden.streak.note" = "%d일 연속 물주기.";
+"garden.streak.note.one" = "1일 연속 물주기.";
 "garden.today" = "오늘";
 "garden.week.practiced" = "%d개 연습";
 "garden.week.bloomed" = "%d개 개화";
