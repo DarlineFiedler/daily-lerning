@@ -67,11 +67,12 @@ struct GardenHomeView: View {
     // MARK: - Kopf (Datum + Titel + Streak-Notiz + Ziel-Ring)
 
     private var header: some View {
-        // Ist ein Tagesziel gesetzt, zeigen Ring und Notiz denselben Ziel-Streak wie die
-        // Ziel-Statistik („Tage in Folge"); ohne Ziel fällt beides auf den Aktivitäts-
-        // Streak (jeder Übungstag) zurück – sonst widersprechen sich Home und Statistik.
+        // Home zeigt bewusst den Aktivitäts-Streak (jeder Übungstag) – „mein aktueller
+        // Streak". Die Ziel-Statistik zählt unter „Tage in Folge" dagegen nur Tage mit
+        // erreichtem Tagesziel; beides darf abweichen. Der Ring rechts folgt dem Ziel,
+        // sofern eines gesetzt ist.
         let hasGoal = dailyGoal > 0
-        let streak = hasGoal ? GoalStats.current().goalStreak() : StreakStore.displayStreak()
+        let streak = StreakStore.displayStreak()
         return HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(dateText)

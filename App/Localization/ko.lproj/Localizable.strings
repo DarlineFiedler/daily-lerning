@@ -309,6 +309,7 @@
 "goalstats.rate" = "달성률 (월)";
 "goalstats.weekly.reached" = "주간 목표";
 "goalstats.practiced" = "연습 (기록)";
+"goalstats.learned.days" = "학습한 날";
 "goalstats.accuracy" = "정답률";
 "goalstats.calendar.title" = "목표 캘린더";
 "goalstats.calendar.legend.reached" = "달성";

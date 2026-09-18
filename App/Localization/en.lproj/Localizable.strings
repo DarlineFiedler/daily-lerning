@@ -309,6 +309,7 @@
 "goalstats.rate" = "Rate (month)";
 "goalstats.weekly.reached" = "Weekly goals";
 "goalstats.practiced" = "Practiced (history)";
+"goalstats.learned.days" = "Days learned";
 "goalstats.accuracy" = "Accuracy";
 "goalstats.calendar.title" = "Goal Calendar";
 "goalstats.calendar.legend.reached" = "Reached";

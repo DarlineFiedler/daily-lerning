@@ -309,6 +309,7 @@
 "goalstats.rate" = "Quote (Monat)";
 "goalstats.weekly.reached" = "Wochenziele";
 "goalstats.practiced" = "Geübt (Verlauf)";
+"goalstats.learned.days" = "Tage gelernt";
 "goalstats.accuracy" = "Trefferquote";
 "goalstats.calendar.title" = "Ziel-Kalender";
 "goalstats.calendar.legend.reached" = "Erreicht";
