@@ -231,9 +231,16 @@ final class PracticeSession {
     /// Im Per-Karte-Fluss ist das Wort `currentItem.vocab` (via `submit`).
     func record(result correct: Bool, for vocab: Vocab) {
         let before = vocab.status
-        // Zuvor falsch/zurückgesetzt? (geübt, aber Erfolgs-Counter auf 0) – für „Selbstkorrektur".
-        let wasPreviouslyWrong = vocab.timesPracticed > 0 && vocab.successCounter == 0
+        // War die letzte Antwort falsch? – für „Selbstkorrektur". Bewusst `lastAnswerWasWrong`
+        // statt `successCounter == 0`, da ein Fehler den Counter seit Issue #118 nicht mehr hart
+        // auf 0 setzt (ein gelapstes „gelerntes" Wort wäre sonst nicht als vorher-falsch erkannt).
+        let wasPreviouslyWrong = vocab.lastAnswerWasWrong
+        // Schon einmal gelernt? Muss VOR `registerResult` gelesen werden (das setzt das Flag) –
+        // so zählt nur der Erstaufstieg als „neu gelernt" und ein Relearning bläht die Statistik
+        // nicht auf (Issue #118).
+        let wasEverLearned = vocab.everReachedLearned
         vocab.registerResult(correct: correct)
+        let becameLearned = !wasEverLearned && before != .learned && vocab.status == .learned
         if correct {
             correctCount += 1
             currentCombo += 1
@@ -252,7 +259,7 @@ final class PracticeSession {
             // Aufstieg? (rawValue steigt mit dem Lernfortschritt).
             if vocab.status.rawValue > before.rawValue {
                 leveledUpVocabs.append(vocab)
-                if vocab.status == .learned, before != .learned { newlyLearnedCount += 1 }
+                if becameLearned { newlyLearnedCount += 1 }
             }
         } else {
             wrongCount += 1
@@ -266,9 +273,9 @@ final class PracticeSession {
             StreakStore.registerActivity() // idempotent pro Kalendertag
             didRegisterStreak = true
         }
-        // Wochenrückblick füttern: distinct geübtes Wort + evtl. Erstaufstieg auf „Gelernt".
+        // Wochenrückblick füttern: distinct geübtes Wort + Erstaufstieg auf „Gelernt"
+        // (`becameLearned`, oben erstmalig-only berechnet).
         // Nur im Speicher aggregieren – die Persistenz läuft gebündelt über `flushProgress()`.
-        let becameLearned = before != .learned && vocab.status == .learned
         let log = weeklyActivity ?? WeeklyReviewStore.loadActivity()
         weeklyActivity = log.recording(wordID: vocab.id, becameLearned: becameLearned,
                                        correct: correct, on: .now, calendar: .current)

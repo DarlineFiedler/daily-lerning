@@ -13,6 +13,9 @@ final class ProblemWordsTests: XCTestCase {
         v.timesPracticed = times
         v.totalWrongCount = wrong
         v.successCounter = streak
+        // „Aktuell schwächelnd" hängt seit Issue #118 an der letzten Antwort, nicht am Counter:
+        // streak 0 ⇒ letzte Antwort war falsch; streak > 0 ⇒ zuletzt richtig (erholt).
+        v.lastAnswerWasWrong = streak == 0
         return v
     }
 
@@ -32,6 +35,23 @@ final class ProblemWordsTests: XCTestCase {
     /// kein Problemwort mehr.
     func testRecoveredWordIsNotProblem() {
         XCTAssertFalse(vocab(times: 5, wrong: 3, streak: 2).isProblemWord)
+    }
+
+    /// Issue #118: Ein gelapstes Wort mit noch positivem Counter (letzte Antwort falsch) wird
+    /// erkannt – früher hätte `successCounter == 0` es fälschlich durchrutschen lassen.
+    func testLapsedWordWithPositiveCounterIsProblem() {
+        let v = vocab(times: 5, wrong: 3, streak: 0)
+        v.successCounter = LearningStatus.almostLearnedThreshold // z.B. „gelernt" → Lapse → 3
+        v.lastAnswerWasWrong = true // letzte Antwort war dennoch falsch
+        XCTAssertTrue(v.isProblemWord)
+    }
+
+    /// Gegenprobe: derselbe positive Counter, aber letzte Antwort richtig ⇒ kein Problemwort.
+    func testWordWithPositiveCounterAndLastCorrectIsNotProblem() {
+        let v = vocab(times: 5, wrong: 3, streak: 0)
+        v.successCounter = LearningStatus.almostLearnedThreshold
+        v.lastAnswerWasWrong = false
+        XCTAssertFalse(v.isProblemWord)
     }
 
     /// Genug Versuche, aber niedrige Fehlerquote ⇒ kein Problemwort.

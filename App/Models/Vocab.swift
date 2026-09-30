@@ -27,14 +27,30 @@ final class Vocab {
     var topikRaw: Int?
 
     var statusRaw: Int = LearningStatus.new.rawValue
-    var successCounter: Int = 0 // Streak aufeinanderfolgender richtiger Antworten
+    /// Fortschritts-Counter, aus dem sich Status und Wiederhol-Intervall ableiten. Steigt bei
+    /// einer richtigen Antwort einmal pro Kalendertag um 1; ein Fehler senkt ihn um höchstens
+    /// eine Stufe (siehe `registerResult` / `LearningStatus.counterAfterLapse`) – er ist also
+    /// kein reiner „Streak aufeinanderfolgender richtiger Antworten" mehr.
+    var successCounter: Int = 0
     var includeInWidget: Bool = false
     var timesPracticed: Int = 0
     /// Gesamtzahl aller falschen Antworten über die Lebenszeit des Worts (additiv zu
-    /// `timesPracticed`). Anders als `successCounter` (der bei jedem Fehler auf 0 fällt)
-    /// akkumuliert dieser Wert und erlaubt eine Fehlerquote (siehe `isProblemWord`).
+    /// `timesPracticed`). Anders als `successCounter` (der auf max. eine Stufe je Fehler
+    /// absinkt) akkumuliert dieser Wert und erlaubt eine Fehlerquote (siehe `isProblemWord`).
     /// Additiv eingeführt; SwiftData migriert bestehende Stores automatisch (Default 0).
     var totalWrongCount: Int = 0
+    /// War die **letzte** verbuchte Antwort falsch? Anders als `successCounter == 0` bleibt
+    /// dieser Indikator korrekt, seit ein Fehler den Counter nicht mehr hart auf 0 setzt
+    /// (Issue #118): Er markiert ein aktuell schwächelndes Wort für `isProblemWord` und die
+    /// Selbstkorrektur-Erkennung. Additiv eingeführt; SwiftData migriert bestehende Stores
+    /// automatisch (Default `false`).
+    var lastAnswerWasWrong: Bool = false
+    /// Hat das Wort im Laufe seines Lebens **schon einmal** den Status „gelernt" erreicht?
+    /// Damit zählt der Wochenrückblick/`newlyLearned` ein Wort nur beim **Erstaufstieg** als
+    /// „neu gelernt" – ein nach einem Lapse erneut gelerntes Wort bläht die Statistik nicht auf
+    /// (Issue #118). Additiv eingeführt; SwiftData migriert bestehende Stores automatisch
+    /// (Default `false`).
+    var everReachedLearned: Bool = false
     var lastPracticedAt: Date?
     /// Nächster Fälligkeitszeitpunkt fürs Wiederholen (SRS-lite). `nil` = noch nie
     /// geplant ⇒ sofort fällig (siehe `isDue`). Additiv eingeführt; SwiftData
@@ -155,11 +171,14 @@ final class Vocab {
     static let problemWrongRateThreshold = 0.4
 
     /// Oft falsch beantwortet **und** aktuell schwächelnd. Die Mindestversuche verhindern
-    /// Ausreißer bei wenigen Fehlversuchen; `successCounter == 0` macht die Auswahl
-    /// selbstheilend – verbessert sich das Wort wieder, verlässt es die Problemwörter.
+    /// Ausreißer bei wenigen Fehlversuchen; `lastAnswerWasWrong` macht die Auswahl
+    /// selbstheilend – die nächste richtige Antwort holt das Wort wieder aus den Problemwörtern.
+    /// Bewusst an `lastAnswerWasWrong` statt `successCounter == 0` gekoppelt, damit auch ein
+    /// gelapstes „gelerntes"/„fast gelerntes" Wort (Counter > 0, letzte Antwort falsch) erkannt
+    /// wird, seit ein Fehler den Counter nicht mehr hart auf 0 setzt (Issue #118).
     var isProblemWord: Bool {
         timesPracticed >= Self.problemMinAttempts &&
-            successCounter == 0 &&
+            lastAnswerWasWrong &&
             Double(totalWrongCount) / Double(timesPracticed) > Self.problemWrongRateThreshold
     }
 
@@ -190,7 +209,10 @@ final class Vocab {
             successCounter = LearningStatus.counterAfterLapse(successCounter)
             totalWrongCount += 1
         }
-        statusRaw = LearningStatus.computed(counter: successCounter, practiced: true).rawValue
+        lastAnswerWasWrong = !correct
+        let newStatus = LearningStatus.computed(counter: successCounter, practiced: true)
+        statusRaw = newStatus.rawValue
+        if newStatus == .learned { everReachedLearned = true }
         nextReviewAt = ReviewSchedule.nextReviewDate(for: successCounter, from: now)
     }
 
@@ -205,6 +227,8 @@ final class Vocab {
             totalWrongCount = 0
             lastPracticedAt = nil
             lastCountedAt = nil
+            lastAnswerWasWrong = false
+            everReachedLearned = false
             nextReviewAt = nil // zurück auf „sofort fällig"
         case .learning:
             successCounter = LearningStatus.learningThreshold
@@ -212,6 +236,7 @@ final class Vocab {
             successCounter = LearningStatus.almostLearnedThreshold
         case .learned:
             successCounter = LearningStatus.masteredThreshold
+            everReachedLearned = true
         }
         // Fälligkeit an den (evtl. neu gesetzten) Counter angleichen, außer bei „neu".
         if newStatus != .new {
