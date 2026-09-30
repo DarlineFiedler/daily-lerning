@@ -172,8 +172,10 @@ final class Vocab {
 
     /// Zentrale Ergebnisverarbeitung – von allen Lernmodi genutzt.
     /// Richtig → Counter **einmal pro Kalendertag** +1 (weitere richtige Antworten am selben
-    /// Tag zählen nicht mehr). Falsch → Counter jederzeit zurück auf 0 (auch von „Gelernt"
-    /// herunter). Status wird neu berechnet und die nächste Fälligkeit (SRS-lite) geplant.
+    /// Tag zählen nicht mehr). Falsch („Lapse") → Counter sinkt um höchstens **eine Stufe**
+    /// (`LearningStatus.counterAfterLapse`): ein gelerntes Wort fällt auf „fast gelernt", nicht
+    /// ganz nach unten (Issue #118); neue/lernende Wörter fallen weiterhin auf 0. Status wird
+    /// neu berechnet und die nächste Fälligkeit (SRS-lite) geplant.
     /// `now` ist injizierbar, damit sich der Tageswechsel testen lässt.
     func registerResult(correct: Bool, now: Date = .now) {
         timesPracticed += 1
@@ -185,7 +187,7 @@ final class Vocab {
                 lastCountedAt = now
             }
         } else {
-            successCounter = 0
+            successCounter = LearningStatus.counterAfterLapse(successCounter)
             totalWrongCount += 1
         }
         statusRaw = LearningStatus.computed(counter: successCounter, practiced: true).rawValue
