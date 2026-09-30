@@ -25,6 +25,17 @@ enum LearningStatus: Int, Codable, CaseIterable, Identifiable {
         return .learning
     }
 
+    /// Counter nach einem „Lapse" (falsche Antwort). Ein einzelner Ausrutscher kostet
+    /// höchstens **eine** Stufe, statt den ganzen Fortschritt zu löschen (Issue #118):
+    /// Ein gelerntes Wort fällt auf „fast gelernt", ein „fast gelerntes" auf „am Lernen".
+    /// Neue/lernende Wörter (Counter < `almostLearnedThreshold`) fallen wie bisher auf 0,
+    /// damit die Problemwort-Erkennung (`Vocab.isProblemWord`) unverändert greift.
+    static func counterAfterLapse(_ counter: Int) -> Int {
+        if counter >= masteredThreshold { return almostLearnedThreshold }
+        if counter >= almostLearnedThreshold { return learningThreshold }
+        return 0
+    }
+
     /// Localization-Key (siehe Localizable.strings in den *.lproj-Ordnern).
     var titleKey: String {
         switch self {

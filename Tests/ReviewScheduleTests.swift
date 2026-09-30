@@ -42,14 +42,18 @@ final class ReviewScheduleTests: XCTestCase {
         XCTAssertTrue(vocab.isDue(asOf: .now.addingTimeInterval(2 * 86_400)))
     }
 
-    func testWrongAnswerMakesDueSoon() {
+    func testLapsedLearnedWordEntersRelearningInterval() {
         let vocab = Vocab(word: "가다", meaning: "gehen")
         // Counter steigt nur einmal pro Tag → an fünf aufeinanderfolgenden Tagen bis „gelernt".
         for day in 0 ..< 5 { vocab.registerResult(correct: true, now: day.daysFromNow) }
         XCTAssertEqual(vocab.successCounter, 5)
-        // Falsche Antwort am Folgetag (Zeitachse konsistent) → Reset, morgen wieder fällig.
+        // Ein einzelner Fehler senkt den Counter nur eine Stufe (Issue #118): 5 → 3 (fast gelernt).
+        // Die nächste Fälligkeit folgt dem Relearning-Intervall (4 Tage), nicht „morgen" und
+        // auch nicht dem 14-Tage-Intervall eines gelernten Worts.
         vocab.registerResult(correct: false, now: 5.daysFromNow)
-        XCTAssertTrue(vocab.isDue(asOf: 7.daysFromNow))
+        XCTAssertEqual(vocab.successCounter, LearningStatus.almostLearnedThreshold)
+        XCTAssertFalse(vocab.isDue(asOf: 6.daysFromNow)) // nicht schon morgen fällig
+        XCTAssertTrue(vocab.isDue(asOf: 9.daysFromNow)) // aber deutlich früher als in 14 Tagen
     }
 
     func testManualNewClearsSchedule() {

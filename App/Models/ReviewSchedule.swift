@@ -4,8 +4,8 @@ import Foundation
 ///
 /// Bewusst **kein** SM-2 (kein Ease-Faktor, keine Review-History): Passend zum
 /// 4-Stufen-Statusmodell reicht eine Intervallkurve auf Basis des vorhandenen
-/// `successCounter` (Streak aufeinanderfolgender richtiger Antworten). Zentral
-/// definiert, damit alle Lernmodi identisch planen.
+/// `successCounter` (Fortschritts-Counter, siehe [[Vocab]]). Zentral definiert,
+/// damit alle Lernmodi identisch planen.
 enum ReviewSchedule {
     /// Tage bis zur nächsten Fälligkeit, abhängig vom Erfolgs-Counter.
     /// 0 (gerade falsch / neu) → morgen wieder; danach wachsende Abstände.

@@ -49,16 +49,86 @@ final class LearningStatusTests: XCTestCase {
         XCTAssertEqual(vocab.successCounter, 2)
     }
 
-    func testLearnedWordWrongDropsToLearning() {
+    func testLearnedWordWrongDropsToAlmostLearned() {
         let vocab = Vocab(word: "가다", meaning: "gehen")
         for day in 0 ..< LearningStatus.masteredThreshold {
             vocab.registerResult(correct: true, now: day.daysFromNow)
         }
         XCTAssertEqual(vocab.status, .learned)
-        // Ein versehentlich falsch beantwortetes „Gelernt"-Wort fällt zurück.
+        // Ein einzelner Ausrutscher kostet nur eine Stufe (Issue #118): „Gelernt" → „fast gelernt",
+        // nicht ganz nach unten auf 0/„am Lernen".
         vocab.registerResult(correct: false, now: LearningStatus.masteredThreshold.daysFromNow)
-        XCTAssertEqual(vocab.successCounter, 0)
-        XCTAssertEqual(vocab.status, .learning)
+        XCTAssertEqual(vocab.successCounter, LearningStatus.almostLearnedThreshold)
+        XCTAssertEqual(vocab.status, .almostLearned)
+    }
+
+    // MARK: - Lapse-Abbildung (Issue #118)
+
+    func testCounterAfterLapseDropsAtMostOneStage() {
+        // Gelernt (≥ 5) → fast gelernt; fast gelernt (3–4) → am Lernen; am Lernen/neu → 0.
+        XCTAssertEqual(LearningStatus.counterAfterLapse(LearningStatus.masteredThreshold), LearningStatus.almostLearnedThreshold)
+        XCTAssertEqual(LearningStatus.counterAfterLapse(LearningStatus.masteredThreshold + 3), LearningStatus.almostLearnedThreshold)
+        XCTAssertEqual(LearningStatus.counterAfterLapse(LearningStatus.almostLearnedThreshold), LearningStatus.learningThreshold)
+        XCTAssertEqual(LearningStatus.counterAfterLapse(LearningStatus.almostLearnedThreshold + 1), LearningStatus.learningThreshold)
+        XCTAssertEqual(LearningStatus.counterAfterLapse(LearningStatus.learningThreshold), 0)
+        XCTAssertEqual(LearningStatus.counterAfterLapse(0), 0)
+    }
+
+    func testCounterAfterLapseNeverIncreasesAndStaysNonNegative() {
+        for counter in 0 ... (LearningStatus.masteredThreshold + 5) {
+            let lapsed = LearningStatus.counterAfterLapse(counter)
+            XCTAssertLessThanOrEqual(lapsed, counter) // sinkt oder bleibt, nie nach oben
+            XCTAssertGreaterThanOrEqual(lapsed, 0)
+        }
+    }
+
+    // MARK: - lastAnswerWasWrong (Issue #118)
+
+    func testLastAnswerWasWrongTracksLastResult() {
+        let vocab = Vocab(word: "가다", meaning: "gehen")
+        XCTAssertFalse(vocab.lastAnswerWasWrong) // Default: noch nie falsch
+        vocab.registerResult(correct: false)
+        XCTAssertTrue(vocab.lastAnswerWasWrong)
+        vocab.registerResult(correct: true, now: 1.daysFromNow)
+        XCTAssertFalse(vocab.lastAnswerWasWrong) // richtige Antwort löscht das Flag
+    }
+
+    /// Kernpunkt der Entkopplung: Nach einem Lapse von „gelernt" ist der Counter noch > 0,
+    /// die letzte Antwort war aber falsch – `lastAnswerWasWrong` bildet das korrekt ab.
+    func testLapsedLearnedWordFlagsLastAnswerWrongDespitePositiveCounter() {
+        let vocab = Vocab(word: "가다", meaning: "gehen")
+        for day in 0 ..< LearningStatus.masteredThreshold {
+            vocab.registerResult(correct: true, now: day.daysFromNow)
+        }
+        vocab.registerResult(correct: false, now: LearningStatus.masteredThreshold.daysFromNow)
+        XCTAssertEqual(vocab.successCounter, LearningStatus.almostLearnedThreshold) // > 0
+        XCTAssertTrue(vocab.lastAnswerWasWrong)
+    }
+
+    // MARK: - everReachedLearned (Issue #118)
+
+    func testEverReachedLearnedSetOnFirstMasteryAndSurvivesLapse() {
+        let vocab = Vocab(word: "가다", meaning: "gehen")
+        XCTAssertFalse(vocab.everReachedLearned)
+        for day in 0 ..< LearningStatus.masteredThreshold {
+            vocab.registerResult(correct: true, now: day.daysFromNow)
+        }
+        XCTAssertTrue(vocab.everReachedLearned)
+        // Ein Lapse senkt den Status, löscht aber nicht die Tatsache, dass es gelernt war.
+        vocab.registerResult(correct: false, now: LearningStatus.masteredThreshold.daysFromNow)
+        XCTAssertEqual(vocab.status, .almostLearned)
+        XCTAssertTrue(vocab.everReachedLearned)
+    }
+
+    func testManualLearnedSetsEverReachedLearnedAndNewResetsFlags() {
+        let vocab = Vocab(word: "가다", meaning: "gehen")
+        vocab.setStatusManually(.learned)
+        XCTAssertTrue(vocab.everReachedLearned)
+        vocab.registerResult(correct: false) // schwächelt
+        XCTAssertTrue(vocab.lastAnswerWasWrong)
+        vocab.setStatusManually(.new) // vollständiger Reset
+        XCTAssertFalse(vocab.everReachedLearned)
+        XCTAssertFalse(vocab.lastAnswerWasWrong)
     }
 
     func testRegisterResultWrongResetsCounter() {
