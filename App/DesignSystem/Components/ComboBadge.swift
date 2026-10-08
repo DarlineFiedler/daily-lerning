@@ -10,6 +10,8 @@ import SwiftUI
 struct ComboBadge: View {
     let combo: Int
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private var isVisible: Bool { combo >= PracticeSession.comboBadgeMin }
     private var isMilestone: Bool { PracticeSession.isComboMilestone(combo) }
 
@@ -31,7 +33,7 @@ struct ComboBadge: View {
             // Pro Kombo-Stand ein frischer Auftritt → jede Antwort „poppt" das Badge.
             .id(combo)
             .transition(.scale(scale: 0.5).combined(with: .opacity))
-            .animation(.spring(response: 0.35, dampingFraction: 0.55), value: combo)
+            .animation(Motion.animation(.spring(response: 0.35, dampingFraction: 0.55), reduceMotion: reduceMotion), value: combo)
             // Rein dekorativ – doppelt die Kombo-Ansage bei jeder Karte vor VoiceOver
             // verbergen (der Lernstand wird ohnehin über die Modus-Views vermittelt).
             .accessibilityHidden(true)
