@@ -21,6 +21,35 @@ enum WidgetStrings {
         }
     }
 
+    // MARK: - Interaktives Wort-Widget (Gewusst/Nochmal)
+
+    /// Button „Gewusst" – richtiges Ergebnis.
+    static var knewIt: String {
+        switch languageCode {
+        case "de": return "Gewusst"
+        case "ko": return "알아요"
+        default: return "Knew it"
+        }
+    }
+
+    /// Button „Nochmal" – falsches Ergebnis.
+    static var again: String {
+        switch languageCode {
+        case "de": return "Nochmal"
+        case "ko": return "다시"
+        default: return "Again"
+        }
+    }
+
+    /// Bestätigung nach dem Tippen eines Ergebnisses.
+    static var logged: String {
+        switch languageCode {
+        case "de": return "Verbucht"
+        case "ko": return "기록됨"
+        default: return "Logged"
+        }
+    }
+
     /// Titel der Live Activity einer laufenden Lernsession.
     static var sessionTitle: String {
         switch languageCode {

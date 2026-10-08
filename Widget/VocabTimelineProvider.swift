@@ -6,6 +6,11 @@ struct VocabEntry: TimelineEntry {
     let date: Date
     let word: WidgetWord?
     let settings: WidgetSettings
+    /// Wurde das gezeigte Wort gerade im Widget verbucht? `nil` = normale Ansicht mit
+    /// „Gewusst"/„Nochmal"-Buttons; sonst zeigt die Karte kurz die Bestätigung (`true` =
+    /// „Gewusst", `false` = „Nochmal"). Nur der aktuelle Slot wird so markiert – beim nächsten
+    /// Wort kommen die Buttons zurück (siehe `getTimeline`).
+    var justAnsweredCorrect: Bool?
 }
 
 /// Baut eine Timeline, die im gewählten Minuten-Intervall durch die aktivierten
@@ -74,6 +79,20 @@ struct VocabTimelineProvider: TimelineProvider {
                 idx = 0
             }
             entries.append(VocabEntry(date: date, word: words[idx], settings: settings))
+        }
+
+        // Bestätigung: Wurde das Wort des aktuellen Slots gerade im Widget verbucht, zeigt genau
+        // dieser (erste) Eintrag „Verbucht ✓" statt der Buttons. Das verhindert ein Doppel-
+        // Verbuchen derselben sichtbaren Karte; beim nächsten Slot (= nächstes Wort) rendern die
+        // Buttons wieder. Bezug ist der Slot-Beginn, damit eine Antwort aus einem früheren Slot
+        // nicht nachwirkt.
+        if let last = WidgetResultQueue.load().last,
+           let current = entries.first,
+           last.wordID == current.word?.id {
+            let slotStart = anchor.addingTimeInterval(Double(nowSlot) * secondsPerSlot)
+            if last.date >= slotStart {
+                entries[0].justAnsweredCorrect = last.correct
+            }
         }
 
         completion(Timeline(entries: entries, policy: .atEnd))

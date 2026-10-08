@@ -38,7 +38,13 @@ enum AppContentRefresh {
     /// und der einzige zeitabhängige Faktor ist der Tageswechsel (`DailyPlan` ist tagesbasiert).
     /// Deshalb wird dann der sonst nutzlose Fetch + Badge- + Streak-Reload übersprungen.
     static func onAppActive(context: ModelContext, now: Date = .now) {
-        guard shouldRefreshOnActive(lastRefreshDay: lastActiveRefreshDay, now: now) else { return }
+        // Zuerst die vom interaktiven Widget verbuchten „Gewusst"/„Nochmal"-Ergebnisse
+        // einspielen (siehe [[WidgetResultReconciler]]). Das läuft bei JEDEM Vordergrund-
+        // Wechsel – unabhängig vom Kalendertag-Guard unten –, weil die Nutzerin das Widget
+        // auch mehrfach am selben Tag getippt haben kann. Wurde etwas verbucht, muss trotz
+        // gleichem Tag voll aufgefrischt werden (der geänderte Status bewegt das Badge).
+        let didReconcile = WidgetResultReconciler.drain(context: context)
+        guard didReconcile || shouldRefreshOnActive(lastRefreshDay: lastActiveRefreshDay, now: now) else { return }
         lastActiveRefreshDay = Calendar.current.startOfDay(for: now)
         afterVocabChange(context: context)
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.streak)
