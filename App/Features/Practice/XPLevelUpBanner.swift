@@ -6,6 +6,7 @@ import SwiftUI
 struct XPLevelUpBanner: View {
     let level: XPLevel
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var appeared = false
 
     var body: some View {
@@ -36,7 +37,7 @@ struct XPLevelUpBanner: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(L("xp.levelUp.a11y", level.level, L(level.rankKey)))
         .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) { appeared = true }
+            withAnimation(Motion.animation(.spring(response: 0.5, dampingFraction: 0.6), reduceMotion: reduceMotion)) { appeared = true }
         }
     }
 }
