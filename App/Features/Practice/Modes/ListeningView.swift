@@ -54,6 +54,8 @@ struct ListeningView: View {
             .hardShadow(x: 3, y: 4)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(L("practice.listen.a11y"))
+        .accessibilityHint(L("practice.listen.replay"))
         // Nach dem Beantworten das Wort einblenden – dann verrät es nichts mehr.
         .overlay(alignment: .bottom) {
             if answered {
@@ -61,6 +63,8 @@ struct ListeningView: View {
                     .font(.appHeadline)
                     .foregroundStyle(Theme.ink)
                     .padding(.bottom, Theme.Spacing.m)
+                    // Eingeblendetes Wort ist Hangul – für VoiceOver koreanisch auszeichnen.
+                    .accessibilityLabel(Text(AttributedString.korean(item.vocab.word)))
             }
         }
     }

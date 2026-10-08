@@ -143,6 +143,7 @@
 "practice.config.count" = "How many";
 "practice.count.all" = "All";
 "practice.listen.replay" = "Tap to listen";
+"practice.listen.a11y" = "Listen to the word";
 "practice.retryWrong" = "Practice mistakes";
 "practice.summary.accuracy" = "Accuracy";
 "practice.summary.streak" = "Streak";

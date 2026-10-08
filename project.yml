@@ -9,8 +9,8 @@ options:
 
 settings:
   base:
-    MARKETING_VERSION: "3.2.0"
-    CURRENT_PROJECT_VERSION: "38"
+    MARKETING_VERSION: "3.3.0"
+    CURRENT_PROJECT_VERSION: "39"
     SWIFT_VERSION: "5.0"
     CODE_SIGN_STYLE: Automatic
     # Persönliches Free-Team von Darline – damit Xcode ▶︎ die neue Bundle-ID/App-Group
