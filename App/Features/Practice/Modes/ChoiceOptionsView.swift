@@ -29,6 +29,8 @@ struct ChoiceOptionsView: View {
                             Text(mark.symbol)
                                 .font(.appHeadline)
                                 .foregroundStyle(mark.color)
+                                // Dekorativ – der Status wird als accessibilityValue angesagt.
+                                .accessibilityHidden(true)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -43,12 +45,32 @@ struct ChoiceOptionsView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(answered)
+                .accessibilityLabel(optionLabel(choice))
+                .accessibilityValue(optionValue(choice))
+                .accessibilityAddTraits(isChosen(choice) ? .isSelected : [])
             }
         }
     }
 
     private func isRight(_ choice: Vocab) -> Bool { choice.id == item.vocab.id }
     private func isChosen(_ choice: Vocab) -> Bool { choice.id == selected?.id }
+
+    /// VoiceOver-Label der Option. Ist die Antwort-Seite Hangul (Richtung
+    /// Bedeutung→Wort), wird sie als Koreanisch ausgezeichnet, damit die Aussprache stimmt.
+    private func optionLabel(_ choice: Vocab) -> Text {
+        let text = item.optionText(choice)
+        return item.direction == .meaningToWord ? Text(AttributedString.korean(text)) : Text(text)
+    }
+
+    /// Nach der Antwort meldet VoiceOver, ob diese Option richtig bzw. die falsch
+    /// gewählte war; vorher bzw. für übrige Optionen bleibt der Value leer.
+    private func optionValue(_ choice: Vocab) -> String {
+        switch ChoiceOptionState.resolve(answered: answered, isRight: isRight(choice), isChosen: isChosen(choice)) {
+        case .correct: L("practice.correct")
+        case .chosenWrong: L("practice.wrong")
+        case .unanswered, .other: ""
+        }
+    }
 
     /// Übrige (nicht richtige, nicht gewählte) Optionen verblassen nach der Antwort.
     private func faded(_ choice: Vocab) -> Bool {

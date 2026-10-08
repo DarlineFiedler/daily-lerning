@@ -334,6 +334,9 @@ struct PromptCard: View {
     /// Wenn gesetzt, erscheint ein Vorlese-Button (koreanisches Wort). Nur übergeben,
     /// wenn der Prompt selbst das Wort ist – sonst würde er die Antwort verraten.
     var spokenText: String?
+    /// Prompt ist Hangul → als Koreanisch auszeichnen, damit VoiceOver ihn korrekt
+    /// ausspricht. Sichtbare Darstellung bleibt unverändert (Issue #120).
+    var isKoreanPrompt: Bool = false
 
     var body: some View {
         VStack(spacing: Theme.Spacing.s) {
@@ -346,6 +349,7 @@ struct PromptCard: View {
                     .foregroundStyle(Theme.ink)
                     .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.5)
+                    .accessibilityLabel(isKoreanPrompt ? Text(AttributedString.korean(text)) : Text(text))
                 if let spokenText {
                     SpeakButton(text: spokenText, font: .appTitle2, tint: Theme.vermillion)
                 }

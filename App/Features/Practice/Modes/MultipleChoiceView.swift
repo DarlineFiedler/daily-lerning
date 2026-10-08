@@ -13,7 +13,8 @@ struct MultipleChoiceView: View {
     var body: some View {
         VStack(spacing: Theme.Spacing.l) {
             PromptCard(text: item.prompt(),
-                       spokenText: item.direction == .wordToMeaning ? item.vocab.word : nil)
+                       spokenText: item.direction == .wordToMeaning ? item.vocab.word : nil,
+                       isKoreanPrompt: item.direction == .wordToMeaning)
 
             ChoiceOptionsView(item: item, selected: $selected)
 
