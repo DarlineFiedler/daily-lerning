@@ -83,8 +83,41 @@ struct VocabWidgetView: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
+                resultControls(for: word)
+                    .padding(.top, 2)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    /// Interaktive „Gewusst"/„Nochmal"-Steuerung des systemSmall-Widgets (iOS 17). Nach dem
+    /// Tippen zeigt dieselbe Karte kurz „Verbucht ✓" statt der Buttons – der Provider markiert
+    /// dafür den aktuellen Slot (siehe [[VocabTimelineProvider]]). Bewusst nur hier und nicht
+    /// in den `accessory`-Familien: Lock-Screen-Widgets unterstützen keine interaktiven Buttons.
+    @ViewBuilder
+    private func resultControls(for word: WidgetWord) -> some View {
+        if let correct = entry.justAnsweredCorrect {
+            Label(WidgetStrings.logged, systemImage: correct ? "checkmark.circle.fill" : "arrow.counterclockwise.circle.fill")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        } else {
+            HStack(spacing: 6) {
+                Button(intent: RegisterWidgetResultIntent(wordID: word.id, correct: true)) {
+                    Label(WidgetStrings.knewIt, systemImage: "checkmark")
+                }
+                Button(intent: RegisterWidgetResultIntent(wordID: word.id, correct: false)) {
+                    Label(WidgetStrings.again, systemImage: "arrow.counterclockwise")
+                }
+            }
+            .font(.caption2.weight(.semibold))
+            .labelStyle(.titleOnly)
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
+            .tint(.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
         }
     }
 
