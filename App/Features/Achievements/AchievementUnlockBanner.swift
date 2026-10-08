@@ -6,6 +6,7 @@ import SwiftUI
 struct AchievementUnlockBanner: View {
     let achievements: [Achievement]
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var shown = false
     @State private var hideTask: Task<Void, Never>?
 
@@ -16,7 +17,7 @@ struct AchievementUnlockBanner: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
-        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: shown)
+        .animation(Motion.animation(.spring(response: 0.5, dampingFraction: 0.8), reduceMotion: reduceMotion), value: shown)
         .onChange(of: achievements.map(\.id)) { _, ids in
             if !ids.isEmpty { reveal() }
         }
