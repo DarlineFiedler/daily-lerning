@@ -49,7 +49,7 @@ struct StatisticsView: View {
     private func overallSection(counts: [LearningStatus: Int], learned: Int, rate: Int) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             SectionHeader(L("stats.overall"))
-            HStack(spacing: Theme.Spacing.s) {
+            StatTileRow {
                 StatTile(value: "\(vocabs.count)", label: L("stats.total"),
                          systemImage: "text.book.closed.fill", tint: Theme.brandStart)
                 StatTile(value: "\(learned)", label: L("status.learned"),

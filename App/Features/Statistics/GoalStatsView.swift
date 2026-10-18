@@ -70,7 +70,7 @@ struct GoalStatsView: View {
 
         return VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             SectionHeader(L("goalstats.overview"))
-            HStack(spacing: Theme.Spacing.s) {
+            StatTileRow {
                 StatTile(value: "\(streak)", label: L("goalstats.streak"),
                          systemImage: "flame.fill", tint: Theme.brandEnd)
                 StatTile(value: "\(best)", label: L("goalstats.streak.best"),
@@ -78,7 +78,7 @@ struct GoalStatsView: View {
                 StatTile(value: percentText(rate), label: L("goalstats.rate"),
                          systemImage: "chart.pie.fill", tint: LearningStatus.learned.color)
             }
-            HStack(spacing: Theme.Spacing.s) {
+            StatTileRow {
                 StatTile(value: "\(weeklyReached)", label: L("goalstats.weekly.reached"),
                          systemImage: "star.fill", tint: LearningStatus.learned.color)
                 StatTile(value: "\(practiced)", label: L("goalstats.practiced"),
@@ -86,11 +86,11 @@ struct GoalStatsView: View {
                 StatTile(value: accuracy.map { "\($0)%" } ?? "–", label: L("goalstats.accuracy"),
                          systemImage: "target", tint: Theme.brandEnd)
             }
+            // Einzelne Rest-Kachel: bei großen Textgrößen ohnehin volle Breite; sonst
+            // links auf Drittel-Breite über die flexible Breite der Kachel selbst.
             HStack(spacing: Theme.Spacing.s) {
                 StatTile(value: "\(learnedDays)", label: L("goalstats.learned.days"),
                          systemImage: "calendar", tint: LearningStatus.learned.color)
-                // Zwei unsichtbare Platzhalter, damit die Kachel wie im 3er-Raster
-                // links auf Drittel-Breite bleibt statt die ganze Zeile zu füllen.
                 Color.clear.frame(maxWidth: .infinity)
                 Color.clear.frame(maxWidth: .infinity)
             }

@@ -124,6 +124,9 @@ struct GardenHomeView: View {
                 .rotationEffect(.degrees(-7))
             }
             .frame(width: 74, height: 74)
+            // Fester Ring: Zahlen nicht über Accessibility-Größen hinaus wachsen
+            // lassen, sonst sprengen sie den Kreis (Issue #120).
+            .dynamicTypeSize(...DynamicTypeSize.xxLarge)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(L("home.goal.progress", dayDone, dailyGoal))
@@ -143,6 +146,8 @@ struct GardenHomeView: View {
             .frame(width: 62, height: 62)
             .overlay(Circle().strokeBorder(Theme.vermillion, lineWidth: 1.5))
             .rotationEffect(.degrees(-7))
+            // Fester Kreis: Dynamic Type deckeln, damit die Streak-Zahl passt.
+            .dynamicTypeSize(...DynamicTypeSize.xxLarge)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(L("home.streak.a11y", streak))
@@ -158,8 +163,12 @@ struct GardenHomeView: View {
                 Text("\(due)")
                     .font(.appDisplay(18))
                     .foregroundStyle(Color(hex: "#F2E9D8"))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                     .frame(width: 44, height: 44)
                     .background(due > 0 ? Theme.leaf : Theme.inkFaint, in: Circle())
+                    // Feste Badge-Größe: Zahl im Kreis halten statt ihn zu sprengen.
+                    .dynamicTypeSize(...DynamicTypeSize.xxLarge)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(due > 0 ? L("garden.water.title") : L("garden.water.none.title"))
                         .font(.appHeadline)
