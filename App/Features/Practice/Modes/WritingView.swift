@@ -22,7 +22,8 @@ struct WritingView: View {
     var body: some View {
         VStack(spacing: Theme.Spacing.l) {
             PromptCard(text: item.prompt(),
-                       spokenText: item.direction == .wordToMeaning ? item.vocab.word : nil)
+                       spokenText: item.direction == .wordToMeaning ? item.vocab.word : nil,
+                       isKoreanPrompt: item.direction == .wordToMeaning)
 
             TextField(L("practice.typeAnswer"), text: $typed)
                 .font(.appDisplay(30, weight: .regular))
@@ -102,6 +103,7 @@ struct WritingView: View {
                 HStack(spacing: Theme.Spacing.s) {
                     Text(item.answer())
                         .font(.appTitle3)
+                        .accessibilityLabel(Text.speech(item.answer(), korean: item.direction == .meaningToWord))
                     if item.direction == .meaningToWord {
                         SpeakButton(text: item.vocab.word)
                     }

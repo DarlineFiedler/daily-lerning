@@ -143,6 +143,7 @@
 "practice.config.count" = "몇 개";
 "practice.count.all" = "전체";
 "practice.listen.replay" = "탭하여 듣기";
+"practice.listen.a11y" = "단어 듣기";
 "practice.retryWrong" = "틀린 단어 다시";
 "practice.summary.accuracy" = "정확도";
 "practice.summary.streak" = "연속";
