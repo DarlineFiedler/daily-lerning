@@ -316,10 +316,8 @@ enum WeeklyReviewStore {
     // MARK: - Laden / Speichern
 
     private static func load() -> WeeklyActivity {
-        guard let data = d.data(forKey: WeeklyReviewKeys.log),
-              let decoded = try? JSONDecoder().decode(WeeklyActivity.self, from: data)
-        else { return WeeklyActivity() }
-        return decoded
+        // Bei korruptem Blob den Rohwert sichern, statt ihn beim nächsten save() zu verlieren.
+        d.decodeJSONOrPreserve(WeeklyActivity.self, forKey: WeeklyReviewKeys.log) ?? WeeklyActivity()
     }
 
     private static func save(_ activity: WeeklyActivity) {

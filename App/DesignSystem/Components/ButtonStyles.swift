@@ -13,7 +13,7 @@ struct PrimaryButtonStyle: ButtonStyle {
         let pressed = configuration.isPressed
         return configuration.label
             .font(.appHeadline)
-            .foregroundStyle(Color(hex: "#FBF5EA"))
+            .foregroundStyle(Theme.onFill)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .background {

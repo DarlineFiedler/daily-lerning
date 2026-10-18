@@ -37,6 +37,24 @@ enum AppGroup {
     static let urlScheme = "hangulgarten"
 }
 
+extension UserDefaults {
+    /// Dekodiert einen JSON-Wert unter `key`. Schlägt die Dekodierung fehl (korrupter Blob),
+    /// wird der rohe Inhalt EINMALIG unter `<key>.corrupt` gesichert, BEVOR der Aufrufer auf
+    /// seinen Default zurückfällt – sonst überschreibt der nächste `save()` die korrupten
+    /// (evtl. per Hand rettbaren) Bytes unwiederbringlich. Gibt `nil` zurück, wenn kein Wert
+    /// existiert oder die Dekodierung fehlschlägt.
+    func decodeJSONOrPreserve<T: Decodable>(_ type: T.Type, forKey key: String,
+                                            decoder: JSONDecoder = JSONDecoder()) -> T? {
+        guard let data = data(forKey: key) else { return nil }
+        if let decoded = try? decoder.decode(type, from: data) { return decoded }
+        // Erste Korruption gewinnt: eine schon vorhandene Sicherung nicht überschreiben.
+        if object(forKey: key + ".corrupt") == nil {
+            set(data, forKey: key + ".corrupt")
+        }
+        return nil
+    }
+}
+
 /// `kind`-Identifikatoren der Home-Screen-Widgets. Geteilt zwischen Widget-Target
 /// (Registrierung) und App (gezieltes Neuladen), damit die App genau EIN Widget
 /// aktualisieren kann statt `reloadAllTimelines()` über alle Kinds zu feuern.

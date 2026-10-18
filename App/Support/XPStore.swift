@@ -146,10 +146,8 @@ enum XPStore {
     // MARK: - Persistenz
 
     private static func load() -> XPState {
-        guard let data = d.data(forKey: XPKeys.state),
-              let decoded = try? JSONDecoder().decode(XPState.self, from: data)
-        else { return XPState() }
-        return decoded
+        // Bei korruptem Blob den Rohwert sichern, statt ihn beim nächsten save() zu verlieren.
+        d.decodeJSONOrPreserve(XPState.self, forKey: XPKeys.state) ?? XPState()
     }
 
     private static func save(_ state: XPState) {

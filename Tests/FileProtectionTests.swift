@@ -8,9 +8,12 @@ import XCTest
 /// Write-Optionen – nicht die tatsächliche Durchsetzung durch iOS.
 final class FileProtectionTests: XCTestCase {
 
-    /// Der Store liest ausschließlich die App im Vordergrund → bewusst auf `.complete` angehoben.
-    func testStoreFileProtectionIsComplete() {
-        XCTAssertEqual(PersistenceController.storeFileProtection, .complete)
+    /// Der Store nutzt `.completeUntilFirstUserAuthentication` (Issue #104, Review-Fix): im
+    /// Ruhezustand verschlüsselt, aber nach dem ersten Entsperren lesbar. Bewusst NICHT
+    /// `.complete`, damit ein Launch bei gesperrtem Gerät (Prewarming / nach Reboot) den
+    /// Container noch öffnen kann und nicht dauerhaft auf einen leeren In-Memory-Store fällt.
+    func testStoreFileProtectionAllowsReadAfterFirstUnlock() {
+        XCTAssertEqual(PersistenceController.storeFileProtection, .completeUntilFirstUserAuthentication)
     }
 
     /// Der Snapshot muss vom Widget bei gesperrtem Gerät lesbar bleiben → bewusst NICHT `.complete`,

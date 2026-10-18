@@ -36,7 +36,9 @@ struct GardenTabBar: View {
                 .overlay(Rectangle().fill(Theme.hairline).frame(height: 1), alignment: .top)
                 .ignoresSafeArea(edges: .bottom)
         )
-        .accessibilityIdentifier("gardenTabBar")
+        // Bewusst KEIN accessibilityIdentifier auf dem Container: ein Identifier auf dem
+        // HStack überschreibt in SwiftUI die der enthaltenen Buttons (alle trügen dann
+        // denselben) – die Einzel-Identifier (tabButton.*, practiceFAB) würden unauffindbar.
     }
 
     private func tab(_ tab: GardenTab, emoji: String, title: String) -> some View {
@@ -57,6 +59,7 @@ struct GardenTabBar: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(active ? [.isSelected, .isButton] : .isButton)
+        .accessibilityIdentifier(tab == .garden ? "tabButton.garden" : "tabButton.me")
     }
 
     private var practiceFAB: some View {
@@ -74,7 +77,7 @@ struct GardenTabBar: View {
                         .minimumScaleFactor(0.6)
                 }
             }
-            .foregroundStyle(Color(hex: "#FBF5EA"))
+            .foregroundStyle(Theme.onFill)
             .frame(width: 66, height: 66)
             .background(Theme.vermillion, in: Circle())
             .buttonHardShadow(Theme.vermillionDark, y: 5)

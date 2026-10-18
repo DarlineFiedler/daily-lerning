@@ -54,6 +54,7 @@ struct ReviewSessionView: View {
                 }
             }
             .paperBackground()
+            .accessibilityIdentifier("screen.review")
         }
         .onAppear {
             loadSelection()

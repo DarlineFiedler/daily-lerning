@@ -170,12 +170,14 @@ enum StreakStore {
 
     /// Aktueller Streak, aber 0, wenn abgelaufen und nicht mehr per Joker rettbar.
     static func displayStreak(asOf date: Date = .now, calendar: Calendar = .current) -> Int {
-        load().displayStreak(asOf: date, calendar: calendar, maxJokers: maxJokers)
+        // Reiner Lese-Pfad: ohne die Verlaufs-Arrays laden (kein `save()`).
+        loadLight().displayStreak(asOf: date, calendar: calendar, maxJokers: maxJokers)
     }
 
     /// Aktuell verfügbare Joker, inklusive noch nicht persistierter Wochenvergabe.
     static func availableJokers(asOf date: Date = .now, calendar: Calendar = .current) -> Int {
-        load().grantingJokers(asOf: date, calendar: calendar, max: maxJokers).jokers
+        // Reiner Lese-Pfad: ohne die Verlaufs-Arrays laden (kein `save()`).
+        loadLight().grantingJokers(asOf: date, calendar: calendar, max: maxJokers).jokers
     }
 
     // MARK: - Laden / Speichern
@@ -189,6 +191,20 @@ enum StreakStore {
             weekAnchor: date(forKey: StreakKeys.weekAnchor),
             jokerUses: jokerUses,
             activeDays: activeDays
+        )
+    }
+
+    /// Wie `load()`, aber OHNE die (bis zu `historyRetentionDays` langen) Verlaufs-Arrays
+    /// `jokerUses`/`activeDays`. Nur für reine Lese-Pfade (`displayStreak`/`availableJokers`),
+    /// die die Arrays nicht brauchen – NIEMALS als Basis für ein `save()`, sonst würde der
+    /// gesamte Verlauf mit leeren Arrays überschrieben.
+    private static func loadLight() -> StreakState {
+        StreakState(
+            current: current,
+            longest: longest,
+            lastActiveDay: date(forKey: StreakKeys.lastActiveDay),
+            jokers: d.integer(forKey: StreakKeys.jokers),
+            weekAnchor: date(forKey: StreakKeys.weekAnchor)
         )
     }
 

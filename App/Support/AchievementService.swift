@@ -110,6 +110,12 @@ enum AchievementService {
                                groups: groups,
                                bossDefeated: bossDefeated,
                                maxCombo: maxCombo)
+        // Wochenziel erreicht? Flag im selben Fortschritt setzen, damit die eine Auswertung
+        // unten das „Wochenziel erreicht"-Badge (🏁) freischalten kann. Ohne diese Buchung
+        // bliebe das Badge – und damit auch das 100%-Meta-Badge – dauerhaft unerreichbar.
+        if !progress.weeklyGoalReached, isWeeklyGoalReached(on: date) {
+            progress.weeklyGoalReached = true
+        }
         AchievementStore.progress = progress
         // Tages-Challenge gegen den frischen Tagespuffer prüfen und ggf. verbuchen –
         // vor der Auswertung, damit das Meta-Badge im selben Aufruf freischalten kann.
@@ -119,6 +125,25 @@ enum AchievementService {
                                                           alreadyUnlocked: AchievementStore.unlockedIDs)
         AchievementStore.markUnlocked(unlocked, on: date)
         return unlocked
+    }
+
+    /// Ist das aktuell gesetzte Wochenziel (falls aktiv) in der laufenden Woche erreicht?
+    /// Grundlage für das „Wochenziel erreicht"-Badge. `false`, wenn kein Wochenziel gesetzt ist.
+    static func isWeeklyGoalReached(on date: Date = .now, calendar: Calendar = .current) -> Bool {
+        let d = AppGroup.defaults
+        let goal = d.integer(forKey: GoalKeys.weekly)
+        guard goal > 0 else { return false }
+        let metric = GoalMetric(rawValue: d.string(forKey: GoalKeys.metric) ?? "") ?? .practiced
+        return WeeklyReviewStore.weekProgress(for: metric, asOf: date, calendar: calendar) >= goal
+    }
+
+    /// Verbucht das „Wochenziel erreicht"-Flag, falls das Ziel erreicht ist, und wertet aus.
+    /// Idempotent (siehe `recordEvent`). Deckt den Pfad ab, in dem das Ziel allein über das
+    /// interaktive Widget erreicht wurde (dort läuft keine `registerSession`).
+    @discardableResult
+    static func checkWeeklyGoalReached(context: ModelContext, on date: Date = .now) -> [Achievement] {
+        guard isWeeklyGoalReached(on: date) else { return [] }
+        return recordEvent(\.weeklyGoalReached, date: date, context: context)
     }
 
     /// Setzt ein einfaches Ereignis-Flag im Fortschritt (z.B. „Suche benutzt") und

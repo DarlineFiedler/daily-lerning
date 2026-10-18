@@ -42,10 +42,3 @@ extension Color {
         )
     }
 }
-
-extension LinearGradient {
-    /// Verlauf aus einem Hex-String einer Gruppenfarbe.
-    static func forHex(_ hex: String) -> LinearGradient {
-        Color(hex: hex).vibrantGradient
-    }
-}

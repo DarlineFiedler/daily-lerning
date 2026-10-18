@@ -62,6 +62,13 @@ enum AchievementStore {
         return Date(timeIntervalSince1970: t)
     }
 
+    /// Alle Freischalt-Zeitpunkte auf einmal – ein Dictionary-Read statt einer je Badge
+    /// (die Übersicht hat ~60 Kacheln). `[:]`, wenn noch nichts freigeschaltet ist.
+    static var unlockDates: [String: Date] {
+        guard let dates = d.dictionary(forKey: AchievementKeys.unlockDates) as? [String: Double] else { return [:] }
+        return dates.mapValues { Date(timeIntervalSince1970: $0) }
+    }
+
     /// Merkt neu freigeschaltete Badges samt Zeitstempel. Idempotent: bereits
     /// bekannte IDs behalten ihren ursprünglichen Freischalt-Zeitpunkt.
     static func markUnlocked(_ achievements: [Achievement], on date: Date = .now) {

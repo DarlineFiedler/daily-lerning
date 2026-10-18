@@ -85,10 +85,9 @@ enum DailyChallengeStore {
     // MARK: - Persistenz
 
     private static func load() -> DailyChallengeState {
-        guard let data = d.data(forKey: DailyChallengeKeys.state),
-              let decoded = try? JSONDecoder().decode(DailyChallengeState.self, from: data)
-        else { return DailyChallengeState() }
-        return decoded
+        // Bei korruptem Blob den Rohwert sichern, statt ihn beim nächsten save() zu verlieren.
+        d.decodeJSONOrPreserve(DailyChallengeState.self, forKey: DailyChallengeKeys.state)
+            ?? DailyChallengeState()
     }
 
     private static func save(_ state: DailyChallengeState) {

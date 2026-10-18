@@ -315,10 +315,8 @@ enum GoalHistoryStore {
     // MARK: - Laden / Speichern
 
     private static func load() -> GoalHistory {
-        guard let data = d.data(forKey: GoalHistoryKeys.log),
-              let decoded = try? JSONDecoder().decode(GoalHistory.self, from: data)
-        else { return GoalHistory() }
-        return decoded
+        // Bei korruptem Blob den Rohwert sichern, statt ihn beim nächsten save() zu verlieren.
+        d.decodeJSONOrPreserve(GoalHistory.self, forKey: GoalHistoryKeys.log) ?? GoalHistory()
     }
 
     private static func save(_ history: GoalHistory) {

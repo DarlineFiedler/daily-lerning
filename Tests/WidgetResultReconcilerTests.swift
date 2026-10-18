@@ -16,13 +16,26 @@ final class WidgetResultReconcilerTests: XCTestCase {
         container = PersistenceController.makeContainer(inMemory: true)
         context = container.mainContext
         WidgetResultQueue.clear()
+        resetStores()
     }
 
     override func tearDown() {
         WidgetResultQueue.clear()
+        resetStores()
         context = nil
         container = nil
         super.tearDown()
+    }
+
+    /// Setzt die vom Reconciler beschriebenen, prozess-geteilten Stores zurück
+    /// (Streak + Wochen-Log in `AppGroup.defaults`), damit Tests isoliert laufen.
+    private func resetStores() {
+        let d = AppGroup.defaults
+        for key in [StreakKeys.current, StreakKeys.longest, StreakKeys.lastActiveDay,
+                    StreakKeys.jokers, StreakKeys.weekAnchor, StreakKeys.jokerUses,
+                    StreakKeys.activeDays, WeeklyReviewKeys.log] {
+            d.removeObject(forKey: key)
+        }
     }
 
     @discardableResult
@@ -37,12 +50,12 @@ final class WidgetResultReconcilerTests: XCTestCase {
         let vocab = insert("가다")
         let now = Date(timeIntervalSince1970: 1_000_000)
 
-        let changed = WidgetResultReconciler.apply(
+        let outcome = WidgetResultReconciler.apply(
             [PendingWidgetResult(wordID: vocab.id, correct: true, date: now)],
             context: context
         )
 
-        XCTAssertTrue(changed)
+        XCTAssertEqual(outcome, .persisted)
         XCTAssertEqual(vocab.successCounter, 1)
         XCTAssertEqual(vocab.timesPracticed, 1)
         XCTAssertEqual(vocab.lastPracticedAt, now)
@@ -53,12 +66,12 @@ final class WidgetResultReconcilerTests: XCTestCase {
     func testAppliesWrongResult() {
         let vocab = insert("오다")
 
-        let changed = WidgetResultReconciler.apply(
+        let outcome = WidgetResultReconciler.apply(
             [PendingWidgetResult(wordID: vocab.id, correct: false, date: .now)],
             context: context
         )
 
-        XCTAssertTrue(changed)
+        XCTAssertEqual(outcome, .persisted)
         XCTAssertEqual(vocab.timesPracticed, 1)
         XCTAssertEqual(vocab.totalWrongCount, 1)
         XCTAssertTrue(vocab.lastAnswerWasWrong)
@@ -68,17 +81,17 @@ final class WidgetResultReconcilerTests: XCTestCase {
     func testIgnoresUnknownWordID() {
         insert("가다")
 
-        let changed = WidgetResultReconciler.apply(
+        let outcome = WidgetResultReconciler.apply(
             [PendingWidgetResult(wordID: UUID(), correct: true, date: .now)],
             context: context
         )
 
-        XCTAssertFalse(changed)
+        XCTAssertEqual(outcome, .nothing)
     }
 
     /// Leere Ergebnisliste ändert nichts.
     func testEmptyResultsNoChange() {
-        XCTAssertFalse(WidgetResultReconciler.apply([], context: context))
+        XCTAssertEqual(WidgetResultReconciler.apply([], context: context), .nothing)
     }
 
     /// Der Tap-Zeitpunkt wird an `registerResult(now:)` durchgereicht: zwei richtige Antworten
@@ -97,6 +110,56 @@ final class WidgetResultReconcilerTests: XCTestCase {
         XCTAssertEqual(vocab.successCounter, 2)
     }
 
+    /// Ein Widget-Ergebnis zählt für die Tages-Streak (sonst reißt sie trotz Aktivität ab).
+    func testWidgetResultRegistersStreak() {
+        let vocab = insert("먹다")
+        let today = Date()
+
+        WidgetResultReconciler.apply(
+            [PendingWidgetResult(wordID: vocab.id, correct: true, date: today)],
+            context: context
+        )
+
+        XCTAssertEqual(StreakStore.displayStreak(asOf: today), 1,
+                       "Ein Widget-Tipp muss den heutigen Tag für die Streak zählen.")
+    }
+
+    /// Ein Widget-Ergebnis füttert den Wochenrückblick (distinct geübtes Wort + Trefferquote),
+    /// damit Ziel-/Statistik-Zahlen nicht gegenüber dem Wortstatus driften.
+    func testWidgetResultFeedsWeeklyActivity() {
+        let vocab = insert("자다")
+        let today = Date()
+
+        WeeklyReviewStore.saveActivity(WeeklyActivity())
+        WidgetResultReconciler.apply(
+            [PendingWidgetResult(wordID: vocab.id, correct: true, date: today)],
+            context: context
+        )
+
+        XCTAssertEqual(WeeklyReviewStore.dayProgress(for: .practiced, asOf: today), 1)
+    }
+
+    /// Ein Ergebnis mit Datum in der Zukunft (Uhr-Schieflage) wird auf „jetzt" gekappt und darf
+    /// NICHT die aktuelle Wochen-Historie wegprunen.
+    func testFutureDatedResultIsClampedAndKeepsHistory() {
+        let vocab = insert("쓰다")
+        let now = Date()
+        // Heutigen Eintrag seeden.
+        WeeklyReviewStore.record(wordID: UUID(), becameLearned: false, correct: true, on: now)
+        XCTAssertEqual(WeeklyReviewStore.dayProgress(for: .practiced, asOf: now), 1)
+
+        // 400 Tage in der Zukunft: ohne Kappung würde recording(on: future) die Historie vor
+        // future−91d prunen (also auch heute) und auf einen Zukunftstag buchen.
+        let future = now.addingTimeInterval(400 * 24 * 60 * 60)
+        WidgetResultReconciler.apply(
+            [PendingWidgetResult(wordID: vocab.id, correct: true, date: future)],
+            context: context, now: now
+        )
+
+        // Heutiger Eintrag + gekapptes Widget-Ergebnis → 2 distinct Wörter HEUTE, nichts verloren.
+        XCTAssertEqual(WeeklyReviewStore.dayProgress(for: .practiced, asOf: now), 2)
+    }
+
     /// `drain` liest die Queue, spielt sie ein und leert sie danach.
     func testDrainAppliesAndClearsQueue() {
         let vocab = insert("하다")
@@ -112,5 +175,16 @@ final class WidgetResultReconcilerTests: XCTestCase {
     /// Leere Queue → `drain` meldet „nichts verbucht".
     func testDrainEmptyQueue() {
         XCTAssertFalse(WidgetResultReconciler.drain(context: context))
+    }
+
+    /// Enthält die Queue nur unbekannte (z.B. gelöschte) IDs, wird sie trotzdem geleert –
+    /// solche Einträge dürfen nicht endlos auflaufen.
+    func testDrainClearsQueueWithOnlyUnknownIDs() {
+        WidgetResultQueue.append(PendingWidgetResult(wordID: UUID(), correct: true, date: .now))
+
+        let changed = WidgetResultReconciler.drain(context: context)
+
+        XCTAssertFalse(changed, "Unbekannte IDs verbuchen nichts.")
+        XCTAssertTrue(WidgetResultQueue.load().isEmpty, "Unbekannte IDs müssen aus der Queue fallen.")
     }
 }

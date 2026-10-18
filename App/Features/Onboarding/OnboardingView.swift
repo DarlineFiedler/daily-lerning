@@ -40,6 +40,12 @@ struct OnboardingView: View {
             bottomBar
         }
         .paperBackground()
+        // `children: .contain` macht den VStack zu einer A11y-Container-Grenze, damit der
+        // Screen-Identifier NICHT an die enthaltenen Buttons (Überspringen/Ziel/Weiter)
+        // durchschlägt (wie es bei einem Identifier auf einem nackten Stack sonst passiert –
+        // vgl. den Fix am GardenTabBar). Die Buttons bleiben einzeln bedien-/prüfbar.
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("screen.onboarding")
         .onAppear { packs = WordPack.loadBundled() }
     }
 
@@ -183,7 +189,7 @@ struct OnboardingView: View {
         return Button { dailyGoal = value } label: {
             Text(label)
                 .font(.appMono(12))
-                .foregroundStyle(selected ? Color(hex: "#FBF5EA") : Theme.ink)
+                .foregroundStyle(selected ? Theme.onFill : Theme.ink)
                 .padding(.horizontal, 12).padding(.vertical, 10)
                 .frame(maxWidth: .infinity)
                 .background(selected ? Theme.vermillion : Theme.card,
