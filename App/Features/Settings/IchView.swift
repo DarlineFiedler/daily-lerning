@@ -34,6 +34,7 @@ struct IchView: View {
             .paperBackground()
             .navigationTitle(L("tab.me"))
             .navigationBarTitleDisplayMode(.inline)
+            .accessibilityIdentifier("screen.me")
         }
     }
 

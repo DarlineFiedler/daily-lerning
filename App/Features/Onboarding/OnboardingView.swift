@@ -40,6 +40,7 @@ struct OnboardingView: View {
             bottomBar
         }
         .paperBackground()
+        .accessibilityIdentifier("screen.onboarding")
         .onAppear { packs = WordPack.loadBundled() }
     }
 

@@ -49,6 +49,7 @@ struct GardenHomeView: View {
             }
             .paperBackground()
             .navigationBarHidden(true)
+            .accessibilityIdentifier("screen.garden")
             .onAppear {
                 StreakStore.settle()
                 GoalHistoryStore.snapshotToday()

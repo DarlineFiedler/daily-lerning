@@ -124,6 +124,7 @@ struct PracticeConfigView: View {
                 .padding(Theme.Spacing.m)
             }
             .paperBackground()
+            .accessibilityIdentifier("screen.practiceConfig")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
