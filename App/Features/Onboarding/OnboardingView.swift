@@ -183,7 +183,7 @@ struct OnboardingView: View {
         return Button { dailyGoal = value } label: {
             Text(label)
                 .font(.appMono(12))
-                .foregroundStyle(selected ? Color(hex: "#FBF5EA") : Theme.ink)
+                .foregroundStyle(selected ? Theme.onFill : Theme.ink)
                 .padding(.horizontal, 12).padding(.vertical, 10)
                 .frame(maxWidth: .infinity)
                 .background(selected ? Theme.vermillion : Theme.card,

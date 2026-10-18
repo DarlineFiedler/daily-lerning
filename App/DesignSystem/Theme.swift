@@ -48,6 +48,12 @@ enum Theme {
     /// Nacht – dunkler Screen (Sperrbildschirm, Endgegner).
     static let night = Color(hex: "#14120F")
 
+    /// Feste helle Papierfarbe für Text/Icons AUF gefüllten Flächen (Primärbutton,
+    /// aktives Segment, FAB). Bewusst NICHT adaptiv – auf Zinnober/Tinte bleibt die
+    /// Schrift immer hell. Als `static let` gecacht, damit `Color(hex:)` nicht pro Frame
+    /// (z.B. in `ButtonStyle.makeBody`) neu geparst wird.
+    static let onFill = Color(hex: "#FBF5EA")
+
     // MARK: - Marken-Kompatibilität (Bestandscode)
     // Früher Indigo→Pink-Verlauf. Jetzt auf die Papier-Palette umgemünzt, damit alte
     // Aufrufer denselben Namen verwenden können.
@@ -61,13 +67,6 @@ enum Theme {
         colors: [vermillion, vermillionDark],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
-    )
-
-    /// Weicher Verlauf für große Flächen (z.B. Gartenkarte Papier → Papier-tief).
-    static let brandGradientSoft = LinearGradient(
-        colors: [card, cardDeep],
-        startPoint: .top,
-        endPoint: .bottom
     )
 
     // MARK: - Adaptive Flächenfarben (Bestandsnamen → neue Werte)

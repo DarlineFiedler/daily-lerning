@@ -10,6 +10,8 @@ struct AchievementsView: View {
 
     @State private var metrics = AchievementMetrics()
     @State private var unlockedIDs: Set<String> = []
+    /// Alle Freischalt-Daten einmal je Render gelesen (statt pro Badge ein Dictionary-Read).
+    @State private var unlockDates: [String: Date] = [:]
 
     private var unlockedCount: Int {
         AchievementCatalog.all.filter { unlockedIDs.contains($0.id) }.count
@@ -47,6 +49,7 @@ struct AchievementsView: View {
         AchievementService.evaluate(context: context)
         metrics = AchievementService.metrics(context: context)
         unlockedIDs = AchievementStore.unlockedIDs
+        unlockDates = AchievementStore.unlockDates
     }
 
     // MARK: - Kopf
@@ -76,7 +79,7 @@ struct AchievementsView: View {
                     AchievementBadge(achievement: achievement,
                                      metrics: metrics,
                                      unlocked: unlockedIDs.contains(achievement.id),
-                                     unlockedOn: AchievementStore.unlockDate(for: achievement.id))
+                                     unlockedOn: unlockDates[achievement.id])
                 }
             }
         }

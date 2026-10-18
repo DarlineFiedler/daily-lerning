@@ -8,8 +8,10 @@ import SwiftUI
 
 extension View {
     /// Print-Schatten: fester Versatz, **kein** Weichzeichnen. Standard entspricht dem
-    /// ruhigen Karten-Schatten der Vorlage (`2px 3px 0`, ~9 % Tinte).
-    func hardShadow(x: CGFloat = 2, y: CGFloat = 3, color: Color = Color(hex: "#211E19").opacity(0.09)) -> some View {
+    /// ruhigen Karten-Schatten der Vorlage (`2px 3px 0`, ~9 % Tinte). Default nutzt das
+    /// gecachte `Theme.Shadow.color`-Token (identischer Wert), damit `Color(hex:)` nicht an
+    /// jeder Aufrufstelle neu geparst wird.
+    func hardShadow(x: CGFloat = 2, y: CGFloat = 3, color: Color = Theme.Shadow.color) -> some View {
         shadow(color: color, radius: 0, x: x, y: y)
     }
 
@@ -23,9 +25,12 @@ extension View {
 
 /// Feine, waagerechte Papier-Linierung (1pt Linie alle 4pt), sehr dezent (~2,2 % Tinte).
 struct PaperTexture: View {
+    /// Einmal geparst statt pro Canvas-Pass (der Hintergrund liegt auf ~24 Screens).
+    private static let line = Color(hex: "#211E19").opacity(0.022)
+
     var body: some View {
         Canvas { context, size in
-            let line = Color(hex: "#211E19").opacity(0.022)
+            let line = Self.line
             var y: CGFloat = 0
             while y < size.height {
                 context.fill(Path(CGRect(x: 0, y: y, width: size.width, height: 1)), with: .color(line))

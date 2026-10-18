@@ -20,7 +20,7 @@ struct PaperSegmented<Option: Hashable>: View {
                         .font(.appMono(12))
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
-                        .foregroundStyle(isSelected ? Color(hex: "#FBF5EA") : Theme.ink)
+                        .foregroundStyle(isSelected ? Theme.onFill : Theme.ink)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 9)
                         .background(

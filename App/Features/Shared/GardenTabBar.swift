@@ -74,7 +74,7 @@ struct GardenTabBar: View {
                         .minimumScaleFactor(0.6)
                 }
             }
-            .foregroundStyle(Color(hex: "#FBF5EA"))
+            .foregroundStyle(Theme.onFill)
             .frame(width: 66, height: 66)
             .background(Theme.vermillion, in: Circle())
             .buttonHardShadow(Theme.vermillionDark, y: 5)
