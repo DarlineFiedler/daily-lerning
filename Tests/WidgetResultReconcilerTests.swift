@@ -155,4 +155,15 @@ final class WidgetResultReconcilerTests: XCTestCase {
     func testDrainEmptyQueue() {
         XCTAssertFalse(WidgetResultReconciler.drain(context: context))
     }
+
+    /// Enthält die Queue nur unbekannte (z.B. gelöschte) IDs, wird sie trotzdem geleert –
+    /// solche Einträge dürfen nicht endlos auflaufen.
+    func testDrainClearsQueueWithOnlyUnknownIDs() {
+        WidgetResultQueue.append(PendingWidgetResult(wordID: UUID(), correct: true, date: .now))
+
+        let changed = WidgetResultReconciler.drain(context: context)
+
+        XCTAssertFalse(changed, "Unbekannte IDs verbuchen nichts.")
+        XCTAssertTrue(WidgetResultQueue.load().isEmpty, "Unbekannte IDs müssen aus der Queue fallen.")
+    }
 }

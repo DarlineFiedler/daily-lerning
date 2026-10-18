@@ -62,9 +62,13 @@ enum WidgetResultReconciler {
     static func drain(context: ModelContext) -> Bool {
         let pending = WidgetResultQueue.load()
         guard !pending.isEmpty else { return false }
-        // Zuerst leeren, dann anwenden: So kann ein Fehler beim Anwenden nicht dazu führen, dass
-        // dieselben Ergebnisse beim nächsten Drain erneut verbucht werden (Doppelzählung).
-        WidgetResultQueue.clear()
-        return apply(pending, context: context)
+        let changed = apply(pending, context: context)
+        // Queue NUR leeren, wenn der Zustand sauber persistiert ist (nichts mehr ungespeichert).
+        // So gehen die Ergebnisse bei einem seltenen Save-Fehler nicht verloren, sondern werden
+        // beim nächsten Drain erneut versucht – statt sie vorab zu löschen. Wurde nichts verbucht
+        // (nur unbekannte/veraltete IDs → `apply` speichert nicht → keine offenen Änderungen),
+        // wird ebenfalls geleert, damit solche Einträge nicht endlos auflaufen.
+        if !context.hasChanges { WidgetResultQueue.clear() }
+        return changed
     }
 }
