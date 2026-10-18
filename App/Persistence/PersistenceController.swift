@@ -39,12 +39,18 @@ enum PersistenceController {
     /// Hinweis und überspringt das Seeding, statt still einen leeren Store zu zeigen.
     private(set) static var storeOpenFailed = false
 
-    /// Datenschutz-Stufe des lokalen Stores – bewusst auf `.complete` angehoben (Issue #104).
-    /// Die Datenbank wird ausschließlich von der App im Vordergrund gelesen: `AppContentRefresh`
-    /// läuft nur über `onAppActive`/Vokabeländerungen, es gibt keinen `BGTaskScheduler`-Task und
-    /// das Widget nutzt allein den JSON-Snapshot ([[WidgetSnapshotWriter]]), nie die DB. Deshalb
-    /// dürfen die Store-Dateien bei gesperrtem Bildschirm unlesbar sein.
-    static let storeFileProtection: FileProtectionType = .complete
+    /// Datenschutz-Stufe des lokalen Stores (Issue #104): verschlüsselt im Ruhezustand, aber ab
+    /// dem ersten Entsperren nach einem Neustart lesbar (`.completeUntilFirstUserAuthentication`).
+    ///
+    /// Bewusst NICHT `.complete`: Der `ModelContainer` wird bei `@main`-Init einmalig und ohne
+    /// Retry geöffnet. Startet iOS den Prozess, während das Gerät gesperrt ist (App-Prewarming
+    /// oder erster Start nach einem Reboot vor dem ersten Entsperren), sind `.complete`-geschützte
+    /// Dateien unlesbar → der Container-Open scheitert und die App fällt für die GESAMTE
+    /// Prozess-Laufzeit auf einen leeren In-Memory-Store zurück (leere App, überschriebener
+    /// Widget-Snapshot, verlorene Widget-Ergebnisse). `.completeUntilFirstUserAuthentication` ist
+    /// die Standard-Stufe für App-Datenbanken und vermeidet genau diesen Fall, ohne die
+    /// Verschlüsselung im ausgeschalteten/frisch gebooteten Zustand aufzugeben.
+    static let storeFileProtection: FileProtectionType = .completeUntilFirstUserAuthentication
 
     static func makeContainer(inMemory: Bool = false) -> ModelContainer {
         if inMemory {

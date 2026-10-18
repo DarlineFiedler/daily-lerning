@@ -38,12 +38,21 @@ enum AppContentRefresh {
     /// und der einzige zeitabhängige Faktor ist der Tageswechsel (`DailyPlan` ist tagesbasiert).
     /// Deshalb wird dann der sonst nutzlose Fetch + Badge- + Streak-Reload übersprungen.
     static func onAppActive(context: ModelContext, now: Date = .now) {
+        // Bei fehlgeschlagenem Store-Open läuft nur ein flüchtiger, LEERER In-Memory-Store
+        // (siehe [[PersistenceController]] `storeOpenFailed`). Dann NICHTS auffrischen: Ein
+        // Drain würde die Widget-Queue leeren und die Ergebnisse in den Wegwerf-Store buchen
+        // (dauerhaft verloren), und `afterVocabChange` würde den intakten Widget-Snapshot mit
+        // einem leeren überschreiben. Die echten Daten auf der Platte bleiben so unangetastet.
+        guard !PersistenceController.storeOpenFailed else { return }
         // Zuerst die vom interaktiven Widget verbuchten „Gewusst"/„Nochmal"-Ergebnisse
         // einspielen (siehe [[WidgetResultReconciler]]). Das läuft bei JEDEM Vordergrund-
         // Wechsel – unabhängig vom Kalendertag-Guard unten –, weil die Nutzerin das Widget
         // auch mehrfach am selben Tag getippt haben kann. Wurde etwas verbucht, muss trotz
         // gleichem Tag voll aufgefrischt werden (der geänderte Status bewegt das Badge).
         let didReconcile = WidgetResultReconciler.drain(context: context)
+        // Ein reiner Widget-Tag kann das Wochenziel erreicht haben, ohne dass je eine
+        // `registerSession` lief – darum hier explizit prüfen/verbuchen (idempotent).
+        if didReconcile { AchievementService.checkWeeklyGoalReached(context: context, on: now) }
         guard didReconcile || shouldRefreshOnActive(lastRefreshDay: lastActiveRefreshDay, now: now) else { return }
         lastActiveRefreshDay = Calendar.current.startOfDay(for: now)
         afterVocabChange(context: context)

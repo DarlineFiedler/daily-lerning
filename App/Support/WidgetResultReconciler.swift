@@ -19,14 +19,41 @@ enum WidgetResultReconciler {
         // Doppel-Eintrag, damit der Lookup-Aufbau nicht crasht.
         let byID = Dictionary(vocabs.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
 
+        // Ergebnisse chronologisch verarbeiten: Das Widget kann über mehrere Tage puffern, und
+        // die Streak-/Wochen-Buchung hängt an der Tagesreihenfolge.
+        let ordered = results.sorted { $0.date < $1.date }
+        let calendar = Calendar.current
+        // Wochen-Log EINMAL laden und gebündelt zurückschreiben (wie der Übungs-Hotpath in
+        // [[PracticeSession]]), statt pro Ergebnis zu de/encoden.
+        var weekly = WeeklyReviewStore.loadActivity()
+        var activeDays: Set<Date> = []
+
         var changed = false
-        for result in results {
+        for result in ordered {
             guard let vocab = byID[result.wordID] else { continue }
+            // Erstaufstieg auf „Gelernt" VOR `registerResult` bestimmen (das setzt das Flag) –
+            // so zählt nur der Erstaufstieg als „neu gelernt" (analog PracticeSession.record).
+            let wasEverLearned = vocab.everReachedLearned
+            let before = vocab.status
             vocab.registerResult(correct: result.correct, now: result.date)
+            let becameLearned = !wasEverLearned && before != .learned && vocab.status == .learned
+            // Wochenrückblick/Ziel-Fortschritt füttern (distinct Wort + Trefferquote).
+            weekly = weekly.recording(wordID: vocab.id, becameLearned: becameLearned,
+                                      correct: result.correct, on: result.date, calendar: calendar)
+            activeDays.insert(calendar.startOfDay(for: result.date))
             changed = true
         }
-        if changed { context.saveOrLog() }
-        return changed
+
+        guard changed else { return false }
+        // Streak je betroffenem Kalendertag verbuchen (idempotent pro Tag, chronologisch, damit
+        // überbrückte Lücken korrekt mit Jokern aufgelöst werden). Damit zählt auch ein reiner
+        // Widget-Tag für die Streak – sonst reißt sie trotz Aktivität ab.
+        for day in activeDays.sorted() {
+            StreakStore.registerActivity(on: day, calendar: calendar)
+        }
+        WeeklyReviewStore.saveActivity(weekly)
+        context.saveOrLog()
+        return true
     }
 
     /// Lädt die Queue, leert sie und spielt sie ein. Gibt zurück, ob etwas verbucht wurde –
