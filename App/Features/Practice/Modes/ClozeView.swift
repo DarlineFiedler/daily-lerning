@@ -69,7 +69,7 @@ struct ClozeView: View {
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.5)
                 // Lückensatz ist Koreanisch – für die VoiceOver-Aussprache auszeichnen.
-                .accessibilityLabel(Text(AttributedString.korean(sentence)))
+                .accessibilityLabel(Text.speech(sentence, korean: true))
             Text(L("practice.cloze.meaningHint", item.vocab.meaning))
                 .font(.appHand(19))
                 .foregroundStyle(Theme.inkSecondary)

@@ -349,7 +349,7 @@ struct PromptCard: View {
                     .foregroundStyle(Theme.ink)
                     .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.5)
-                    .accessibilityLabel(isKoreanPrompt ? Text(AttributedString.korean(text)) : Text(text))
+                    .accessibilityLabel(Text.speech(text, korean: isKoreanPrompt))
                 if let spokenText {
                     SpeakButton(text: spokenText, font: .appTitle2, tint: Theme.vermillion)
                 }

@@ -64,7 +64,7 @@ struct ListeningView: View {
                     .foregroundStyle(Theme.ink)
                     .padding(.bottom, Theme.Spacing.m)
                     // Eingeblendetes Wort ist Hangul – für VoiceOver koreanisch auszeichnen.
-                    .accessibilityLabel(Text(AttributedString.korean(item.vocab.word)))
+                    .accessibilityLabel(Text.speech(item.vocab.word, korean: true))
             }
         }
     }

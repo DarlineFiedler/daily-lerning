@@ -103,9 +103,7 @@ struct WritingView: View {
                 HStack(spacing: Theme.Spacing.s) {
                     Text(item.answer())
                         .font(.appTitle3)
-                        .accessibilityLabel(item.direction == .meaningToWord
-                            ? Text(AttributedString.korean(item.answer()))
-                            : Text(item.answer()))
+                        .accessibilityLabel(Text.speech(item.answer(), korean: item.direction == .meaningToWord))
                     if item.direction == .meaningToWord {
                         SpeakButton(text: item.vocab.word)
                     }

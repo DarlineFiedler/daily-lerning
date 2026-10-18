@@ -29,8 +29,6 @@ struct ChoiceOptionsView: View {
                             Text(mark.symbol)
                                 .font(.appHeadline)
                                 .foregroundStyle(mark.color)
-                                // Dekorativ – der Status wird als accessibilityValue angesagt.
-                                .accessibilityHidden(true)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -58,8 +56,7 @@ struct ChoiceOptionsView: View {
     /// VoiceOver-Label der Option. Ist die Antwort-Seite Hangul (Richtung
     /// Bedeutung→Wort), wird sie als Koreanisch ausgezeichnet, damit die Aussprache stimmt.
     private func optionLabel(_ choice: Vocab) -> Text {
-        let text = item.optionText(choice)
-        return item.direction == .meaningToWord ? Text(AttributedString.korean(text)) : Text(text)
+        .speech(item.optionText(choice), korean: item.direction == .meaningToWord)
     }
 
     /// Nach der Antwort meldet VoiceOver, ob diese Option richtig bzw. die falsch

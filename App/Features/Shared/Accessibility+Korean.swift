@@ -14,6 +14,16 @@ extension AttributedString {
     }
 }
 
+extension Text {
+    /// Baut ein VoiceOver-Label für ein `accessibilityLabel`: ist `korean` gesetzt,
+    /// wird der Text als Koreanisch ausgezeichnet (Hangul-Aussprache), sonst normal
+    /// vorgelesen. Eine Quelle der Wahrheit für die „ko-KR"-Auszeichnung in den
+    /// Lern-Modi (Issue #120).
+    static func speech(_ string: String, korean: Bool) -> Text {
+        korean ? Text(AttributedString.korean(string)) : Text(string)
+    }
+}
+
 /// Barrierefreiheits-Status einer Antwortoption nach der Wahl – steuert, was
 /// VoiceOver als Value/Trait meldet. Rein aus dem Zustand abgeleitet (testbar),
 /// parallel zur sichtbaren Tönung in [[ChoiceOptionsView]].
