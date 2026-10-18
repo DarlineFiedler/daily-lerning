@@ -28,6 +28,9 @@ struct GardenTabBar: View {
         .padding(.horizontal, 30)
         .padding(.top, 10)
         .padding(.bottom, 6)
+        // Feste Tab-Geometrie (runde FAB, schmale Seiten-Tabs): Dynamic Type deckeln,
+        // sonst brechen/schneiden die Labels bei großen Textgrößen ab (Issue #120).
+        .dynamicTypeSize(...DynamicTypeSize.xLarge)
         .background(
             Theme.paper
                 .overlay(Rectangle().fill(Theme.hairline).frame(height: 1), alignment: .top)
@@ -46,6 +49,8 @@ struct GardenTabBar: View {
                 Text(title)
                     .font(.appMono(10))
                     .tracking(0.5)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
             .foregroundStyle(active ? Theme.ink : Theme.inkMuted)
             .frame(width: 64)
@@ -59,10 +64,14 @@ struct GardenTabBar: View {
             VStack(spacing: 1) {
                 Text(L("tab.practice"))
                     .font(.appDisplay(15))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                 if dueCount > 0 {
                     Text(L("practice.fab.due", dueCount))
                         .font(.appMono(9))
                         .opacity(0.85)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
                 }
             }
             .foregroundStyle(Color(hex: "#FBF5EA"))
