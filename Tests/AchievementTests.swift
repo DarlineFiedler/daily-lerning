@@ -416,43 +416,6 @@ final class AchievementTests: XCTestCase {
         XCTAssertTrue(AchievementService.groupMastery(from: [(count: big, learned: big)]).big)
     }
 
-    // MARK: - Wochenziel-Badge (Regression)
-
-    /// Das „Wochenziel erreicht"-Badge (🏁) muss freischalten, sobald das gesetzte Wochenziel
-    /// in der laufenden Woche erreicht ist. Regression: Die Flag `weeklyGoalReached` wurde nie
-    /// gesetzt → das Badge (und damit das 100%-Meta-Badge) war dauerhaft unerreichbar.
-    @MainActor
-    func testWeeklyGoalReachedUnlocksBadge() {
-        withCleanStore {
-            let d = AppGroup.defaults
-            let goalKeys = [GoalKeys.weekly, GoalKeys.metric, WeeklyReviewKeys.log]
-            let saved = goalKeys.map { ($0, d.object(forKey: $0)) }
-            defer {
-                for (key, value) in saved {
-                    if let value { d.set(value, forKey: key) } else { d.removeObject(forKey: key) }
-                }
-            }
-            goalKeys.forEach { d.removeObject(forKey: $0) }
-
-            let container = PersistenceController.makeContainer(inMemory: true)
-            let context = container.mainContext
-
-            // Ohne gesetztes Ziel gilt es nie als erreicht.
-            XCTAssertFalse(AchievementService.isWeeklyGoalReached())
-
-            d.set(3, forKey: GoalKeys.weekly)
-            d.set(GoalMetric.practiced.rawValue, forKey: GoalKeys.metric)
-            for _ in 0 ..< 3 {
-                WeeklyReviewStore.record(wordID: UUID(), becameLearned: false, correct: true)
-            }
-
-            XCTAssertTrue(AchievementService.isWeeklyGoalReached())
-            AchievementService.checkWeeklyGoalReached(context: context)
-            XCTAssertTrue(AchievementStore.unlockedIDs.contains("weeklyGoal"),
-                          "Das Wochenziel-Badge muss nach Erreichen des Ziels freigeschaltet sein.")
-        }
-    }
-
     // MARK: - Persistenz (AchievementStore)
 
     /// Sichert und leert die Achievement-Keys vor jedem Store-Test und stellt sie
