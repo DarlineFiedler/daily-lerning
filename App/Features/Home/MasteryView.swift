@@ -83,8 +83,13 @@ struct MasteryView: View {
     }
 
     /// Gruppen nach Beherrschungs-Anteil absteigend (leere Gruppen ans Ende).
+    /// `masteryFraction` je Gruppe einmal berechnen (decorate-sort-undecorate),
+    /// statt bei jedem Paarvergleich zweimal.
     private var rankedGroups: [VocabGroup] {
-        activeGroups.sorted { masteryFraction($0) > masteryFraction($1) }
+        activeGroups
+            .map { (group: $0, fraction: masteryFraction($0)) }
+            .sorted { $0.fraction > $1.fraction }
+            .map(\.group)
     }
 
     private func masteryFraction(_ group: VocabGroup) -> Double {

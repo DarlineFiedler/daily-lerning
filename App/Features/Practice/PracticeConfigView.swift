@@ -62,8 +62,8 @@ struct PracticeConfigView: View {
     }
 
     /// So viele Wörter werden tatsächlich abgefragt (Begrenzung berücksichtigt).
-    private var effectiveCount: Int {
-        min(pool.count, wordLimit ?? pool.count)
+    private func effectiveCount(poolCount: Int) -> Int {
+        min(poolCount, wordLimit ?? poolCount)
     }
 
     private var config: PracticeConfig {
@@ -101,7 +101,10 @@ struct PracticeConfigView: View {
     private var examNeedsLevel: Bool { examMode && selectedTopikLevels.isEmpty }
 
     var body: some View {
-        NavigationStack {
+        // `pool` einmal je Body-Pass auswerten (Start-Sperre, Preset-Sperre,
+        // Wortanzahl und Session-Aufbau lesen es sonst mehrfach neu).
+        let pool = pool
+        return NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Spacing.m) {
                     Text(L("practice.config.title"))
@@ -139,7 +142,7 @@ struct PracticeConfigView: View {
                     .disabled(pool.isEmpty)
                 }
             }
-            .safeAreaInset(edge: .bottom) { startBar }
+            .safeAreaInset(edge: .bottom) { startBar(pool: pool) }
             .navigationDestination(isPresented: $startSession) {
                 if examMode {
                     // Prüfungssimulation: reguläre Engine, aber mit Countdown und
@@ -378,7 +381,7 @@ struct PracticeConfigView: View {
         }
     }
 
-    private var startBar: some View {
+    private func startBar(pool: [Vocab]) -> some View {
         VStack(spacing: 6) {
             Button { startSession = true } label: {
                 Text(L("practice.config.start"))
@@ -393,7 +396,7 @@ struct PracticeConfigView: View {
                     .font(.appCaption)
                     .foregroundStyle(Theme.wrong)
             } else {
-                Text(L("practice.config.wordCountOfPool", effectiveCount, pool.count))
+                Text(L("practice.config.wordCountOfPool", effectiveCount(poolCount: pool.count), pool.count))
                     .font(.appCaption)
                     .foregroundStyle(pool.isEmpty ? Theme.wrong : Theme.inkSecondary)
             }

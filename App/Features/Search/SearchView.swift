@@ -62,12 +62,15 @@ struct SearchView: View {
     }
 
     var body: some View {
+        // `results` einmal je Body-Pass auswerten statt pro Lesevorgang neu filtern
+        // (Trefferzähler, Leer-Prüfung und Liste würden sonst 3× filtern).
+        let results = results
         // Kein eigener NavigationStack: aus IchView in dessen Stack gepusht (sonst
         // verschachtelte Stacks → Push-Freeze).
-        VStack(spacing: Theme.Spacing.s) {
-            searchField
+        return VStack(spacing: Theme.Spacing.s) {
+            searchField(resultCount: results.count)
             if !vocabs.isEmpty { filterBar }
-            content
+            content(results: results)
         }
             .paperBackground()
             .navigationTitle(L("search.title"))
@@ -115,7 +118,7 @@ struct SearchView: View {
     /// Immer sichtbares Papier-Suchfeld mit Lupe, Eingabe, Löschen-Knopf und
     /// Treffer-Zähler – ersetzt die System-`.searchable`-Leiste, die im Papier-Look
     /// nicht erscheint/passt.
-    private var searchField: some View {
+    private func searchField(resultCount: Int) -> some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .font(.appBody)
@@ -138,7 +141,7 @@ struct SearchView: View {
                 .accessibilityLabel(L("common.cancel"))
             }
             if hasCriteria {
-                Text(L("search.hits", results.count))
+                Text(L("search.hits", resultCount))
                     .font(.appMono(11))
                     .foregroundStyle(Theme.inkMuted)
                     .fixedSize()
@@ -240,7 +243,7 @@ struct SearchView: View {
     // MARK: - Inhalt
 
     @ViewBuilder
-    private var content: some View {
+    private func content(results: [Vocab]) -> some View {
         if !hasCriteria {
             ContentUnavailableView {
                 Label(L("search.title"), systemImage: "magnifyingglass")
