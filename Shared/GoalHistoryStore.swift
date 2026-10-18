@@ -107,6 +107,13 @@ struct GoalStats {
     let currentMetric: GoalMetric
     let calendar: Calendar
 
+    /// Vorberechneter Tages-Index der Ziel-Historie (`startOfDay → Entry`). Macht die
+    /// Tages-Lookups in den Tages-Schleifen (`goalStreak`/`bestGoalStreak`/
+    /// `completionRate`) O(1) statt eines linearen Scans pro Tag.
+    private let entryByDay: [Date: GoalHistory.Entry]
+    /// Vorberechneter Tages-Index der Aktivität (`startOfDay → Tageswerte`).
+    private let totalsByDay: [Date: (practiced: Int, learned: Int)]
+
     /// Erreichungs-Status eines Kalendertags gegen sein Tagesziel.
     enum DayStatus {
         case reached // Tageswert ≥ Tagesziel
@@ -125,25 +132,49 @@ struct GoalStats {
         self.currentWeeklyTarget = currentWeeklyTarget
         self.currentMetric = currentMetric
         self.calendar = calendar
+
+        // Tages-Indizes einmalig aufbauen: wandelt die bis zu 3 linearen `first { … }`-
+        // Scans pro Tag in O(1)-Lookups um. `recordingSnapshot`/`recording` sind idempotent
+        // pro Kalendertag, es gibt also je `startOfDay` höchstens einen Eintrag – die
+        // Dictionary-Projektion ist damit äquivalent zum bisherigen `first { … }`.
+        entryByDay = Dictionary(history.days.map { (calendar.startOfDay(for: $0.day), $0) },
+                                uniquingKeysWith: { _, last in last })
+        totalsByDay = Dictionary(
+            activity.days.map {
+                (calendar.startOfDay(for: $0.day), ($0.practicedIDs.count, $0.newlyLearned))
+            },
+            uniquingKeysWith: { _, last in last }
+        )
     }
 
     // MARK: - Tageswerte
 
+    /// Ziel-Snapshot eines Tages aus dem vorberechneten Index (O(1)), oder `nil`.
+    private func entry(on day: Date) -> GoalHistory.Entry? {
+        entryByDay[calendar.startOfDay(for: day)]
+    }
+
+    /// Tageswerte eines Tages aus dem vorberechneten Index (O(1)). `0/0`, wenn für den
+    /// Tag kein Eintrag existiert.
+    private func dayTotals(on day: Date) -> (practiced: Int, learned: Int) {
+        totalsByDay[calendar.startOfDay(for: day)] ?? (0, 0)
+    }
+
     /// An dem Tag geltendes Tagesziel (aus der Historie, sonst aktueller Wert).
     func dailyTarget(on day: Date) -> Int {
-        history.entry(on: day, calendar: calendar)?.dailyTarget ?? currentDailyTarget
+        entry(on: day)?.dailyTarget ?? currentDailyTarget
     }
 
     /// An dem Tag geltende Metrik (geübte vs. neu gelernte Wörter).
     func metric(on day: Date) -> GoalMetric {
-        guard let raw = history.entry(on: day, calendar: calendar)?.metricRaw,
+        guard let raw = entry(on: day)?.metricRaw,
               let metric = GoalMetric(rawValue: raw) else { return currentMetric }
         return metric
     }
 
     /// Erreichter Tageswert gemäß der an dem Tag geltenden Metrik.
     func value(on day: Date) -> Int {
-        let totals = activity.dayTotals(on: day, calendar: calendar)
+        let totals = dayTotals(on: day)
         return metric(on: day) == .practiced ? totals.practiced : totals.learned
     }
 
