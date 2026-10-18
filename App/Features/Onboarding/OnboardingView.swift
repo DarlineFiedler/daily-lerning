@@ -40,6 +40,11 @@ struct OnboardingView: View {
             bottomBar
         }
         .paperBackground()
+        // `children: .contain` macht den VStack zu einer A11y-Container-Grenze, damit der
+        // Screen-Identifier NICHT an die enthaltenen Buttons (Überspringen/Ziel/Weiter)
+        // durchschlägt (wie es bei einem Identifier auf einem nackten Stack sonst passiert –
+        // vgl. den Fix am GardenTabBar). Die Buttons bleiben einzeln bedien-/prüfbar.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("screen.onboarding")
         .onAppear { packs = WordPack.loadBundled() }
     }

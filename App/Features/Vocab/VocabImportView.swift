@@ -137,8 +137,11 @@ struct VocabImportView: View {
         let needsStop = url.startAccessingSecurityScopedResource()
         defer { if needsStop { url.stopAccessingSecurityScopedResource() } }
         // Dateigröße VOR dem Einlesen prüfen – eine zu große Datei gar nicht erst laden.
-        if let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize,
-           size > Self.maxImportFileBytes {
+        // Zwei Quellen, da manche (iCloud-/Drittanbieter-)Provider `.fileSizeKey` nicht liefern;
+        // greift eine, wird gekappt. Liefert keine eine Größe, bleibt nur das Einlesen (selten).
+        let sizeViaURL = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
+        let sizeViaFM = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.size] as? Int
+        if let size = sizeViaURL ?? sizeViaFM, size > Self.maxImportFileBytes {
             importError = true
             return
         }
