@@ -228,7 +228,9 @@ struct GroupDetailView: View {
     }
 
     private var selectionBar: some View {
-        HStack(spacing: Theme.Spacing.m) {
+        // Verschiebe-Ziele einmal auswerten (sonst für Leer-Prüfung und Menü-Liste 2×).
+        let targets = moveTargets
+        return HStack(spacing: Theme.Spacing.m) {
             Text(L("vocab.selectedCount", selection.count))
                 .font(.appSubheadline.weight(.semibold))
             Spacer()
@@ -241,9 +243,9 @@ struct GroupDetailView: View {
             } label: {
                 Label(L("vocab.setStatus"), systemImage: "circle.lefthalf.filled")
             }
-            if !moveTargets.isEmpty {
+            if !targets.isEmpty {
                 Menu {
-                    ForEach(moveTargets) { target in
+                    ForEach(targets) { target in
                         Button { move(selectedVocabs, to: target) } label: {
                             Label(target.name, systemImage: "rectangle.stack.fill")
                         }

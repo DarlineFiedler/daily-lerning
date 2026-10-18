@@ -8,14 +8,16 @@ struct StatusDistributionBar: View {
     private var total: Int { counts.values.reduce(0, +) }
 
     var body: some View {
-        GeometryReader { geo in
+        // Gesamtsumme einmal bilden, statt sie je Status-Segment neu zu reduzieren.
+        let total = CGFloat(max(total, 1))
+        return GeometryReader { geo in
             HStack(spacing: 0) {
                 ForEach(LearningStatus.allCases) { status in
                     let count = counts[status] ?? 0
                     if count > 0 {
                         Rectangle()
                             .fill(status.color)
-                            .frame(width: geo.size.width * CGFloat(count) / CGFloat(max(total, 1)))
+                            .frame(width: geo.size.width * CGFloat(count) / total)
                     }
                 }
             }

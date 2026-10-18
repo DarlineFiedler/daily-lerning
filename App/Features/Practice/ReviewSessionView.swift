@@ -37,20 +37,23 @@ struct ReviewSessionView: View {
     /// So viele Wörter werden diesen Durchgang tatsächlich abgefragt (Begrenzung
     /// berücksichtigt). Die übrigen bleiben für heute offen und tauchen beim
     /// nächsten Öffnen erneut im Pool auf.
-    private var effectiveCount: Int {
-        ReviewSelection(wordLimit: wordLimit).effectiveCount(poolCount: dueVocabs.count)
+    private func effectiveCount(dueCount: Int) -> Int {
+        ReviewSelection(wordLimit: wordLimit).effectiveCount(poolCount: dueCount)
     }
 
     var body: some View {
-        NavigationStack {
+        // `dueVocabs` baut auf der teuren `DailyPlan.today`-Partition auf – einmal je
+        // Body-Pass auswerten statt für Leer-Prüfung und Wortanzahl erneut.
+        let due = dueVocabs
+        return NavigationStack {
             Group {
                 if let session = sessionStore.active {
                     PracticeContainerView(session: session, onClose: { dismiss() },
                                           sessionStore: sessionStore, resumable: true)
-                } else if dueVocabs.isEmpty {
+                } else if due.isEmpty {
                     emptyState
                 } else {
-                    configStep
+                    configStep(dueCount: due.count)
                 }
             }
             .paperBackground()
@@ -68,7 +71,7 @@ struct ReviewSessionView: View {
 
     // MARK: - Auswahl-Schritt
 
-    private var configStep: some View {
+    private func configStep(dueCount: Int) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.l) {
                 DirectionModeSelection(direction: $direction, modes: $modes,
@@ -85,17 +88,17 @@ struct ReviewSessionView: View {
                 Button(L("common.close")) { dismiss() }
             }
         }
-        .safeAreaInset(edge: .bottom) { startBar }
+        .safeAreaInset(edge: .bottom) { startBar(dueCount: dueCount) }
     }
 
-    private var startBar: some View {
+    private func startBar(dueCount: Int) -> some View {
         VStack(spacing: 6) {
             Button(action: start) {
                 Label(L("common.start"), systemImage: "play.fill")
             }
             .buttonStyle(.primary)
 
-            Text(L("group.wordCount", effectiveCount))
+            Text(L("group.wordCount", effectiveCount(dueCount: dueCount)))
                 .font(.appMono(12))
                 .foregroundStyle(Theme.inkSecondary)
         }
