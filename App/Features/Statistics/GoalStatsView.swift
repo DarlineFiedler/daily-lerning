@@ -86,14 +86,10 @@ struct GoalStatsView: View {
                 StatTile(value: accuracy.map { "\($0)%" } ?? "–", label: L("goalstats.accuracy"),
                          systemImage: "target", tint: Theme.brandEnd)
             }
-            // Einzelne Rest-Kachel: bei großen Textgrößen ohnehin volle Breite; sonst
-            // links auf Drittel-Breite über die flexible Breite der Kachel selbst.
-            HStack(spacing: Theme.Spacing.s) {
-                StatTile(value: "\(learnedDays)", label: L("goalstats.learned.days"),
-                         systemImage: "calendar", tint: LearningStatus.learned.color)
-                Color.clear.frame(maxWidth: .infinity)
-                Color.clear.frame(maxWidth: .infinity)
-            }
+            // Einzelne Rest-Kachel: füllt die Reihe (voll breit) – konsistent mit den
+            // gestapelten Reihen bei großen Textgrößen, ohne Platzhalter-Hack.
+            StatTile(value: "\(learnedDays)", label: L("goalstats.learned.days"),
+                     systemImage: "calendar", tint: LearningStatus.learned.color)
         }
     }
 
