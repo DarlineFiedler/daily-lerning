@@ -11,20 +11,26 @@ struct StatisticsView: View {
     var body: some View {
         // Kein eigener NavigationStack: aus IchView in dessen Stack gepusht.
         Group {
-                if vocabs.isEmpty {
+                // Archivierte Gruppen sind „pausiert" und zählen – wie überall sonst
+                // (Widget, Garten, App-Icon-Badge) – nicht in die Statistik. Einmal je
+                // Render filtern und die Teilmengen nach unten reichen.
+                let activeVocabs = vocabs.filter { $0.group?.isArchived != true }
+                let activeGroups = groups.filter { !$0.isArchived }
+                if activeVocabs.isEmpty {
                     emptyState
                 } else {
                     // Status-Verteilung einmal je Render berechnen, statt sie in
                     // mehreren computed properties erneut zu filtern.
-                    let counts = vocabs.statusCounts()
+                    let counts = activeVocabs.statusCounts()
                     let learned = counts[.learned] ?? 0
-                    let rate = Int(round(Double(learned) / Double(vocabs.count) * 100))
+                    let rate = Int(round(Double(learned) / Double(activeVocabs.count) * 100))
                     ScrollView {
                         VStack(alignment: .leading, spacing: Theme.Spacing.l) {
-                            overallSection(counts: counts, learned: learned, rate: rate)
+                            overallSection(total: activeVocabs.count, counts: counts,
+                                           learned: learned, rate: rate)
                             trendSection
                             heatmapSection
-                            if !groups.isEmpty { byGroupSection }
+                            if !activeGroups.isEmpty { byGroupSection(activeGroups) }
                         }
                         .padding(Theme.Spacing.m)
                     }
@@ -46,11 +52,11 @@ struct StatisticsView: View {
 
     // MARK: - Gesamt
 
-    private func overallSection(counts: [LearningStatus: Int], learned: Int, rate: Int) -> some View {
+    private func overallSection(total: Int, counts: [LearningStatus: Int], learned: Int, rate: Int) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             SectionHeader(L("stats.overall"))
             StatTileRow {
-                StatTile(value: "\(vocabs.count)", label: L("stats.total"),
+                StatTile(value: "\(total)", label: L("stats.total"),
                          systemImage: "text.book.closed.fill", tint: Theme.brandStart)
                 StatTile(value: "\(learned)", label: L("status.learned"),
                          systemImage: "checkmark.seal.fill", tint: LearningStatus.learned.color)
@@ -95,10 +101,10 @@ struct StatisticsView: View {
 
     // MARK: - Nach Gruppe
 
-    private var byGroupSection: some View {
+    private func byGroupSection(_ activeGroups: [VocabGroup]) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             SectionHeader(L("stats.byGroup"))
-            ForEach(groups) { group in
+            ForEach(activeGroups) { group in
                 GroupStatRow(group: group)
             }
         }

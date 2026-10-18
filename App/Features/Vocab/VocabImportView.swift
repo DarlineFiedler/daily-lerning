@@ -127,10 +127,21 @@ struct VocabImportView: View {
         }
     }
 
+    /// Obergrenze für importierte CSV/TXT-Dateien. Deutlich kleiner als das Backup-Limit
+    /// (eine Wortliste ist nie hunderte MB groß) – verhindert, dass eine versehentlich/absichtlich
+    /// riesige fremde Datei komplett in den Speicher gelesen und geparst wird (OOM-Schutz).
+    static let maxImportFileBytes = 16 * 1024 * 1024
+
     private func loadFile(_ result: Result<[URL], Error>) {
         guard case .success(let urls) = result, let url = urls.first else { return }
         let needsStop = url.startAccessingSecurityScopedResource()
         defer { if needsStop { url.stopAccessingSecurityScopedResource() } }
+        // Dateigröße VOR dem Einlesen prüfen – eine zu große Datei gar nicht erst laden.
+        if let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize,
+           size > Self.maxImportFileBytes {
+            importError = true
+            return
+        }
         if let content = try? String(contentsOf: url, encoding: .utf8) {
             text = content
         } else {
