@@ -128,7 +128,7 @@ struct SettingsView: View {
         } message: {
             Text(L("settings.reset.message"))
         }
-        .onAppear { wordPacks = WordPack.loadBundled() }
+        .task { wordPacks = await WordPack.loadBundledCached() }
         .onChange(of: interval) { refreshWidget() }
         .onChange(of: showMeaning) { refreshWidget() }
         .onChange(of: localization.language) {
