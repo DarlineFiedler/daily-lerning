@@ -36,7 +36,11 @@ struct WordPack: Identifiable {
         if let loadTask { return await loadTask.value }
         let task = Task.detached(priority: .userInitiated) { loadBundled() }
         loadTask = task
-        return await task.value
+        let packs = await task.value
+        // Ein leeres Ergebnis (sehr seltener Fehlversuch) NICHT dauerhaft cachen, sonst bliebe
+        // die Liste bis zum App-Neustart leer. Cache verwerfen, damit der nächste Aufruf erneut lädt.
+        if packs.isEmpty { loadTask = nil }
+        return packs
     }
 }
 

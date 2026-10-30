@@ -121,6 +121,11 @@ struct VocabImportView: View {
             .onChange(of: text) { _, newValue in
                 parseTask?.cancel()
                 parseTask = Task {
+                    // Entprellung: schnelle Tastenanschläge brechen den Task ab, BEVOR der
+                    // teure Parse startet – so läuft nur der letzte Stand einmal durch,
+                    // statt pro Anschlag eine volle Parse-Runde zu spawnen.
+                    try? await Task.sleep(for: .milliseconds(150))
+                    guard !Task.isCancelled else { return }
                     let rows = await Task.detached { VocabCSV.parse(newValue) }.value
                     guard !Task.isCancelled else { return }
                     parsedRows = rows
@@ -146,21 +151,23 @@ struct VocabImportView: View {
 
     private func loadFile(_ result: Result<[URL], Error>) {
         guard case .success(let urls) = result, let url = urls.first else { return }
-        // Größenprüfung + Einlesen laufen im Hintergrund, damit eine große Datei den Main
-        // Actor nicht blockiert (Issue #142). Rückgabe `nil` = Fehler (zu groß ODER Lesefehler).
+        // Security-Scope SYNCHRON im fileImporter-Callback beanspruchen: manche
+        // (iCloud-/Drittanbieter-)Provider gewähren den Zugriff nur hier, nicht mehr in einem
+        // später laufenden Task. Das eigentliche IO läuft trotzdem im Hintergrund, damit eine
+        // große Datei den Main Actor nicht blockiert (Issue #142); der Scope wird erst nach dem
+        // Lesen freigegeben. Rückgabe `nil` = Fehler (zu groß ODER Lesefehler).
+        let needsStop = url.startAccessingSecurityScopedResource()
         Task {
             let content = await Task.detached { () -> String? in
-                let needsStop = url.startAccessingSecurityScopedResource()
-                defer { if needsStop { url.stopAccessingSecurityScopedResource() } }
                 // Dateigröße VOR dem Einlesen prüfen – eine zu große Datei gar nicht erst laden.
-                // Zwei Quellen, da manche (iCloud-/Drittanbieter-)Provider `.fileSizeKey` nicht
-                // liefern; greift eine, wird gekappt. Liefert keine eine Größe, bleibt nur das
-                // Einlesen (selten).
+                // Zwei Quellen, da manche Provider `.fileSizeKey` nicht liefern; greift eine, wird
+                // gekappt. Liefert keine eine Größe, bleibt nur das Einlesen (selten).
                 let sizeViaURL = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
                 let sizeViaFM = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.size] as? Int
                 if let size = sizeViaURL ?? sizeViaFM, size > Self.maxImportFileBytes { return nil }
                 return try? String(contentsOf: url, encoding: .utf8)
             }.value
+            if needsStop { url.stopAccessingSecurityScopedResource() }
             if let content { text = content } else { importError = true }
         }
     }
