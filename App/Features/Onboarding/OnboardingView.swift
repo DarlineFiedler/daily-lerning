@@ -46,7 +46,7 @@ struct OnboardingView: View {
         // vgl. den Fix am GardenTabBar). Die Buttons bleiben einzeln bedien-/prüfbar.
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("screen.onboarding")
-        .onAppear { packs = WordPack.loadBundled() }
+        .task { packs = await WordPack.loadBundledCached() }
     }
 
     // MARK: - Kopf (Schrittzähler + Überspringen)

@@ -25,6 +25,9 @@ struct VocabImportView: View {
     /// Gecachtes Parse-Ergebnis, nur bei tatsächlicher Textänderung neu berechnet (siehe
     /// `.onChange(of: text)`) statt `VocabCSV.parse(text)` mehrfach pro Tastenanschlag.
     @State private var parsedRows: [VocabCSV.Row] = []
+    /// Laufender Hintergrund-Parse; wird bei erneuter Textänderung abgebrochen, damit ein
+    /// veraltetes Ergebnis das aktuelle nicht überschreibt (Issue #142).
+    @State private var parseTask: Task<Void, Never>?
 
     /// Enthält der eingefügte Text mindestens eine eingestufte Zeile? Nur dann blenden
     /// wir den Niveau-Filter ein (alte Pakete ohne Spalte bleiben unverändert).
@@ -113,7 +116,21 @@ struct VocabImportView: View {
                 if case .new = target, let first = groups.first { target = .existing(first) }
             }
             // Text nur bei echter Änderung parsen (auch beim Datei-Import, der `text` setzt).
-            .onChange(of: text) { parsedRows = VocabCSV.parse(text) }
+            // Parse läuft im Hintergrund, damit große Einfügungen den Main Actor nicht
+            // blockieren; ein veralteter Lauf wird abgebrochen (Issue #142).
+            .onChange(of: text) { _, newValue in
+                parseTask?.cancel()
+                parseTask = Task {
+                    // Entprellung: schnelle Tastenanschläge brechen den Task ab, BEVOR der
+                    // teure Parse startet – so läuft nur der letzte Stand einmal durch,
+                    // statt pro Anschlag eine volle Parse-Runde zu spawnen.
+                    try? await Task.sleep(for: .milliseconds(150))
+                    guard !Task.isCancelled else { return }
+                    let rows = await Task.detached { VocabCSV.parse(newValue) }.value
+                    guard !Task.isCancelled else { return }
+                    parsedRows = rows
+                }
+            }
             .fileImporter(
                 isPresented: $showFileImporter,
                 allowedContentTypes: [.commaSeparatedText, .plainText, .text],
@@ -130,25 +147,28 @@ struct VocabImportView: View {
     /// Obergrenze für importierte CSV/TXT-Dateien. Deutlich kleiner als das Backup-Limit
     /// (eine Wortliste ist nie hunderte MB groß) – verhindert, dass eine versehentlich/absichtlich
     /// riesige fremde Datei komplett in den Speicher gelesen und geparst wird (OOM-Schutz).
-    static let maxImportFileBytes = 16 * 1024 * 1024
+    nonisolated static let maxImportFileBytes = 16 * 1024 * 1024
 
     private func loadFile(_ result: Result<[URL], Error>) {
         guard case .success(let urls) = result, let url = urls.first else { return }
+        // Security-Scope SYNCHRON im fileImporter-Callback beanspruchen: manche
+        // (iCloud-/Drittanbieter-)Provider gewähren den Zugriff nur hier, nicht mehr in einem
+        // später laufenden Task. Das eigentliche IO läuft trotzdem im Hintergrund, damit eine
+        // große Datei den Main Actor nicht blockiert (Issue #142); der Scope wird erst nach dem
+        // Lesen freigegeben. Rückgabe `nil` = Fehler (zu groß ODER Lesefehler).
         let needsStop = url.startAccessingSecurityScopedResource()
-        defer { if needsStop { url.stopAccessingSecurityScopedResource() } }
-        // Dateigröße VOR dem Einlesen prüfen – eine zu große Datei gar nicht erst laden.
-        // Zwei Quellen, da manche (iCloud-/Drittanbieter-)Provider `.fileSizeKey` nicht liefern;
-        // greift eine, wird gekappt. Liefert keine eine Größe, bleibt nur das Einlesen (selten).
-        let sizeViaURL = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
-        let sizeViaFM = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.size] as? Int
-        if let size = sizeViaURL ?? sizeViaFM, size > Self.maxImportFileBytes {
-            importError = true
-            return
-        }
-        if let content = try? String(contentsOf: url, encoding: .utf8) {
-            text = content
-        } else {
-            importError = true
+        Task {
+            let content = await Task.detached { () -> String? in
+                // Dateigröße VOR dem Einlesen prüfen – eine zu große Datei gar nicht erst laden.
+                // Zwei Quellen, da manche Provider `.fileSizeKey` nicht liefern; greift eine, wird
+                // gekappt. Liefert keine eine Größe, bleibt nur das Einlesen (selten).
+                let sizeViaURL = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
+                let sizeViaFM = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.size] as? Int
+                if let size = sizeViaURL ?? sizeViaFM, size > Self.maxImportFileBytes { return nil }
+                return try? String(contentsOf: url, encoding: .utf8)
+            }.value
+            if needsStop { url.stopAccessingSecurityScopedResource() }
+            if let content { text = content } else { importError = true }
         }
     }
 
