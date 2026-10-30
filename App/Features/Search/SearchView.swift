@@ -63,8 +63,9 @@ struct SearchView: View {
 
     var body: some View {
         // `results` einmal je Body-Pass auswerten statt pro Lesevorgang neu filtern
-        // (Trefferzähler, Leer-Prüfung und Liste würden sonst 3× filtern).
-        let results = results
+        // (Trefferzähler, Leer-Prüfung und Liste würden sonst 3× filtern). Ohne
+        // aktive Kriterien gar nicht filtern – wie zuvor (Leerzustand).
+        let results = hasCriteria ? results : []
         // Kein eigener NavigationStack: aus IchView in dessen Stack gepusht (sonst
         // verschachtelte Stacks → Push-Freeze).
         return VStack(spacing: Theme.Spacing.s) {

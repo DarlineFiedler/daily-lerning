@@ -42,18 +42,22 @@ struct ReviewSessionView: View {
     }
 
     var body: some View {
-        // `dueVocabs` baut auf der teuren `DailyPlan.today`-Partition auf – einmal je
-        // Body-Pass auswerten statt für Leer-Prüfung und Wortanzahl erneut.
-        let due = dueVocabs
-        return NavigationStack {
+        NavigationStack {
             Group {
                 if let session = sessionStore.active {
                     PracticeContainerView(session: session, onClose: { dismiss() },
                                           sessionStore: sessionStore, resumable: true)
-                } else if due.isEmpty {
-                    emptyState
                 } else {
-                    configStep(dueCount: due.count)
+                    // `dueVocabs` baut auf der teuren `DailyPlan.today`-Partition auf.
+                    // Nur hier (ohne aktive Session) einmal auswerten – während einer
+                    // laufenden Runde würde der Aktiv-Zweig oben sonst bei jedem Render
+                    // unnötig die ganze Partition berechnen.
+                    let due = dueVocabs
+                    if due.isEmpty {
+                        emptyState
+                    } else {
+                        configStep(dueCount: due.count)
+                    }
                 }
             }
             .paperBackground()
