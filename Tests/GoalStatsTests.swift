@@ -65,6 +65,48 @@ final class GoalStatsTests: XCTestCase {
         XCTAssertEqual(s.value(on: day(2026, 7, 22)), 1)
     }
 
+    func testValueIsZeroForDayWithoutActivity() {
+        // Aktivität nur am 21., Abfrage am 22. → Default-Tageswert 0 (aus dem Index).
+        let a = practiced(WeeklyActivity(), count: 3, on: day(2026, 7, 21))
+        let s = stats(activity: a)
+        XCTAssertEqual(s.value(on: day(2026, 7, 22)), 0)
+    }
+
+    func testDayLookupsPickCorrectDayAcrossMultipleEntries() {
+        // Mehrere Historie- und Aktivitätstage: jeder Tages-Lookup trifft seinen eigenen
+        // Eintrag (statt des ersten) – sichert die Tages-Index-Projektion ab.
+        var a = WeeklyActivity()
+        a = practiced(a, count: 1, on: day(2026, 7, 20))
+        a = practiced(a, count: 5, on: day(2026, 7, 21))
+        a = practiced(a, count: 3, on: day(2026, 7, 22))
+        var h = GoalHistory()
+        h = snap(h, daily: 2, weekly: 0, on: day(2026, 7, 20))
+        h = snap(h, daily: 7, weekly: 0, on: day(2026, 7, 21))
+        h = snap(h, daily: 4, weekly: 0, on: day(2026, 7, 22))
+        let s = stats(activity: a, history: h)
+        XCTAssertEqual(s.dailyTarget(on: day(2026, 7, 20)), 2)
+        XCTAssertEqual(s.dailyTarget(on: day(2026, 7, 21)), 7)
+        XCTAssertEqual(s.dailyTarget(on: day(2026, 7, 22)), 4)
+        XCTAssertEqual(s.value(on: day(2026, 7, 20)), 1)
+        XCTAssertEqual(s.value(on: day(2026, 7, 21)), 5)
+        XCTAssertEqual(s.value(on: day(2026, 7, 22)), 3)
+    }
+
+    func testDayLookupPicksFirstEntryOnDuplicateDay() {
+        // Falls die Historie (z.B. durch Legacy-Daten) zwei Einträge für denselben Tag
+        // enthält, gewinnt – wie beim alten `first { … }` – der erste.
+        let d = cal.startOfDay(for: day(2026, 7, 21))
+        var h = GoalHistory()
+        h.days = [
+            GoalHistory.Entry(day: d, dailyTarget: 3, weeklyTarget: 0,
+                              metricRaw: GoalMetric.practiced.rawValue),
+            GoalHistory.Entry(day: d, dailyTarget: 9, weeklyTarget: 0,
+                              metricRaw: GoalMetric.practiced.rawValue)
+        ]
+        let s = stats(history: h)
+        XCTAssertEqual(s.dailyTarget(on: day(2026, 7, 21)), 3)
+    }
+
     // MARK: - Tages-Status
 
     func testStatusReachedPartialMissedNoGoalUpcoming() {
