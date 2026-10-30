@@ -136,14 +136,16 @@ struct GoalStats {
         // Tages-Indizes einmalig aufbauen: wandelt die bis zu 3 linearen `first { … }`-
         // Scans pro Tag in O(1)-Lookups um. `recordingSnapshot`/`recording` sind idempotent
         // pro Kalendertag, es gibt also je `startOfDay` höchstens einen Eintrag – die
-        // Dictionary-Projektion ist damit äquivalent zum bisherigen `first { … }`.
+        // Dictionary-Projektion ist damit äquivalent zum bisherigen `first { … }`. Bei
+        // (nur theoretisch, z.B. Legacy-Daten) doch kollidierenden Tagen gewinnt der erste
+        // Eintrag – exakt wie `first { … }`.
         entryByDay = Dictionary(history.days.map { (calendar.startOfDay(for: $0.day), $0) },
-                                uniquingKeysWith: { _, last in last })
+                                uniquingKeysWith: { first, _ in first })
         totalsByDay = Dictionary(
             activity.days.map {
                 (calendar.startOfDay(for: $0.day), ($0.practicedIDs.count, $0.newlyLearned))
             },
-            uniquingKeysWith: { _, last in last }
+            uniquingKeysWith: { first, _ in first }
         )
     }
 

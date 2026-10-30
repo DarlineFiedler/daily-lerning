@@ -92,6 +92,21 @@ final class GoalStatsTests: XCTestCase {
         XCTAssertEqual(s.value(on: day(2026, 7, 22)), 3)
     }
 
+    func testDayLookupPicksFirstEntryOnDuplicateDay() {
+        // Falls die Historie (z.B. durch Legacy-Daten) zwei Einträge für denselben Tag
+        // enthält, gewinnt – wie beim alten `first { … }` – der erste.
+        let d = cal.startOfDay(for: day(2026, 7, 21))
+        var h = GoalHistory()
+        h.days = [
+            GoalHistory.Entry(day: d, dailyTarget: 3, weeklyTarget: 0,
+                              metricRaw: GoalMetric.practiced.rawValue),
+            GoalHistory.Entry(day: d, dailyTarget: 9, weeklyTarget: 0,
+                              metricRaw: GoalMetric.practiced.rawValue)
+        ]
+        let s = stats(history: h)
+        XCTAssertEqual(s.dailyTarget(on: day(2026, 7, 21)), 3)
+    }
+
     // MARK: - Tages-Status
 
     func testStatusReachedPartialMissedNoGoalUpcoming() {
