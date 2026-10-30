@@ -31,15 +31,21 @@ struct WordListView: View {
     }
 
     /// Text- und Statusfilter kombiniert. Bei `lockedStatus` ist der Status fix,
-    /// sonst greifen die (optional gewählten) Filter-Chips.
-    private var results: [Vocab] {
+    /// sonst greifen die (optional gewählten) Filter-Chips. `active` wird einmal im
+    /// Body ermittelt und hereingereicht, statt pro Lesevorgang neu zu filtern.
+    private func filteredResults(_ active: [Vocab]) -> [Vocab] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        let filtered = activeVocabs.filter {
+        let filtered = active.filter {
             matchesStatus($0) && matchesText($0, trimmed) && (!problemsOnly || $0.isProblemWord)
         }
         // Im Problemwörter-Modus das schwächste Wort (höchste Fehlerquote) zuerst zeigen.
+        // `wrongRate` je Wort einmal berechnen (decorate-sort-undecorate), statt bei
+        // jedem Paarvergleich erneut.
         guard problemsOnly else { return filtered }
-        return filtered.sorted { wrongRate($0) > wrongRate($1) }
+        return filtered
+            .map { (vocab: $0, rate: wrongRate($0)) }
+            .sorted { $0.rate > $1.rate }
+            .map(\.vocab)
     }
 
     /// Lebenszeit-Fehlerquote (0…1); bei 0 Versuchen 0, um Division durch null zu vermeiden.
@@ -57,9 +63,13 @@ struct WordListView: View {
     }
 
     var body: some View {
-        ScrollView {
+        // `activeVocabs` und die gefilterte Liste einmal je Body-Pass auswerten,
+        // statt beides mehrfach (Chips, Leer-Prüfung, Liste) neu zu berechnen.
+        let active = activeVocabs
+        let results = filteredResults(active)
+        return ScrollView {
             LazyVStack(spacing: Theme.Spacing.m) {
-                if lockedStatus == nil, !problemsOnly, !activeVocabs.isEmpty { filterChips }
+                if lockedStatus == nil, !problemsOnly, !active.isEmpty { filterChips }
                 if results.isEmpty {
                     emptyState
                 } else {

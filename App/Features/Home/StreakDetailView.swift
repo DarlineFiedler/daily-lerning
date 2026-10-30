@@ -16,14 +16,17 @@ struct StreakDetailView: View {
     private var history: [Date] { jokerUses.sorted(by: >) }
 
     var body: some View {
-        NavigationStack {
+        // `jokerUses` nur einmal je Body-Pass sortieren, statt in mehreren
+        // Abschnitten (Karte, Zähler, Historie) erneut.
+        let history = history
+        return NavigationStack {
             ScrollView {
                 VStack(spacing: Theme.Spacing.l) {
                     stats
-                    jokerCard
+                    jokerCard(history: history)
                     calendarSection
                     heatmapSection
-                    if !history.isEmpty { historySection }
+                    if !history.isEmpty { historySection(history: history) }
                     HandNote(L("streak.detail.jokerFooter"), size: 18,
                              color: Theme.inkSecondary, angle: -1)
                         .frame(maxWidth: .infinity)
@@ -63,7 +66,7 @@ struct StreakDetailView: View {
 
     // MARK: - Joker-Erklärung
 
-    private var jokerCard: some View {
+    private func jokerCard(history: [Date]) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 2) {
@@ -116,7 +119,7 @@ struct StreakDetailView: View {
 
     // MARK: - Einsatz-Historie
 
-    private var historySection: some View {
+    private func historySection(history: [Date]) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             SectionHeader(L("streak.detail.history"))
             VStack(spacing: 0) {
