@@ -22,6 +22,26 @@ struct WordPack: Identifiable {
         }
         .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
+
+    /// Prozessweiter Cache des gebündelten Lade-Tasks. Main-Actor-isoliert, da ausschließlich
+    /// aus SwiftUI-Views (`.task`) angefragt. Den *Task* zu cachen (statt nur das Ergebnis)
+    /// dedupliziert gleichzeitige Erstaufrufe: beide awaiten denselben Task.
+    @MainActor private static var loadTask: Task<[WordPack], Never>?
+
+    /// Liefert die gebündelten Pakete, ohne den Main Actor zu blockieren: Lesen+Parsen läuft
+    /// einmalig in `Task.detached`, das Ergebnis wird gecacht (die CSVs im Bundle sind
+    /// unveränderlich) und bei weiteren Aufrufen sofort zurückgegeben. Vermeidet UI-Hitches
+    /// bei Erststart (Onboarding) und beim Import (Issue #142).
+    @MainActor static func loadBundledCached() async -> [WordPack] {
+        if let loadTask { return await loadTask.value }
+        let task = Task.detached(priority: .userInitiated) { loadBundled() }
+        loadTask = task
+        let packs = await task.value
+        // Ein leeres Ergebnis (sehr seltener Fehlversuch) NICHT dauerhaft cachen, sonst bliebe
+        // die Liste bis zum App-Neustart leer. Cache verwerfen, damit der nächste Aufruf erneut lädt.
+        if packs.isEmpty { loadTask = nil }
+        return packs
+    }
 }
 
 private extension String {
