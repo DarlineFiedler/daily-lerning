@@ -12,6 +12,7 @@ final class SpeechService: NSObject {
     private override init() {
         super.init()
         synthesizer.delegate = self
+        registerSessionResetObservers()
     }
 
     /// Cache der Stimmen-Verfügbarkeit je Sprachcode. `AVSpeechSynthesisVoice(language:)`
@@ -56,7 +57,7 @@ final class SpeechService: NSObject {
     /// sondern erst, wenn eine Weile nichts mehr gesprochen wurde. So bleibt die Hardware
     /// während einer Lernsitzung warm und Fremd-Audio wird nach dem letzten Wort wieder
     /// freigegeben.
-    private var deactivationWork: DispatchWorkItem?
+    private var deactivationTask: Task<Void, Never>?
 
     /// Sekunden, die die Session nach dem letzten Wort noch aktiv bleibt.
     private let sessionKeepAlive: TimeInterval = 3
@@ -74,7 +75,7 @@ final class SpeechService: NSObject {
         // Nur beim echten Kaltstart aktivieren; eine bereits aktive Session bleibt warm.
         let wasCold = !sessionActive
         activateSession()
-        deactivationWork?.cancel() // geplante Deaktivierung abbrechen, wir sprechen gleich
+        deactivationTask?.cancel() // geplante Deaktivierung abbrechen, wir sprechen gleich
 
         let utterance = AVSpeechUtterance(string: trimmed)
         utterance.voice = voice
@@ -93,21 +94,29 @@ final class SpeechService: NSObject {
         guard !sessionActive else { return }
         #if os(iOS)
         let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
-        try? session.setActive(true)
-        #endif
+        do {
+            try session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+            try session.setActive(true)
+            sessionActive = true // nur bei Erfolg „warm" merken, sonst beim nächsten Wort erneut versuchen
+        } catch {
+            sessionActive = false
+        }
+        #else
         sessionActive = true
+        #endif
     }
 
-    /// Plant die Deaktivierung nach einer Ruhephase. Jedes neue Wort verschiebt sie.
+    /// Plant die Deaktivierung nach einer Ruhephase. Jedes neue Wort bricht sie ab und
+    /// plant neu. Ein einzelner cancelbarer Task hält das im selben Isolationsmodell wie
+    /// die übrigen Session-Hops.
     private func scheduleDeactivation() {
-        deactivationWork?.cancel()
-        let work = DispatchWorkItem { [weak self] in
-            guard let self, !self.synthesizer.isSpeaking else { return }
+        deactivationTask?.cancel()
+        deactivationTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(nanoseconds: UInt64(self.sessionKeepAlive * 1_000_000_000))
+            guard !Task.isCancelled, !self.synthesizer.isSpeaking else { return }
             self.deactivateSession()
         }
-        deactivationWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + sessionKeepAlive, execute: work)
     }
 
     private func deactivateSession() {
@@ -117,6 +126,30 @@ final class SpeechService: NSObject {
         // Fremd-Audio wieder auf volle Lautstärke bringen.
         try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
         #endif
+    }
+
+    /// Das System kann die Session unter uns deaktivieren (Anruf/Siri-Interruption oder
+    /// App-Hintergrund ohne Audio-Background-Mode). Ohne Reset bliebe `sessionActive`
+    /// fälschlich `true`, der nächste `speak()` übersprünge Reaktivierung + Vorlauf-Stille
+    /// und das erste Wort käme wieder stumm/abgeschnitten. Wir markieren die Session daher
+    /// als kalt (ohne eigenes `setActive(false)`, das System hat sie bereits abgeschaltet).
+    private func registerSessionResetObservers() {
+        #if os(iOS)
+        let center = NotificationCenter.default
+        center.addObserver(forName: AVAudioSession.interruptionNotification,
+                           object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.invalidateSession() }
+        }
+        center.addObserver(forName: UIApplication.didEnterBackgroundNotification,
+                           object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.invalidateSession() }
+        }
+        #endif
+    }
+
+    private func invalidateSession() {
+        deactivationTask?.cancel()
+        sessionActive = false
     }
 }
 
