@@ -8,23 +8,32 @@ Du bearbeitest GitHub-Issue **#$1** im Repo DailyHangul (`DarlineFiedler/daily-l
 
 Arbeite die folgenden Phasen der Reihe nach ab. Springe nicht voraus. Alle Shell-Befehle mit `eval "$(/opt/homebrew/bin/brew shellenv)"` prefixen, damit `gh`, `xcodegen`, `swiftlint`, `swiftformat` im PATH sind.
 
-## 1. Issue verstehen
+## 1. Issue verstehen & prüfen ob schon jemand dran ist
 - `gh issue view $1` lesen (Titel, Body, Kommentare, Labels).
 - Falls das Issue nicht existiert oder unklar ist: stopp und frag die Nutzerin, statt zu raten.
+- **Assignee-Check (wichtig):** Prüfen, ob das Issue schon jemandem zugewiesen ist bzw. ein offener PR daran arbeitet:
+```
+eval "$(/opt/homebrew/bin/brew shellenv)"
+gh issue view $1 --json assignees --jq '.assignees | map(.login) | join(",")'
+gh pr list --state open --search "$1 in:title,body" --json number,title,headRefName,author
+```
+  - Ist das Issue **bereits zugewiesen** oder gibt es einen **offenen PR** dazu, wird es schon abgearbeitet → **stopp** und melde das der Nutzerin (an wen zugewiesen / welcher PR), statt doppelt anzufangen. Nur weitermachen, wenn sie es ausdrücklich will.
 
 ## 2. Plan machen (zuerst!)
 - Geh in den **Plan-Modus** (EnterPlanMode) und erarbeite einen konkreten Umsetzungsplan: betroffene Dateien, Vorgehen, wie getestet wird.
 - Lass den Plan von der Nutzerin bestätigen (ExitPlanMode), bevor du Code änderst.
 
-## 3. Frischen Branch von main
+## 3. Issue beanspruchen & frischen Branch von main
 Erst NACH bestätigtem Plan:
 ```
 eval "$(/opt/homebrew/bin/brew shellenv)"
+gh issue edit $1 --add-assignee @me   # markiert sichtbar, dass das Issue jetzt in Arbeit ist
 git switch main
 git pull --ff-only origin main
 git switch -c <typ>/$1-<kurzer-slug>
 ```
-`<typ>` = `feat` / `fix` / `perf` / `refactor` passend zum Issue. Der Slug beschreibt die Änderung kurz.
+- Das `--add-assignee @me` weist das Issue der Person zu, die es jetzt bearbeitet — so sehen andere, dass es nicht mehr frei ist.
+- `<typ>` = `feat` / `fix` / `perf` / `refactor` passend zum Issue. Der Slug beschreibt die Änderung kurz.
 
 ## 4. Umsetzen
 - Änderungen umsetzen. Bestehenden Code-Stil, Namensgebung und Idiome der Umgebung übernehmen.

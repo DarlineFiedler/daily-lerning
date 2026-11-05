@@ -16,6 +16,13 @@ struct GardenHomeView: View {
     @State private var showNewGroup = false
     @State private var showGoalStats = false
 
+    // Beim Erscheinen/nach einer Übungsrunde einmal aus den App-Group-Defaults geladen
+    // (statt bei jeder Body-Auswertung den Aktivitäts-Log bzw. Challenge-State neu zu
+    // dekodieren); Tag/Woche/Fuß/Challenge werden daraus in-memory abgeleitet – wie es
+    // GoalStatsView mit seinem @State-Snapshot bereits macht.
+    @State private var activity = WeeklyReviewStore.loadActivity()
+    @State private var challenge = DailyChallengeStore.snapshot()
+
     // Persönliches Ziel (geteilter Store, wie im Home-Dashboard).
     @AppStorage(GoalKeys.metric, store: AppGroup.defaults) private var goalMetricRaw = GoalMetric.practiced.rawValue
     @AppStorage(GoalKeys.weekly, store: AppGroup.defaults) private var weeklyGoal = GoalOptions.defaultWeekly
@@ -25,8 +32,20 @@ struct GardenHomeView: View {
     private var activeGroups: [VocabGroup] { groups.filter { !$0.isArchived } }
 
     private var goalMetric: GoalMetric { GoalMetric(rawValue: goalMetricRaw) ?? .practiced }
-    private var dayDone: Int { WeeklyReviewStore.dayProgress(for: goalMetric) }
-    private var weekDone: Int { WeeklyReviewStore.weekProgress(for: goalMetric) }
+    private var dayDone: Int { progress(activity.dayTotals(on: .now, calendar: .current)) }
+    private var weekDone: Int { progress(activity.currentWeekTotals(asOf: .now, calendar: .current)) }
+
+    /// Wählt die gezählte Größe gemäß Zielart (wie `WeeklyReviewStore.value(of:)`).
+    private func progress(_ totals: (practiced: Int, learned: Int)) -> Int {
+        goalMetric == .learned ? totals.learned : totals.practiced
+    }
+
+    /// Lädt Aktivitäts-Log und Challenge-Snapshot neu. Bei Sichtbarkeit und nach einer
+    /// Übungsrunde aufrufen, damit die abgeleiteten Werte frisch bleiben.
+    private func reloadSnapshots() {
+        activity = WeeklyReviewStore.loadActivity()
+        challenge = DailyChallengeStore.snapshot()
+    }
 
     var body: some View {
         NavigationStack {
@@ -53,8 +72,11 @@ struct GardenHomeView: View {
             .onAppear {
                 StreakStore.settle()
                 GoalHistoryStore.snapshotToday()
+                reloadSnapshots()
             }
-            .sheet(isPresented: $showReview) { ReviewSessionView() }
+            // Nach der Übungssession (einziger Pfad, der Log/Challenge ändert) neu laden –
+            // ein Sheet-Dismiss löst kein onAppear des Präsentierenden aus.
+            .sheet(isPresented: $showReview, onDismiss: reloadSnapshots) { ReviewSessionView() }
             .sheet(isPresented: $showNewGroup) { GroupEditView(group: nil) }
             .sheet(isPresented: $showGoalStats) { GoalStatsView() }
             .sheet(isPresented: $showStreakDetail) {
@@ -262,7 +284,7 @@ struct GardenHomeView: View {
     // MARK: - Tages-Challenge
 
     private var challengeCard: some View {
-        let c = DailyChallengeStore.snapshot()
+        let c = challenge
         return HStack(spacing: 11) {
             Text(c.challenge.emoji)
                 .font(.system(size: 18))
@@ -300,7 +322,9 @@ struct GardenHomeView: View {
 
     @ViewBuilder
     private var gardenFooter: some View {
-        let review = WeeklyReviewStore.currentReview()
+        // Aus demselben @State-Log abgeleitet wie WeeklyReviewStore.currentReview().
+        let review = activity.lastCompletedWeekReview(asOf: .now, calendar: .current,
+                                                      streak: StreakStore.displayStreak())
         if weeklyGoal > 0 || review.hasActivity {
             weeklyFooter(review)
         } else {

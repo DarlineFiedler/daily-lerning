@@ -48,6 +48,19 @@ final class SpeechService: NSObject {
         return available
     }
 
+    /// Ist die Audio-Session aktuell aktiv (Hardware „warm")? Solange `true`, wird nicht
+    /// neu aktiviert – das vermeidet den Kaltstart-Glitch bei jedem weiteren Wort.
+    private var sessionActive = false
+
+    /// Verzögerte Deaktivierung. Wir deaktivieren die Session nicht sofort nach jedem Wort,
+    /// sondern erst, wenn eine Weile nichts mehr gesprochen wurde. So bleibt die Hardware
+    /// während einer Lernsitzung warm und Fremd-Audio wird nach dem letzten Wort wieder
+    /// freigegeben.
+    private var deactivationWork: DispatchWorkItem?
+
+    /// Sekunden, die die Session nach dem letzten Wort noch aktiv bleibt.
+    private let sessionKeepAlive: TimeInterval = 3
+
     /// Spricht den Text. Unterbricht eine laufende Ausgabe. Duckt kurz laufende
     /// Fremd-Audio (Musik/Podcast), damit die Aussprache klar hörbar ist.
     func speak(_ text: String, language: String = "ko-KR") {
@@ -57,24 +70,49 @@ final class SpeechService: NSObject {
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
         }
+
+        // Nur beim echten Kaltstart aktivieren; eine bereits aktive Session bleibt warm.
+        let wasCold = !sessionActive
         activateSession()
+        deactivationWork?.cancel() // geplante Deaktivierung abbrechen, wir sprechen gleich
+
         let utterance = AVSpeechUtterance(string: trimmed)
         utterance.voice = voice
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.9 // etwas langsamer zum Nachsprechen
+        if wasCold {
+            // Beim Kaltstart braucht die Audio-Hardware ~100 ms bis Route-/Duck-Rampup fertig
+            // ist. Diese Stille davor verhindert, dass der Wortanfang abgeschnitten wird.
+            utterance.preUtteranceDelay = 0.15
+        }
         synthesizer.speak(utterance)
     }
 
     // MARK: - Audio-Session (Ducking)
 
     private func activateSession() {
+        guard !sessionActive else { return }
         #if os(iOS)
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
         try? session.setActive(true)
         #endif
+        sessionActive = true
+    }
+
+    /// Plant die Deaktivierung nach einer Ruhephase. Jedes neue Wort verschiebt sie.
+    private func scheduleDeactivation() {
+        deactivationWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, !self.synthesizer.isSpeaking else { return }
+            self.deactivateSession()
+        }
+        deactivationWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + sessionKeepAlive, execute: work)
     }
 
     private func deactivateSession() {
+        guard sessionActive else { return }
+        sessionActive = false
         #if os(iOS)
         // Fremd-Audio wieder auf volle Lautstärke bringen.
         try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
@@ -85,11 +123,11 @@ final class SpeechService: NSObject {
 extension SpeechService: AVSpeechSynthesizerDelegate {
     nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer,
                                        didFinish utterance: AVSpeechUtterance) {
-        Task { @MainActor in deactivateSession() }
+        Task { @MainActor in scheduleDeactivation() }
     }
 
     nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer,
                                        didCancel utterance: AVSpeechUtterance) {
-        Task { @MainActor in deactivateSession() }
+        Task { @MainActor in scheduleDeactivation() }
     }
 }
