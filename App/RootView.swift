@@ -201,7 +201,12 @@ private struct SheetEnvironment: ViewModifier {
 /// änderungen nur ein Neuberechnen dieser schmalen Tab-Leiste aus – nicht der
 /// kompletten RootView-Shell (Garten/Ich-Inhalt bleibt unberührt).
 private struct GardenTabBarContainer: View {
-    @Query(sort: \Vocab.createdAt) private var vocabs: [Vocab]
+    // Nur Wörter im Lern-/Wiederhol-Prozess laden: `DailyPlan.openWordCount` zählt neue
+    // Wörter (Status „neu") ohnehin nie, daher per Prädikat ausgeschlossen – das spart
+    // die Materialisierung frisch importierter Wörter. Kein `sort:` – für einen Count ist
+    // die Reihenfolge belanglos. Der Archiv-Filter bleibt in Swift (die `group`-
+    // Traversierung im `#Predicate` ist heikel, siehe [[AppContentRefresh]]).
+    @Query(filter: Vocab.notNewPredicate) private var vocabs: [Vocab]
     let selection: GardenTab
     let onSelect: (GardenTab) -> Void
     let onPractice: () -> Void
