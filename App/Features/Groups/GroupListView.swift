@@ -244,13 +244,10 @@ struct GroupListView: View {
 struct GroupCard: View {
     let group: VocabGroup
 
-    private var learned: Int { group.count(of: .learned) }
-    private var fraction: Double {
-        group.vocabCount > 0 ? Double(learned) / Double(group.vocabCount) : 0
-    }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        let learned = group.vocabs.statusCounts()[.learned] ?? 0
+        let fraction = group.vocabCount > 0 ? Double(learned) / Double(group.vocabCount) : 0
+        return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline) {
                 Text(group.name)
                     .font(.appDisplay(17))
