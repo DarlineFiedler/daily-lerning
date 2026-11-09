@@ -191,10 +191,7 @@ extension VocabBackup {
         let tmp = FileManager.default.temporaryDirectory
         cleanupOldExports(in: tmp)
 
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        let stamp = formatter.string(from: .now)
+        let stamp = DateStamp.fileStamp()
 
         let url = tmp.appendingPathComponent("\(exportPrefix)\(stamp).json")
         // `.completeFileProtection`: der vollständige Datenexport bleibt auf dem Gerät
