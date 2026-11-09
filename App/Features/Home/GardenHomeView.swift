@@ -411,10 +411,12 @@ struct GardenHomeView: View {
     // MARK: - Helfer
 
     private var dateText: String {
-        let f = DateFormatter()
-        f.locale = LocalizationManager.shared.localeForFormatting
-        f.setLocalizedDateFormatFromTemplate("EEEE d MMM")
-        return f.string(from: .now)
+        // `Date.FormatStyle` ordnet die Felder locale-gerecht (wie zuvor der
+        // Template-Formatter) und alloziert – anders als `DateFormatter` je Render –
+        // keinen schweren Foundation-Typ (#143).
+        Date.now.formatted(
+            .dateTime.weekday(.wide).day().month(.abbreviated)
+                .locale(LocalizationManager.shared.localeForFormatting))
     }
 
     private func estimatedMinutes(_ due: Int) -> Int { max(1, Int(ceil(Double(due) * 0.5))) }
