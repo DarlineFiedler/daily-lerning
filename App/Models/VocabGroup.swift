@@ -31,8 +31,4 @@ final class VocabGroup {
     // MARK: - Abgeleitete Werte
 
     var vocabCount: Int { vocabs.count }
-
-    func count(of status: LearningStatus) -> Int {
-        vocabs.filter { $0.status == status }.count
-    }
 }
