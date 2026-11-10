@@ -11,6 +11,12 @@ final class VocabQueryPredicateTests: XCTestCase {
     private var container: ModelContainer!
     private var context: ModelContext!
 
+    /// Fester Bezugszeitpunkt – wird sowohl zum Setzen von `lastPracticedAt` als auch an
+    /// `openWordCount(now:)` übergeben, damit der „heute bearbeitet"-Vergleich nicht von
+    /// zwei getrennten `.now`-Lesungen (Mitternachtsgrenze) abhängt. `nonisolated`, damit es
+    /// im nonisolierten Default-Argument-Kontext von `makeMixed` nutzbar bleibt.
+    nonisolated private static let referenceNow = Date(timeIntervalSinceReferenceDate: 700_000_000)
+
     override func setUp() {
         super.setUp()
         container = PersistenceController.makeContainer(inMemory: true)
@@ -25,7 +31,7 @@ final class VocabQueryPredicateTests: XCTestCase {
 
     /// Gemischter Datensatz: je ein Wort pro Status, eines heute geübt, plus ein gelerntes
     /// Wort in einer archivierten Gruppe.
-    private func makeMixed() throws {
+    private func makeMixed(now: Date = referenceNow) throws {
         let active = VocabGroup(name: "Aktiv")
         let archived = VocabGroup(name: "Archiv", isArchived: true)
         context.insert(active)
@@ -48,7 +54,7 @@ final class VocabQueryPredicateTests: XCTestCase {
 
         let doneToday = Vocab(word: "heute", meaning: "-", group: active)
         doneToday.setStatusManually(.learning)
-        doneToday.lastPracticedAt = .now // heute schon bearbeitet → nicht mehr offen
+        doneToday.lastPracticedAt = now // heute schon bearbeitet → nicht mehr offen
         context.insert(doneToday)
 
         let archivedLearned = Vocab(word: "archiviert", meaning: "-", group: archived)
@@ -77,9 +83,10 @@ final class VocabQueryPredicateTests: XCTestCase {
         let active = all.filter { $0.group?.isArchived != true } // bisheriges Verhalten
         let nonNewActive = active.filter { $0.status != .new } // nach der Optimierung
 
-        XCTAssertEqual(DailyPlan.openWordCount(from: active),
-                       DailyPlan.openWordCount(from: nonNewActive))
+        let now = Self.referenceNow
+        XCTAssertEqual(DailyPlan.openWordCount(from: active, now: now),
+                       DailyPlan.openWordCount(from: nonNewActive, now: now))
         // Sanity: lernend + fast + gelernt offen, "heute" erledigt, "neu" zählt nicht → 3.
-        XCTAssertEqual(DailyPlan.openWordCount(from: active), 3)
+        XCTAssertEqual(DailyPlan.openWordCount(from: active, now: now), 3)
     }
 }

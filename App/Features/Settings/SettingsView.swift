@@ -19,14 +19,15 @@ struct SettingsView: View {
     private let localization = LocalizationManager.shared
     @Environment(\.modelContext) private var context
 
-    // Nur Zähler statt der vollen Vokabel-Tabelle: Anzahl (für die isEmpty-Gates der
-    // Export-/Sicherungs-Zeilen) und Widget-Pool-Größe werden via `fetchCount` ermittelt,
-    // nicht durch Materialisieren aller `Vocab`-Objekte in ein `@Query`-Array. Reaktiv
-    // gehalten über `reloadCounts()` bei `onAppear` und nach jedem bildschirm-eigenen
-    // Mutationspfad (Import, Paket-Import, Restore). Die Vollliste fürs Exportieren wird
-    // erst beim Antippen on-demand geholt (siehe `exportCSV`/`exportBackup`).
-    @State private var vocabCount = 0
-    @State private var widgetCount = 0
+    // Reaktive, aber schlanke Fetches statt die ganze Vocab-Tabelle zu materialisieren:
+    // `widgetVocabs` ist per Prädikat auf den (kleinen) Widget-Pool begrenzt; `vocabProbe`
+    // prüft via `fetchLimit = 1` nur, OB überhaupt Wörter existieren (steuert die Export-/
+    // Backup-Zeilen). Beide bleiben automatisch aktuell (kein manuelles Nachladen nötig).
+    // Die Vollliste fürs Exportieren wird erst beim Antippen on-demand geholt (siehe
+    // `exportCSV`/`exportBackup`).
+    @Query(filter: #Predicate<Vocab> { $0.includeInWidget == true })
+    private var widgetVocabs: [Vocab]
+    @Query(settingsAnyVocabDescriptor()) private var vocabProbe: [Vocab]
     @Query(sort: \VocabGroup.sortOrder) private var allGroups: [VocabGroup]
     @State private var showImport = false
 
@@ -98,7 +99,7 @@ struct SettingsView: View {
                     }
             }
         }
-        .sheet(isPresented: $showImport, onDismiss: reloadCounts) { VocabImportView() }
+        .sheet(isPresented: $showImport) { VocabImportView() }
         .sheet(item: $backupFile) { file in ActivityView(items: [file.url]) }
         .sheet(item: $csvFile) { file in ActivityView(items: [file.url]) }
         .fileImporter(isPresented: $showRestore,
@@ -133,7 +134,6 @@ struct SettingsView: View {
             Text(L("settings.reset.message"))
         }
         .task { wordPacks = await WordPack.loadBundledCached() }
-        .onAppear(perform: reloadCounts)
         .onChange(of: interval) { refreshWidget() }
         .onChange(of: showMeaning) { refreshWidget() }
         .onChange(of: localization.language) {
@@ -181,7 +181,7 @@ struct SettingsView: View {
 
     private var widgetCard: some View {
         card(L("settings.widget.section"),
-             note: L("settings.widget.count", widgetCount) + " " + L("settings.widget.hint")) {
+             note: L("settings.widget.count", widgetVocabs.count) + " " + L("settings.widget.hint")) {
             Text(L("settings.widget.interval")).font(.appBody).foregroundStyle(Theme.ink)
             PaperSegmented(options: WidgetSettings.intervalOptions,
                            title: intervalLabel, selection: $interval)
@@ -253,7 +253,7 @@ struct SettingsView: View {
     private var dataCard: some View {
         card(L("settings.data.section"), note: L("settings.data.hint")) {
             actionRow(L("settings.data.import")) { showImport = true }
-            if vocabCount > 0 {
+            if hasVocabs {
                 hairline
                 actionRow(L("settings.data.export")) { exportCSV() }
             }
@@ -262,7 +262,7 @@ struct SettingsView: View {
 
     private var backupCard: some View {
         card(L("settings.backup.section"), note: L("settings.backup.hint")) {
-            if vocabCount > 0 {
+            if hasVocabs {
                 actionRow(L("settings.backup.export")) { exportBackup() }
                 hairline
             }
@@ -363,16 +363,9 @@ struct SettingsView: View {
         AppContentRefresh.afterVocabChange(context: context)
     }
 
-    /// Zählt Gesamtbestand und Widget-Pool neu (per `fetchCount`, ohne Objekte zu
-    /// materialisieren). Ersetzt die reaktiven `@Query`-Arrays; daher nach jedem
-    /// bildschirm-eigenen Mutationspfad (Import, Paket-Import, Restore) und bei `onAppear`
-    /// aufrufen, damit die Export-Zeilen und die Widget-Zahl aktuell bleiben.
-    private func reloadCounts() {
-        vocabCount = (try? context.fetchCount(FetchDescriptor<Vocab>())) ?? 0
-        widgetCount = (try? context.fetchCount(
-            FetchDescriptor<Vocab>(predicate: #Predicate { $0.includeInWidget == true })
-        )) ?? 0
-    }
+    /// Gibt es überhaupt Wörter? Steuert die Export-/Backup-Zeilen. Reaktiv über die
+    /// schlanke `vocabProbe`-Query (höchstens 1 Treffer), ohne die Tabelle zu materialisieren.
+    private var hasVocabs: Bool { !vocabProbe.isEmpty }
 
     // MARK: - Sicherung
 
@@ -406,7 +399,6 @@ struct SettingsView: View {
         }
         context.saveOrLog()
         AppContentRefresh.afterVocabChange(context: context)
-        reloadCounts()
         packMessage = L("wordpacks.result", total.added, total.updated, total.skipped)
     }
 
@@ -457,13 +449,21 @@ struct SettingsView: View {
     private func confirmRestore(_ backup: VocabBackup) {
         backup.apply(into: context)
         AppContentRefresh.afterVocabChange(context: context)
-        reloadCounts()
         let message = L("settings.backup.restored", backup.vocabs.count, backup.groups.count)
         // Erst im nächsten Runloop setzen: der Bestätigungsdialog wird im selben
         // Zyklus geschlossen; ein direkt gesetzter Alert würde von SwiftUI sonst
         // verschluckt und der Nutzer sähe keine Erfolgsmeldung.
         DispatchQueue.main.async { restoreMessage = message }
     }
+}
+
+/// Minimal-Deskriptor (höchstens 1 Treffer): reicht für die reaktive „gibt es überhaupt
+/// Wörter?"-Prüfung der Export-/Backup-Zeilen, ohne die ganze `Vocab`-Tabelle zu
+/// materialisieren (Issue #141).
+private func settingsAnyVocabDescriptor() -> FetchDescriptor<Vocab> {
+    var descriptor = FetchDescriptor<Vocab>()
+    descriptor.fetchLimit = 1
+    return descriptor
 }
 
 /// Identifizierbarer Wrapper um eine eingelesene, noch zu bestätigende Sicherung
