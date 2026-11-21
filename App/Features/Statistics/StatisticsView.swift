@@ -127,17 +127,15 @@ struct StatisticsView: View {
 private struct GroupStatRow: View {
     let group: VocabGroup
 
-    private var counts: [LearningStatus: Int] {
-        group.vocabs.statusCounts()
-    }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+        let counts = group.vocabs.statusCounts()
+        let learned = counts[.learned] ?? 0
+        return VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             HStack(spacing: Theme.Spacing.s) {
                 GroupColorDot(colorHex: group.colorHex)
                 Text(group.name).font(.appHeadline)
                 Spacer()
-                Text("\(group.count(of: .learned))/\(group.vocabCount)")
+                Text("\(learned)/\(group.vocabCount)")
                     .font(.appCaption.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()

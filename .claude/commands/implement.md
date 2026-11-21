@@ -19,27 +19,34 @@ gh pr list --state open --search "$1 in:title,body" --json number,title,headRefN
 ```
   - Ist das Issue **bereits zugewiesen** oder gibt es einen **offenen PR** dazu, wird es schon abgearbeitet → **stopp** und melde das der Nutzerin (an wen zugewiesen / welcher PR), statt doppelt anzufangen. Nur weitermachen, wenn sie es ausdrücklich will.
 
-## 2. Plan machen (zuerst!)
+## 2. Issue sofort zuweisen (als Erstes!)
+Noch bevor geplant wird — damit sofort sichtbar ist, dass das Issue jetzt in Arbeit ist und niemand sonst parallel anfängt:
+```
+eval "$(/opt/homebrew/bin/brew shellenv)"
+gh issue edit $1 --add-assignee @me
+```
+- Das `--add-assignee @me` weist das Issue der Person zu, die es jetzt bearbeitet — so sehen andere, dass es nicht mehr frei ist.
+- Erst nach erfolgreicher Zuweisung zur Planung weitergehen.
+
+## 3. Plan machen
 - Geh in den **Plan-Modus** (EnterPlanMode) und erarbeite einen konkreten Umsetzungsplan: betroffene Dateien, Vorgehen, wie getestet wird.
 - Lass den Plan von der Nutzerin bestätigen (ExitPlanMode), bevor du Code änderst.
 
-## 3. Issue beanspruchen & frischen Branch von main
+## 4. Frischen Branch von main
 Erst NACH bestätigtem Plan:
 ```
 eval "$(/opt/homebrew/bin/brew shellenv)"
-gh issue edit $1 --add-assignee @me   # markiert sichtbar, dass das Issue jetzt in Arbeit ist
 git switch main
 git pull --ff-only origin main
 git switch -c <typ>/$1-<kurzer-slug>
 ```
-- Das `--add-assignee @me` weist das Issue der Person zu, die es jetzt bearbeitet — so sehen andere, dass es nicht mehr frei ist.
 - `<typ>` = `feat` / `fix` / `perf` / `refactor` passend zum Issue. Der Slug beschreibt die Änderung kurz.
 
-## 4. Umsetzen
+## 5. Umsetzen
 - Änderungen umsetzen. Bestehenden Code-Stil, Namensgebung und Idiome der Umgebung übernehmen.
 - **Version hochzählen** (Pflicht bei jeder Änderung): in `project.yml` unter `settings.base` `CURRENT_PROJECT_VERSION` +1; bei sichtbaren Feature-/Verhaltensänderungen zusätzlich `MARKETING_VERSION` Minor +1. Danach `xcodegen generate` (die `.xcodeproj` ist gitignored).
 
-## 5. Tests
+## 6. Tests
 - Für jede neue/geänderte Logik Tests schreiben oder erweitern. Reine SwiftUI-Views sind vom Coverage-Gate ausgenommen — testbare Logik nicht.
 - Testlauf muss grün sein (warnings-as-errors ist an):
 ```
@@ -53,7 +60,7 @@ xcodebuild -project DailyHangul.xcodeproj -scheme DailyHangul \
 - Danach das **Coverage-Gate** prüfen: `scripts/check-coverage.sh` — muss die Schwelle halten. Reißt die Änderung die Coverage unter den Floor, Tests nachziehen.
 - Langer Build (>8 Min beim ersten Mal): im Hintergrund mit Log laufen lassen, nicht im Vordergrund warten.
 
-## 6. Lint & Format (muss sauber durchlaufen)
+## 7. Lint & Format (muss sauber durchlaufen)
 Genau wie der CI-Job, sonst blockiert der PR:
 ```
 eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -63,7 +70,7 @@ swiftformat . --lint
 - **Erst** `swiftformat .` (ohne `--lint`) zum Autofixen, danach nochmal beide im Lint-Modus, bis beide fehlerfrei sind.
 - Achtung Falle: `trailingCommas` ist bewusst NICHT in der SwiftFormat-Whitelist — SwiftLint entfernt trailing commas, SwiftFormat würde sie hinzufügen. Nicht gegeneinander arbeiten.
 
-## 7. Committen & pushen
+## 8. Committen & pushen
 - Erst committen, wenn Tests grün sind UND Lint/Format sauber ist.
 - Commit-Message im Stil der Repo-History (deutsch, prägnant, mit `(#$1)` am Ende der Betreffzeile). Fußzeile:
 ```
@@ -71,7 +78,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
 ```
 - `git push -u origin <branch>`
 
-## 8. PR aufmachen
+## 9. PR aufmachen
 ```
 gh pr create --base main --title "<titel> (#$1)" --body "<body>"
 ```

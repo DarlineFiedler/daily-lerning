@@ -39,11 +39,6 @@ struct GroupDetailView: View {
         allGroups.filter { !$0.isArchived && $0.id != group.id }
     }
 
-    private var learned: Int { group.count(of: .learned) }
-    private var fraction: Double {
-        group.vocabCount > 0 ? Double(learned) / Double(group.vocabCount) : 0
-    }
-
     var body: some View {
         ScrollView {
             LazyVStack(spacing: Theme.Spacing.m) {
@@ -269,7 +264,9 @@ struct GroupDetailView: View {
     // MARK: - Kopf-Karte & Filter
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+        let learned = group.vocabs.statusCounts()[.learned] ?? 0
+        let fraction = group.vocabCount > 0 ? Double(learned) / Double(group.vocabCount) : 0
+        return VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             HStack(alignment: .firstTextBaseline) {
                 Text(group.name)
                     .font(.appDisplay(22))
