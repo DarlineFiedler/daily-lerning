@@ -3,32 +3,35 @@ import XCTest
 
 final class DateStampTests: XCTestCase {
 
-    /// Fester Zeitpunkt: 2026-11-10 12:00 UTC.
-    private var knownDate: Date {
+    /// Fester Tag (10.11.2026), gebaut in der *Default-Zeitzone* – dieselbe, die der
+    /// Formatter ohne explizite `timeZone` nutzt. So liefert der Stamp in jeder
+    /// Geräte-/CI-Zeitzone denselben Kalendertag (kein UTC-Rollover z. B. in UTC+14).
+    private func date(_ year: Int, _ month: Int, _ day: Int) -> Date {
         var components = DateComponents()
-        components.year = 2026
-        components.month = 11
-        components.day = 10
+        components.year = year
+        components.month = month
+        components.day = day
         components.hour = 12
-        components.timeZone = TimeZone(identifier: "UTC")
-        return Calendar(identifier: .gregorian).date(from: components)!
+        return Calendar.current.date(from: components)!
     }
 
     func testStampHasFixedFormat() {
-        XCTAssertEqual(DateStamp.fileStamp(knownDate), "2026-11-10")
+        XCTAssertEqual(DateStamp.fileStamp(date(2026, 11, 10)), "2026-11-10")
     }
 
-    func testStampIsLocaleIndependent() {
-        // POSIX-Formatter → gleiche Ausgabe unabhängig von der aktuellen Geräte-Locale.
-        let previous = DateStamp.file.locale
-        XCTAssertEqual(previous?.identifier, "en_US_POSIX")
-        XCTAssertEqual(DateStamp.fileStamp(knownDate), "2026-11-10")
+    func testStampFormatIsStrictAsciiRegardlessOfLocale() {
+        // Fester POSIX-Formatter → rein numerischer ASCII-Stamp, unabhängig von der
+        // aktiven Geräte-Locale (keine lokalisierten Ziffern/Trenner).
+        XCTAssertEqual(DateStamp.file.locale?.identifier, "en_US_POSIX")
+        let stamp = DateStamp.fileStamp(date(2026, 1, 5))
+        XCTAssertEqual(stamp, "2026-01-05")
+        XCTAssertNotNil(stamp.range(of: #"^\d{4}-\d{2}-\d{2}$"#, options: .regularExpression))
     }
 
-    func testCachedFormatterIsStableAcrossCalls() {
-        // Mehrfacher Zugriff auf den gecachten `static let` liefert dieselbe Instanz …
-        XCTAssertIdentical(DateStamp.file, DateStamp.file)
-        // … und reproduzierbare Ausgabe.
-        XCTAssertEqual(DateStamp.fileStamp(knownDate), DateStamp.fileStamp(knownDate))
+    func testDistinctDatesProduceDistinctStamps() {
+        // Derselbe gecachte Formatter liefert für verschiedene Tage korrekt
+        // verschiedene Stamps (Zustandslosigkeit zwischen Aufrufen).
+        XCTAssertEqual(DateStamp.fileStamp(date(2026, 11, 10)), "2026-11-10")
+        XCTAssertEqual(DateStamp.fileStamp(date(2025, 12, 31)), "2025-12-31")
     }
 }
