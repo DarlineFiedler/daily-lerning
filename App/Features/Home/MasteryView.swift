@@ -93,7 +93,8 @@ struct MasteryView: View {
     }
 
     private func masteryFraction(_ group: VocabGroup) -> Double {
-        group.vocabCount > 0 ? Double(group.count(of: .learned)) / Double(group.vocabCount) : 0
+        let learned = group.vocabs.statusCounts()[.learned] ?? 0
+        return group.vocabCount > 0 ? Double(learned) / Double(group.vocabCount) : 0
     }
 
     // MARK: - Leerzustand
@@ -147,12 +148,10 @@ private struct MasteryRing: View {
 private struct MasteryRankRow: View {
     let group: VocabGroup
 
-    private var fraction: Double {
-        group.vocabCount > 0 ? Double(group.count(of: .learned)) / Double(group.vocabCount) : 0
-    }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
+        let learned = group.vocabs.statusCounts()[.learned] ?? 0
+        let fraction = group.vocabCount > 0 ? Double(learned) / Double(group.vocabCount) : 0
+        return VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             HStack(spacing: Theme.Spacing.s) {
                 GroupColorDot(colorHex: group.colorHex)
                 Text(group.name).font(.appHeadline).lineLimit(1)
