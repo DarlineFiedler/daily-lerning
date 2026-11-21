@@ -216,6 +216,19 @@ final class Vocab {
         nextReviewAt = ReviewSchedule.nextReviewDate(for: successCounter, from: now)
     }
 
+    // MARK: - Query-Prädikate
+
+    /// Wörter, die nicht mehr „neu" sind (Status ≠ `.new`) – bewusst über das gespeicherte
+    /// `statusRaw`, da die **berechnete** `status` im `#Predicate` nicht nutzbar ist. Ohne
+    /// `group`-Traversierung (die ist im Predicate heikel, siehe [[AppContentRefresh]]) –
+    /// ein etwaiger Archiv-Filter bleibt dem Aufrufer überlassen. Nützlich, wo nur Wörter
+    /// im Lern-/Wiederhol-Prozess zählen (z.B. `DailyPlan.openWordCount`), damit neue Wörter
+    /// gar nicht erst geladen werden.
+    static var notNewPredicate: Predicate<Vocab> {
+        let newRaw = LearningStatus.new.rawValue
+        return #Predicate<Vocab> { $0.statusRaw != newRaw }
+    }
+
     /// Manuelles Setzen des Status (überschreibt die automatische Berechnung).
     /// Richtet den Counter passend aus, damit späteres Lernen sinnvoll fortsetzt.
     func setStatusManually(_ newStatus: LearningStatus) {

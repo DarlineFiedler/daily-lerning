@@ -19,10 +19,15 @@ struct SettingsView: View {
     private let localization = LocalizationManager.shared
     @Environment(\.modelContext) private var context
 
+    // Reaktive, aber schlanke Fetches statt die ganze Vocab-Tabelle zu materialisieren:
+    // `widgetVocabs` ist per Prädikat auf den (kleinen) Widget-Pool begrenzt; `vocabProbe`
+    // prüft via `fetchLimit = 1` nur, OB überhaupt Wörter existieren (steuert die Export-/
+    // Backup-Zeilen). Beide bleiben automatisch aktuell (kein manuelles Nachladen nötig).
+    // Die Vollliste fürs Exportieren wird erst beim Antippen on-demand geholt (siehe
+    // `exportCSV`/`exportBackup`).
     @Query(filter: #Predicate<Vocab> { $0.includeInWidget == true })
     private var widgetVocabs: [Vocab]
-
-    @Query private var allVocabs: [Vocab]
+    @Query(settingsAnyVocabDescriptor()) private var vocabProbe: [Vocab]
     @Query(sort: \VocabGroup.sortOrder) private var allGroups: [VocabGroup]
     @State private var showImport = false
 
@@ -248,7 +253,7 @@ struct SettingsView: View {
     private var dataCard: some View {
         card(L("settings.data.section"), note: L("settings.data.hint")) {
             actionRow(L("settings.data.import")) { showImport = true }
-            if !allVocabs.isEmpty {
+            if hasVocabs {
                 hairline
                 actionRow(L("settings.data.export")) { exportCSV() }
             }
@@ -257,7 +262,7 @@ struct SettingsView: View {
 
     private var backupCard: some View {
         card(L("settings.backup.section"), note: L("settings.backup.hint")) {
-            if !allVocabs.isEmpty {
+            if hasVocabs {
                 actionRow(L("settings.backup.export")) { exportBackup() }
                 hairline
             }
@@ -358,6 +363,10 @@ struct SettingsView: View {
         AppContentRefresh.afterVocabChange(context: context)
     }
 
+    /// Gibt es überhaupt Wörter? Steuert die Export-/Backup-Zeilen. Reaktiv über die
+    /// schlanke `vocabProbe`-Query (höchstens 1 Treffer), ohne die Tabelle zu materialisieren.
+    private var hasVocabs: Bool { !vocabProbe.isEmpty }
+
     // MARK: - Sicherung
 
     /// Bindung, die den Bestätigungs-Alert zeigt, sobald eine Meldung vorliegt.
@@ -396,7 +405,8 @@ struct SettingsView: View {
     /// Baut den CSV-Export erst beim Antippen (nicht bei jeder `body`-Auswertung)
     /// und teilt ihn als Datei.
     private func exportCSV() {
-        guard let url = try? VocabCSV.exportFile(allVocabs) else {
+        let vocabs = (try? context.fetch(FetchDescriptor<Vocab>())) ?? []
+        guard let url = try? VocabCSV.exportFile(vocabs) else {
             restoreMessage = L("settings.export.error")
             return
         }
@@ -404,7 +414,8 @@ struct SettingsView: View {
     }
 
     private func exportBackup() {
-        guard let url = try? VocabBackup.exportFile(groups: allGroups, vocabs: allVocabs) else {
+        let vocabs = (try? context.fetch(FetchDescriptor<Vocab>())) ?? []
+        guard let url = try? VocabBackup.exportFile(groups: allGroups, vocabs: vocabs) else {
             restoreMessage = L("settings.backup.error")
             return
         }
@@ -444,6 +455,15 @@ struct SettingsView: View {
         // verschluckt und der Nutzer sähe keine Erfolgsmeldung.
         DispatchQueue.main.async { restoreMessage = message }
     }
+}
+
+/// Minimal-Deskriptor (höchstens 1 Treffer): reicht für die reaktive „gibt es überhaupt
+/// Wörter?"-Prüfung der Export-/Backup-Zeilen, ohne die ganze `Vocab`-Tabelle zu
+/// materialisieren (Issue #141).
+private func settingsAnyVocabDescriptor() -> FetchDescriptor<Vocab> {
+    var descriptor = FetchDescriptor<Vocab>()
+    descriptor.fetchLimit = 1
+    return descriptor
 }
 
 /// Identifizierbarer Wrapper um eine eingelesene, noch zu bestätigende Sicherung
