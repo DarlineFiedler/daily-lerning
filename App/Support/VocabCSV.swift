@@ -151,10 +151,7 @@ enum VocabCSV {
         let tmp = FileManager.default.temporaryDirectory
         cleanupOldExports(in: tmp)
 
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        let stamp = formatter.string(from: .now)
+        let stamp = DateStamp.fileStamp()
 
         let url = tmp.appendingPathComponent("\(exportPrefix)\(stamp).csv")
         // Über `Data` schreiben, um `.completeFileProtection` setzen zu können
