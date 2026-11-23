@@ -13,6 +13,9 @@ enum DateStamp {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.locale = Locale(identifier: "en_US_POSIX")
+        // Autoupdating, damit der gecachte Formatter einem Zeitzonenwechsel zur
+        // Laufzeit folgt (sonst bliebe die Zone vom ersten Export hängen).
+        formatter.timeZone = .autoupdatingCurrent
         return formatter
     }()
 

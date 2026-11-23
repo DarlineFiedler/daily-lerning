@@ -34,4 +34,9 @@ final class DateStampTests: XCTestCase {
         XCTAssertEqual(DateStamp.fileStamp(date(2026, 11, 10)), "2026-11-10")
         XCTAssertEqual(DateStamp.fileStamp(date(2025, 12, 31)), "2025-12-31")
     }
+
+    func testFormatterFollowsSystemTimeZoneChanges() {
+        // Gecachter Formatter darf nicht auf die Zone beim ersten Zugriff festfrieren.
+        XCTAssertEqual(DateStamp.file.timeZone, TimeZone.autoupdatingCurrent)
+    }
 }

@@ -414,10 +414,13 @@ struct GardenHomeView: View {
     private var dateText: String {
         // `Date.FormatStyle` ordnet die Felder locale-gerecht (wie zuvor der
         // Template-Formatter) und alloziert – anders als `DateFormatter` je Render –
-        // keinen schweren Foundation-Typ (#143).
-        Date.now.formatted(
-            .dateTime.weekday(.wide).day().month(.abbreviated)
-                .locale(LocalizationManager.shared.localeForFormatting))
+        // keinen schweren Foundation-Typ (#143). Kalender explizit aus der Locale,
+        // sonst nähme `.dateTime` den Gerätekalender (z. B. islamisch) statt des
+        // Kalenders der gewählten App-Sprache.
+        let locale = LocalizationManager.shared.localeForFormatting
+        return Date.now.formatted(
+            Date.FormatStyle(date: .omitted, time: .omitted, locale: locale, calendar: locale.calendar)
+                .weekday(.wide).day().month(.abbreviated))
     }
 
     private func estimatedMinutes(_ due: Int) -> Int { max(1, Int(ceil(Double(due) * 0.5))) }
