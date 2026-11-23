@@ -59,6 +59,11 @@ struct ExamContainerView: View {
         .toolbar(.hidden, for: .navigationBar)
         .sensoryFeedback(.success, trigger: session.correctCount)
         .sensoryFeedback(.error, trigger: session.wrongCount)
+        // Badges, die die Prüfung freischaltet (reguläres Ende oder Timeout), feiern –
+        // wie in Übung und Boss-Kampf (Issue #168). `restart()` setzt sie zurück.
+        .overlay(alignment: .top) {
+            AchievementUnlockBanner(achievements: session.newlyUnlocked)
+        }
         .onAppear(perform: startCountdown)
         .onReceive(timer) { date in
             guard started, !isFinished else { return }
