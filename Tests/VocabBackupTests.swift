@@ -173,6 +173,136 @@ final class VocabBackupTests: XCTestCase {
         XCTAssertEqual(kept.meaning, "gehen") // lokaler Wert blieb erhalten
     }
 
+    // MARK: - Ersetzen vs. Zusammenführen (Issue #132)
+
+    /// Ersetzen (`deleteMissing: true`) löscht lokale Gruppen/Wörter, die nicht in der
+    /// Sicherung stehen – danach liegt exakt der Sicherungs-Stand vor.
+    func testApplyReplaceDeletesLocalObjectsMissingFromBackup() throws {
+        let (group, vocab) = try makeSampleData()
+        let backup = VocabBackup(from: [group], vocabs: [vocab])
+
+        // Nach der Sicherung lokal hinzugekommen: eigene Gruppe + Wort darin + loses Wort.
+        let extraGroup = VocabGroup(name: "Neu")
+        context.insert(extraGroup)
+        context.insert(Vocab(word: "먹다", meaning: "essen", group: extraGroup))
+        context.insert(Vocab(word: "자다", meaning: "schlafen"))
+        try context.save()
+
+        backup.apply(into: context, deleteMissing: true)
+
+        XCTAssertEqual(try context.fetch(FetchDescriptor<VocabGroup>()).map(\.id), [group.id])
+        XCTAssertEqual(try context.fetch(FetchDescriptor<Vocab>()).map(\.id), [vocab.id])
+    }
+
+    /// Ein Sicherungs-Wort, das lokal in eine (nicht gesicherte) Gruppe verschoben wurde,
+    /// darf beim Ersetzen nicht über den Cascade der gelöschten Gruppe verloren gehen.
+    func testApplyReplaceKeepsBackupVocabMovedOutOfDeletedGroup() throws {
+        let (group, vocab) = try makeSampleData()
+        let backup = VocabBackup(from: [group], vocabs: [vocab])
+
+        let localGroup = VocabGroup(name: "Lokal")
+        context.insert(localGroup)
+        vocab.group = localGroup
+        try context.save()
+
+        backup.apply(into: context, deleteMissing: true)
+
+        let kept = try XCTUnwrap(try context.fetch(FetchDescriptor<Vocab>()).first)
+        XCTAssertEqual(kept.id, vocab.id)
+        XCTAssertEqual(kept.group?.id, group.id) // zurück in der Sicherungs-Gruppe
+        XCTAssertEqual(try context.fetch(FetchDescriptor<VocabGroup>()).map(\.id), [group.id])
+    }
+
+    /// Ohne `deleteMissing` bleibt die Wiederherstellung ein Merge (Regressionsschutz):
+    /// lokale Extras überleben.
+    func testApplyMergeDefaultKeepsLocalObjects() throws {
+        let (group, vocab) = try makeSampleData()
+        let backup = VocabBackup(from: [group], vocabs: [vocab])
+        context.insert(VocabGroup(name: "Neu"))
+        context.insert(Vocab(word: "자다", meaning: "schlafen"))
+        try context.save()
+
+        backup.apply(into: context)
+
+        XCTAssertEqual(try groupCount(), 2)
+        XCTAssertEqual(try vocabCount(), 2)
+    }
+
+    /// Zeigt die `groupID` eines Sicherungs-Worts auf eine lokale Gruppe, die NICHT in der
+    /// Sicherung steht (inkonsistente/handbearbeitete Datei), darf das Wort beim Ersetzen
+    /// nicht über den Cascade dieser Gruppe verschwinden.
+    func testApplyReplaceKeepsVocabWhoseGroupIsMissingFromBackup() throws {
+        let (_, vocab) = try makeSampleData()
+        let backup = VocabBackup(from: [], vocabs: [vocab]) // groupID zeigt auf die lokale Gruppe
+
+        XCTAssertEqual(backup.removalCounts(in: context).vocabs, 0)
+        let removed = backup.apply(into: context, deleteMissing: true)
+
+        XCTAssertEqual(removed.vocabs, 0)
+        XCTAssertEqual(removed.groups, 1)
+        let kept = try XCTUnwrap(try context.fetch(FetchDescriptor<Vocab>()).first)
+        XCTAssertEqual(kept.id, vocab.id)
+        XCTAssertNil(kept.group)
+        XCTAssertEqual(try groupCount(), 0)
+    }
+
+    /// Mit `overwriteExisting: false` bleiben vorhandene Wörter unverändert – auch in einer
+    /// lokalen Gruppe, die beim Ersetzen gelöscht wird. Sie müssen trotzdem überleben.
+    func testApplyReplaceWithoutOverwriteDetachesKeptVocab() throws {
+        let (_, vocab) = try makeSampleData()
+        let backup = VocabBackup(from: [], vocabs: [vocab])
+
+        backup.apply(into: context, overwriteExisting: false, deleteMissing: true)
+
+        XCTAssertEqual(try context.fetch(FetchDescriptor<Vocab>()).map(\.id), [vocab.id])
+        XCTAssertEqual(try groupCount(), 0)
+    }
+
+    /// Lokale Duplikate derselben id (kein Unique-Constraint) werden beim Ersetzen
+    /// vollständig entfernt; Vorschau und tatsächlich gelöschte Anzahl stimmen überein.
+    func testApplyReplaceRemovesDuplicateIDs() throws {
+        let (group, vocab) = try makeSampleData()
+        let backup = VocabBackup(from: [group], vocabs: [vocab])
+
+        let dupID = UUID()
+        for word in ["먹다", "먹다"] {
+            let dup = Vocab(word: word, meaning: "essen")
+            dup.id = dupID
+            context.insert(dup)
+        }
+        let backupDup = Vocab(word: "가다", meaning: "Duplikat")
+        backupDup.id = vocab.id
+        context.insert(backupDup)
+        try context.save()
+
+        let preview = backup.removalCounts(in: context)
+        let removed = backup.apply(into: context, deleteMissing: true)
+
+        XCTAssertEqual(preview.vocabs, 3)
+        XCTAssertEqual(removed.vocabs, 3)
+        XCTAssertEqual(try context.fetch(FetchDescriptor<Vocab>()).map(\.id), [vocab.id])
+    }
+
+    /// `removalCounts` zählt genau die lokalen Objekte, die beim Ersetzen wegfielen.
+    func testRemovalCountsReportsLocalOnlyObjects() throws {
+        let (group, vocab) = try makeSampleData()
+        let backup = VocabBackup(from: [group], vocabs: [vocab])
+
+        let empty = backup.removalCounts(in: context)
+        XCTAssertEqual(empty.vocabs, 0)
+        XCTAssertEqual(empty.groups, 0)
+
+        let extraGroup = VocabGroup(name: "Neu")
+        context.insert(extraGroup)
+        context.insert(Vocab(word: "먹다", meaning: "essen", group: extraGroup))
+        context.insert(Vocab(word: "자다", meaning: "schlafen"))
+        try context.save()
+
+        let counts = backup.removalCounts(in: context)
+        XCTAssertEqual(counts.vocabs, 2)
+        XCTAssertEqual(counts.groups, 1)
+    }
+
     /// Vor dem Schreiben einer neuen Sicherung werden ältere Sicherungs-Dateien
     /// (`DailyHangul-Backup-*.json`) im Temp-Verzeichnis entfernt, damit sich die
     /// vollständigen Datenexporte dort nicht ansammeln.
