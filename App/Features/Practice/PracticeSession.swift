@@ -284,26 +284,48 @@ final class PracticeSession {
         if isFinished { finalizeRound() }
     }
 
+    /// Beendet die Runde vorzeitig, z.B. bei abgelaufener Prüfungszeit (Issue #134): sie zählt
+    /// als abgeschlossene, aber nie als perfekte/fehlerfreie Runde – unbeantwortete Karten gelten
+    /// als nicht bestanden. Ohne eine einzige Antwort wird nur geflusht (keine Session verbucht,
+    /// sonst ließen sich Runden-Badges/Tages-Challenge ohne Üben freischalten). Eine schon
+    /// vollständig beantwortete Runde ist bereits finalisiert. Idempotent (`didFinalize`).
+    func finishEarly() {
+        guard !isFinished else { return }
+        guard index > 0 else {
+            flushProgress()
+            return
+        }
+        finalizeRound(incomplete: true)
+    }
+
     /// Einmalige Auswertung am Rundenende: Übungsrunde verbuchen und ggf. neue
     /// Badges freischalten. Idempotent pro Runde (`didFinalize`).
-    private func finalizeRound() {
+    /// - Parameter incomplete: Runde wurde vorzeitig beendet (nicht alle Karten beantwortet) –
+    ///   dann nie „Makellos"/fehlerfrei, da ungesehene Karten nicht als richtig zählen dürfen.
+    private func finalizeRound(incomplete: Bool = false) {
         guard !didFinalize else { return }
         didFinalize = true
         flushProgress() // gesammelten Wochen-Log am Rundenende persistieren
         let now = Date.now
         // Fehlerfreie Runde mit genug Wörtern → „Makellos". `isFlawless` gilt für die
-        // Fehlerfrei-Serie schon ohne Mindestwortzahl.
-        let isPerfect = wrongCount == 0 && total >= 5
-        let isFlawless = wrongCount == 0 && total >= 1
+        // Fehlerfrei-Serie schon ohne Mindestwortzahl. Vorzeitig beendet: nie „Makellos";
+        // die Fehlerfrei-Serie bricht nur bei einem echten Fehler, sonst bleibt sie neutral.
+        let isPerfect = !incomplete && wrongCount == 0 && total >= 5
+        let isFlawless: Bool? = incomplete
+            ? (wrongCount > 0 ? false : nil)
+            : wrongCount == 0 && total >= 1
+        // Nur tatsächlich gesehene Karten zählen – bei vorzeitigem Ende nicht die
+        // Modi/Gruppen ungesehener Karten verbuchen (sonst Modi-/Gruppen-Badges ohne Üben).
+        let counted = incomplete ? Array(items.prefix(index)) : items
         newlyUnlocked = AchievementService.registerSession(
-            modes: Set(items.map(\.mode)),
+            modes: Set(counted.map(\.mode)),
             date: now,
             isPerfect: isPerfect,
             isFlawless: isFlawless,
             selfCorrected: didSelfCorrect,
             newlyLearned: newlyLearnedCount,
             currentStreak: StreakStore.current,
-            groups: Set(items.compactMap { $0.vocab.group?.id.uuidString }),
+            groups: Set(counted.compactMap { $0.vocab.group?.id.uuidString }),
             maxCombo: maxCombo,
             context: context
         )
