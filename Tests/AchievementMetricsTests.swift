@@ -56,6 +56,48 @@ final class AchievementMetricsTests: XCTestCase {
         XCTAssertFalse(metrics.bigGardenBloomed) // keine Gruppe >= gardenBloomMinSize
     }
 
+    /// Alle echten Gruppen komplett gelernt, dazu eine leere Gruppe und ungelernte
+    /// gruppenlose Wörter: „all" muss trotzdem true sein. Fällt um, wenn leere Gruppen
+    /// als ungemeistert zählen oder gruppenlose Wörter wie eine Gruppe behandelt werden.
+    func testMetricsAllMasteredIgnoresEmptyGroupsAndGrouplessWords() throws {
+        let min = AchievementService.themenMeisterMinSize
+        let first = VocabGroup(name: "Eins")
+        let second = VocabGroup(name: "Zwei")
+        let empty = VocabGroup(name: "Leer")
+        [first, second, empty].forEach(context.insert)
+        insert(count: min, learned: min, into: first)
+        insert(count: 2, learned: 2, into: second)
+        insert(count: 3, learned: 0, into: nil) // gruppenlos, ungelernt
+        try context.save()
+
+        let metrics = AchievementService.metrics(context: context, progress: AchievementProgress())
+
+        XCTAssertEqual(metrics.totalWords, min + 2 + 3)
+        XCTAssertEqual(metrics.learnedWords, min + 2)
+        XCTAssertTrue(metrics.groupMastered)
+        XCTAssertTrue(metrics.allGroupsMastered)
+        XCTAssertFalse(metrics.bigGardenBloomed)
+    }
+
+    /// Zwei Gruppen mit derselben domänischen `id` (kein Unique-Constraint) bleiben
+    /// getrennte Buckets: die komplett gelernte Gruppe zählt als gemeistert, obwohl die
+    /// andere mit gleicher UUID ungelernt ist.
+    func testMetricsKeepsGroupsWithDuplicateIDSeparate() throws {
+        let min = AchievementService.themenMeisterMinSize
+        let learnedGroup = VocabGroup(name: "Gelernt")
+        let openGroup = VocabGroup(name: "Offen")
+        openGroup.id = learnedGroup.id
+        [learnedGroup, openGroup].forEach(context.insert)
+        insert(count: min, learned: min, into: learnedGroup)
+        insert(count: 3, learned: 0, into: openGroup)
+        try context.save()
+
+        let metrics = AchievementService.metrics(context: context, progress: AchievementProgress())
+
+        XCTAssertTrue(metrics.groupMastered)
+        XCTAssertFalse(metrics.allGroupsMastered)
+    }
+
     /// Eine einzelne, komplett gelernte Gruppe ab `gardenBloomMinSize` löst alle drei
     /// Mastery-Flags aus – prüft, dass die Pro-Gruppe-Zählung aus dem Vocab-Durchlauf
     /// stimmt (learned == count je Gruppe).

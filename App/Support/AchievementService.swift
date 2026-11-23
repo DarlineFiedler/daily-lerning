@@ -30,17 +30,23 @@ enum AchievementService {
         // Ein einziger Vocab-Fetch speist total, learned und die Pro-Gruppe-Kennzahlen:
         // spart die zwei fetchCount-Queries und den VocabGroup-Fetch (der je Gruppe `vocabs`
         // nachlud) bei jedem evaluate/registerSession/recordEvent (Issue #139).
+        // Bewusst ein schlichter Fetch: gemessen (5000 Wörter, In-Memory) waren
+        // `propertiesToFetch = [\.statusRaw]` ~50 % langsamer und
+        // `relationshipKeyPathsForPrefetching = [\.group]` ohne messbaren Gewinn.
         let allVocabs = (try? context.fetch(FetchDescriptor<Vocab>())) ?? []
         let total = allVocabs.count
         var learned = 0
-        // Pro Gruppe (gekeyt per group.id) Vokabelzahl + davon gelernt in einem Durchlauf.
+        // Pro Gruppe Vokabelzahl + davon gelernt in einem Durchlauf. Gekeyt per
+        // persistentModelID (vom Store garantiert eindeutig) statt per domänischer
+        // `group.id`, die kein Unique-Constraint hat – sonst würden zwei Gruppen mit
+        // gleicher UUID (z. B. nach Import) zu einem Bucket verschmelzen.
         // Wörter ohne Gruppe zählen in total/learned, aber in keine Gruppe – wie zuvor;
         // leere Gruppen tauchen nicht auf und würden von `groupMastery` ohnehin ignoriert.
-        var perGroup: [UUID: (count: Int, learned: Int)] = [:]
+        var perGroup: [PersistentIdentifier: (count: Int, learned: Int)] = [:]
         for vocab in allVocabs {
             let isLearned = vocab.statusRaw == learnedRaw
             if isLearned { learned += 1 }
-            guard let groupID = vocab.group?.id else { continue }
+            guard let groupID = vocab.group?.persistentModelID else { continue }
             var summary = perGroup[groupID, default: (count: 0, learned: 0)]
             summary.count += 1
             if isLearned { summary.learned += 1 }
