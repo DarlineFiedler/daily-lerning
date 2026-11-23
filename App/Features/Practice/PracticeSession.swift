@@ -308,18 +308,24 @@ final class PracticeSession {
         flushProgress() // gesammelten Wochen-Log am Rundenende persistieren
         let now = Date.now
         // Fehlerfreie Runde mit genug Wörtern → „Makellos". `isFlawless` gilt für die
-        // Fehlerfrei-Serie schon ohne Mindestwortzahl.
+        // Fehlerfrei-Serie schon ohne Mindestwortzahl. Vorzeitig beendet: nie „Makellos";
+        // die Fehlerfrei-Serie bricht nur bei einem echten Fehler, sonst bleibt sie neutral.
         let isPerfect = !incomplete && wrongCount == 0 && total >= 5
-        let isFlawless = !incomplete && wrongCount == 0 && total >= 1
+        let isFlawless: Bool? = incomplete
+            ? (wrongCount > 0 ? false : nil)
+            : wrongCount == 0 && total >= 1
+        // Nur tatsächlich gesehene Karten zählen – bei vorzeitigem Ende nicht die
+        // Modi/Gruppen ungesehener Karten verbuchen (sonst Modi-/Gruppen-Badges ohne Üben).
+        let counted = incomplete ? Array(items.prefix(index)) : items
         newlyUnlocked = AchievementService.registerSession(
-            modes: Set(items.map(\.mode)),
+            modes: Set(counted.map(\.mode)),
             date: now,
             isPerfect: isPerfect,
             isFlawless: isFlawless,
             selfCorrected: didSelfCorrect,
             newlyLearned: newlyLearnedCount,
             currentStreak: StreakStore.current,
-            groups: Set(items.compactMap { $0.vocab.group?.id.uuidString }),
+            groups: Set(counted.compactMap { $0.vocab.group?.id.uuidString }),
             maxCombo: maxCombo,
             context: context
         )

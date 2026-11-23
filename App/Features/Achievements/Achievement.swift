@@ -332,6 +332,7 @@ struct AchievementProgress: Equatable, Codable {
     ///   - date: Zeitpunkt des Rundenendes (Uhrzeit/Datum bestimmen viele Flags).
     ///   - isPerfect: fehlerfrei mit genug Wörtern (siehe `PracticeSession`).
     ///   - isFlawless: fehlerfrei, unabhängig von der Wortanzahl (für die Fehlerfrei-Serie).
+    ///     `nil` = neutral: die Serie bleibt unberührt (vorzeitig beendete Runde ohne Fehler, #134).
     ///   - selfCorrected: ein zuvor falsch beantwortetes Wort wurde diesmal richtig.
     ///   - newlyLearned: Anzahl in dieser Runde neu auf „gelernt" gestiegener Wörter.
     ///   - currentStreak: aktueller Tages-Streak (für das Serien-Comeback).
@@ -339,7 +340,7 @@ struct AchievementProgress: Equatable, Codable {
     mutating func recordSession(modes: Set<PracticeMode>,
                                 date: Date,
                                 isPerfect: Bool,
-                                isFlawless: Bool = false,
+                                isFlawless: Bool? = false,
                                 selfCorrected: Bool = false,
                                 newlyLearned: Int = 0,
                                 currentStreak: Int = 0,
@@ -361,7 +362,7 @@ struct AchievementProgress: Equatable, Codable {
         recordSpecialDates(comps: comps)
         recordSeries(modeRaws: modeRaws, day: day, hour: hour, isFlawless: isFlawless, calendar: calendar)
         recordDayBuffer(modeRaws: modeRaws, day: day, newlyLearned: newlyLearned, groups: groups, calendar: calendar)
-        if isFlawless { flawlessToday = true } // nach dem Tages-Rollover (setzt flawlessToday zurück) setzen
+        if isFlawless == true { flawlessToday = true } // nach dem Tages-Rollover (setzt flawlessToday zurück) setzen
         recordComeback(day: day, currentStreak: currentStreak, calendar: calendar)
     }
 
@@ -396,8 +397,8 @@ struct AchievementProgress: Equatable, Codable {
     }
 
     /// Runden-/Tages-Serien: fehlerfrei, Nächte nach Mitternacht, gleicher Modus an Folgetagen.
-    private mutating func recordSeries(modeRaws: Set<String>, day: Date, hour: Int, isFlawless: Bool, calendar: Calendar) {
-        flawlessRun.note(success: isFlawless)
+    private mutating func recordSeries(modeRaws: Set<String>, day: Date, hour: Int, isFlawless: Bool?, calendar: Calendar) {
+        if let isFlawless { flawlessRun.note(success: isFlawless) }
         if hour < 5 { nightNights.note(day: day, calendar: calendar) }
         // Gleicher (einziger) Modus an Folgetagen – nur die erste Ein-Modus-Runde des Tages.
         guard modeRaws.count == 1, let onlyMode = modeRaws.first else { return }
