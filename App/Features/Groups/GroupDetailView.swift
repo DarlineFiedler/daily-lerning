@@ -121,7 +121,7 @@ struct GroupDetailView: View {
             isSelected: selection.contains(vocab.id)
         ) {
             if isSelecting {
-                toggle(&selection, vocab.id)
+                selection.toggle(vocab.id)
             } else {
                 editingVocab = vocab
             }
@@ -307,7 +307,7 @@ struct GroupDetailView: View {
                     systemImage: status.systemImage,
                     tint: status.color,
                     isSelected: selectedStatuses.contains(status)
-                ) { toggle(&selectedStatuses, status) }
+                ) { selectedStatuses.toggle(status) }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -332,10 +332,6 @@ struct GroupDetailView: View {
     }
 
     // MARK: - Aktionen
-
-    private func toggle<T: Hashable>(_ set: inout Set<T>, _ value: T) {
-        if set.contains(value) { set.remove(value) } else { set.insert(value) }
-    }
 
     private func toggleSelectAll() {
         let ids = Set(vocabs.map(\.id))

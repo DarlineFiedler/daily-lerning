@@ -274,7 +274,7 @@ struct SettingsView: View {
         HStack {
             Text(L("settings.about.version")).font(.appBody).foregroundStyle(Theme.inkSecondary)
             Spacer()
-            Text(appVersion).font(.appMono(13)).foregroundStyle(Theme.inkMuted)
+            Text(AppInfo.version).font(.appMono(13)).foregroundStyle(Theme.inkMuted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardStyle()
@@ -351,12 +351,6 @@ struct SettingsView: View {
 
     private func intervalLabel(_ minutes: Int) -> String {
         minutes < 60 ? L("interval.min", minutes) : L("interval.hour", minutes / 60)
-    }
-
-    private var appVersion: String {
-        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-        return "\(v) (\(b))"
     }
 
     private func refreshWidget() {

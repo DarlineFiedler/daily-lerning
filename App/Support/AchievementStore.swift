@@ -26,14 +26,13 @@ enum AchievementStore {
         get {
             // Aktueller Zustand liegt als JSON vor; sonst einmalig aus den Legacy-Keys migrieren.
             if let data = d.data(forKey: AchievementKeys.progress),
-               let decoded = try? JSONDecoder().decode(AchievementProgress.self, from: data) {
+               let decoded = try? AppGroup.jsonDecoder.decode(AchievementProgress.self, from: data) {
                 return decoded
             }
             return legacyProgress()
         }
         set {
-            guard let data = try? JSONEncoder().encode(newValue) else { return }
-            d.set(data, forKey: AchievementKeys.progress)
+            d.saveJSON(newValue, forKey: AchievementKeys.progress)
         }
     }
 

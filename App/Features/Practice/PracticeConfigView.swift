@@ -221,7 +221,7 @@ struct PracticeConfigView: View {
                         tint: Theme.leaf,
                         monospaced: true,
                         isSelected: selectedGroupIDs.contains(group.id)
-                    ) { toggle(&selectedGroupIDs, group.id) }
+                    ) { selectedGroupIDs.toggle(group.id) }
                 }
             }
         }
@@ -261,7 +261,7 @@ struct PracticeConfigView: View {
                         tint: status.color,
                         monospaced: true,
                         isSelected: selectedStatuses.contains(status)
-                    ) { toggle(&selectedStatuses, status) }
+                    ) { selectedStatuses.toggle(status) }
                 }
             }
         }
@@ -278,7 +278,7 @@ struct PracticeConfigView: View {
                         tint: Theme.leaf,
                         monospaced: true,
                         isSelected: selectedTopikLevels.contains(level)
-                    ) { toggle(&selectedTopikLevels, level) }
+                    ) { selectedTopikLevels.toggle(level) }
                 }
             }
         }
@@ -323,7 +323,7 @@ struct PracticeConfigView: View {
                         tint: Theme.leaf,
                         monospaced: true,
                         isSelected: selectedModes.contains(mode)
-                    ) { toggle(&selectedModes, mode) }
+                    ) { selectedModes.toggle(mode) }
                 }
             }
             Text(L("practice.config.modesHint"))
@@ -405,10 +405,6 @@ struct PracticeConfigView: View {
         .background(
             Theme.paper.overlay(Rectangle().fill(Theme.hairline).frame(height: 1), alignment: .top)
         )
-    }
-
-    private func toggle<T: Hashable>(_ set: inout Set<T>, _ value: T) {
-        if set.contains(value) { set.remove(value) } else { set.insert(value) }
     }
 
     // MARK: - Voreinstellungen
