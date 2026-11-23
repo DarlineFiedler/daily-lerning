@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // Wiederverwendbare Bausteine der „Papier & Tinte"-Optik: Papierhintergrund mit
 // feiner Linierung, harte Offset-Schatten ohne Blur (Print-Look), Papierkarten,
@@ -24,20 +25,43 @@ extension View {
 // MARK: - Papierhintergrund mit Linienraster
 
 /// Feine, waagerechte Papier-Linierung (1pt Linie alle 4pt), sehr dezent (~2,2 % Tinte).
+///
+/// Statt pro Canvas-Pass ~N/4 Linien-Rects über die volle Höhe zu füllen (der Hintergrund
+/// liegt via `paperBackground()` auf ~24 Screens), wird die Linierung **einmal** als
+/// 1×4pt-Kachel gerendert und vom System gekachelt – konstante Kosten je Render statt
+/// hunderter Draw-Ops.
 struct PaperTexture: View {
-    /// Einmal geparst statt pro Canvas-Pass (der Hintergrund liegt auf ~24 Screens).
-    private static let line = Color(hex: "#211E19").opacity(0.022)
+    /// Tintenfarbe der Linien (`#211E19` @ 2,2 %). Aus dem gemeinsamen Hex-Parser
+    /// ([[HexColorComponents]]) gebaut, damit sie nicht gegenüber `Color(hex:)` driftet.
+    static let lineColor: UIColor = {
+        let c = HexColorComponents.parse("#211E19")
+            ?? HexColorComponents.RGBA(red: 0.5, green: 0.5, blue: 0.5, alpha: 1)
+        return UIColor(red: c.red, green: c.green, blue: c.blue, alpha: 0.022)
+    }()
+
+    /// Einmal gerenderte, kachelbare Linien-Textur (siehe `makeTile()`).
+    static let tile: UIImage = makeTile()
+
+    /// Rendert die 1×4pt-Kachel: oberste 1pt in `lineColor`, darunter 3pt transparent –
+    /// gekachelt ergibt das dieselbe Linierung (1pt Linie alle 4pt) wie zuvor.
+    static func makeTile() -> UIImage {
+        let format = UIGraphicsImageRendererFormat.preferred()
+        format.opaque = false
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 1, height: 4), format: format)
+        return renderer.image { ctx in
+            lineColor.setFill()
+            ctx.fill(CGRect(x: 0, y: 0, width: 1, height: 1))
+        }
+    }
 
     var body: some View {
-        Canvas { context, size in
-            let line = Self.line
-            var y: CGFloat = 0
-            while y < size.height {
-                context.fill(Path(CGRect(x: 0, y: y, width: size.width, height: 1)), with: .color(line))
-                y += 4
-            }
-        }
-        .allowsHitTesting(false)
+        Image(uiImage: Self.tile)
+            .resizable(resizingMode: .tile)
+            .allowsHitTesting(false)
+            // Rein dekorativ: wie das frühere `Canvas` nicht im Accessibility-Baum auftauchen
+            // (sonst verschiebt das Hintergrund-`Image` die A11y-Struktur der Screens, was die
+            // identifier-basierten UI-Tests stört).
+            .accessibilityHidden(true)
     }
 }
 
