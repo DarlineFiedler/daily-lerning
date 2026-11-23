@@ -27,16 +27,26 @@ enum AchievementService {
     /// Baut die aktuellen Metriken aus dem Store + den Vokabeldaten.
     static func metrics(context: ModelContext, progress: AchievementProgress = AchievementStore.progress) -> AchievementMetrics {
         let learnedRaw = LearningStatus.learned.rawValue
-        let learned = (try? context.fetchCount(FetchDescriptor<Vocab>(predicate: #Predicate { $0.statusRaw == learnedRaw }))) ?? 0
-        let total = (try? context.fetchCount(FetchDescriptor<Vocab>())) ?? 0
-        // Gruppen einmal fetchen und pro Gruppe in einem Durchlauf die Kennzahlen bilden –
-        // beide Meister-Ableitungen (eine Gruppe / alle Gruppen) speisen sich daraus.
-        let groups = (try? context.fetch(FetchDescriptor<VocabGroup>())) ?? []
-        let summaries = groups.map { group in
-            (count: group.vocabs.count,
-             learned: group.vocabs.reduce(0) { $0 + ($1.statusRaw == learnedRaw ? 1 : 0) })
+        // Ein einziger Vocab-Fetch speist total, learned und die Pro-Gruppe-Kennzahlen:
+        // spart die zwei fetchCount-Queries und den VocabGroup-Fetch (der je Gruppe `vocabs`
+        // nachlud) bei jedem evaluate/registerSession/recordEvent (Issue #139).
+        let allVocabs = (try? context.fetch(FetchDescriptor<Vocab>())) ?? []
+        let total = allVocabs.count
+        var learned = 0
+        // Pro Gruppe (gekeyt per group.id) Vokabelzahl + davon gelernt in einem Durchlauf.
+        // Wörter ohne Gruppe zählen in total/learned, aber in keine Gruppe – wie zuvor;
+        // leere Gruppen tauchen nicht auf und würden von `groupMastery` ohnehin ignoriert.
+        var perGroup: [UUID: (count: Int, learned: Int)] = [:]
+        for vocab in allVocabs {
+            let isLearned = vocab.statusRaw == learnedRaw
+            if isLearned { learned += 1 }
+            guard let groupID = vocab.group?.id else { continue }
+            var summary = perGroup[groupID, default: (count: 0, learned: 0)]
+            summary.count += 1
+            if isLearned { summary.learned += 1 }
+            perGroup[groupID] = summary
         }
-        let mastery = groupMastery(from: summaries)
+        let mastery = groupMastery(from: Array(perGroup.values))
         return AchievementMetrics.from(progress: progress,
                                        learnedWords: learned,
                                        totalWords: total,
@@ -49,8 +59,9 @@ enum AchievementService {
                                        unlockedIDs: AchievementStore.unlockedIDs)
     }
 
-    /// Reine Auswertung aus Gruppen-Kennzahlen (Vokabelzahl + davon gelernt), damit ein
-    /// einziger Gruppen-Fetch beide Badge-Ableitungen speist – und die Logik testbar bleibt.
+    /// Reine Auswertung aus Gruppen-Kennzahlen (Vokabelzahl + davon gelernt), die aus dem
+    /// einen Vocab-Fetch abgeleitet werden – beide Badge-Ableitungen speisen sich daraus,
+    /// und die Logik bleibt testbar.
     /// - `any`: mindestens eine ausreichend große Gruppe (`>= themenMeisterMinSize`) komplett
     ///   gelernt („Themen-Meister").
     /// - `all`: alle nicht-leeren Gruppen komplett gelernt und insgesamt genug Wörter, damit
