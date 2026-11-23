@@ -3,17 +3,12 @@ import SwiftUI
 /// Modus 5: Lückentext. Der gespeicherte Beispielsatz wird mit dem gesuchten Wort als
 /// Lücke gezeigt; das fehlende Wort wird eingetippt und (tolerant, wie beim Schreiben)
 /// mit `Vocab.word` verglichen. Nur Wörter mit Beispielsatz landen in diesem Modus.
+/// Eingabe, Prüfen/Aufgeben und Aktions-Buttons liefert `TypedAnswerScaffold`.
 struct ClozeView: View {
     let item: PracticeItem
     let onAnswer: (Bool) -> Void
 
-    @State private var typed = ""
-    @State private var checked = false
     @State private var wasCorrect = false
-    /// Der Nutzer hat aufgegeben („Weiß ich nicht"), ohne etwas zu tippen. Die Lösung wird
-    /// wie bei einer falschen Antwort gezeigt, das „Trotzdem richtig" entfällt.
-    @State private var gaveUp = false
-    @FocusState private var focused: Bool
 
     /// Das gesuchte Wort ist immer die Lernsprache (Hangul).
     private var answer: String { item.vocab.word }
@@ -22,43 +17,24 @@ struct ClozeView: View {
         ClozeText.blanked(example: ClozeText.usableExample(for: item.vocab) ?? "", word: answer)
     }
 
+    private var bannerTint: Color {
+        wasCorrect ? LearningStatus.learned.color : Theme.wrong
+    }
+
     var body: some View {
-        VStack(spacing: Theme.Spacing.l) {
-            clozeCard
-
-            TextField(L("practice.cloze.typeWord"), text: $typed)
-                .font(.appDisplay(30, weight: .regular))
-                .multilineTextAlignment(.center)
-                .tint(Theme.vermillion)
-                .padding(.vertical, Theme.Spacing.s)
-                .overlay(alignment: .bottom) {
-                    Rectangle().fill(Theme.vermillion).frame(height: 2)
-                }
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.never)
-                .focused($focused)
-                .disabled(checked)
-                .onSubmit { if !checked { check() } }
-
-            if checked {
-                resultBanner
-                actionButtons
-            } else {
-                Button(action: check) {
-                    Label(L("practice.check"), systemImage: "checkmark")
-                }
-                .buttonStyle(.primary)
-                .disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
-
-                // Aufgeben ist bewusst NICHT an eine Eingabe gebunden – weiß man das Wort
-                // gar nicht, zeigt der Button direkt die Lösung (zählt als falsch).
-                Button(action: giveUp) {
-                    Label(L("practice.iDontKnow"), systemImage: "questionmark.circle")
-                }
-                .buttonStyle(.secondary(tint: Theme.wrong))
-            }
-        }
-        .onAppear { focused = true }
+        TypedAnswerScaffold(
+            placeholder: L("practice.cloze.typeWord"),
+            underline: Theme.vermillion,
+            bannerTint: bannerTint,
+            evaluate: { typed in
+                wasCorrect = AnswerChecker.isCorrect(typed: typed, expected: answer)
+                return wasCorrect
+            },
+            onGiveUp: { wasCorrect = false },
+            onAnswer: onAnswer,
+            prompt: { clozeCard },
+            bannerContent: { bannerContent }
+        )
     }
 
     private var clozeCard: some View {
@@ -85,68 +61,21 @@ struct ClozeView: View {
         .hardShadow(x: 3, y: 4)
     }
 
-    private var resultBanner: some View {
-        VStack(spacing: 6) {
-            Label(
-                wasCorrect ? L("practice.correct") : L("practice.wrong"),
-                systemImage: wasCorrect ? "checkmark.circle.fill" : "xmark.circle.fill"
-            )
-            .font(.appHeadline)
-            .foregroundStyle(wasCorrect ? LearningStatus.learned.color : Theme.wrong)
-
-            if !wasCorrect {
-                HStack(spacing: Theme.Spacing.s) {
-                    Text(answer)
-                        .font(.appTitle3)
-                    SpeakButton(text: answer)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(Theme.Spacing.m)
-        .background((wasCorrect ? LearningStatus.learned.color : Theme.wrong).opacity(0.14),
-                    in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
-    }
-
     @ViewBuilder
-    private var actionButtons: some View {
-        if wasCorrect {
-            Button { onAnswer(true) } label: {
-                Label(L("common.next"), systemImage: "arrow.right")
-            }
-            .buttonStyle(.primary)
-        } else if gaveUp {
-            // Aufgegeben: nur weiter (als falsch gewertet), kein „Trotzdem richtig".
-            Button { onAnswer(false) } label: {
-                Label(L("common.next"), systemImage: "arrow.right")
-            }
-            .buttonStyle(.primary)
-        } else {
-            VStack(spacing: Theme.Spacing.s) {
-                Button { onAnswer(true) } label: {
-                    Label(L("practice.markCorrect"), systemImage: "hand.thumbsup")
-                }
-                .buttonStyle(.secondary(tint: LearningStatus.learned.color))
+    private var bannerContent: some View {
+        Label(
+            wasCorrect ? L("practice.correct") : L("practice.wrong"),
+            systemImage: wasCorrect ? "checkmark.circle.fill" : "xmark.circle.fill"
+        )
+        .font(.appHeadline)
+        .foregroundStyle(bannerTint)
 
-                Button { onAnswer(false) } label: {
-                    Label(L("common.next"), systemImage: "arrow.right")
-                }
-                .buttonStyle(.primary)
+        if !wasCorrect {
+            HStack(spacing: Theme.Spacing.s) {
+                Text(answer)
+                    .font(.appTitle3)
+                SpeakButton(text: answer)
             }
         }
-    }
-
-    private func check() {
-        wasCorrect = AnswerChecker.isCorrect(typed: typed, expected: answer)
-        withAnimation { checked = true }
-        focused = false
-    }
-
-    /// „Weiß ich nicht": Lösung als falsch enthüllen, ohne dass eine Eingabe nötig war.
-    private func giveUp() {
-        wasCorrect = false
-        gaveUp = true
-        withAnimation { checked = true }
-        focused = false
     }
 }

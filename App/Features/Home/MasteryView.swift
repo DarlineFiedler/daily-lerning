@@ -51,21 +51,7 @@ struct MasteryView: View {
     // MARK: - Status-Aufschlüsselung
 
     private func breakdownSection(counts: [LearningStatus: Int]) -> some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-            StatusDistributionBar(counts: counts, height: 14)
-            ForEach(LearningStatus.allCases) { status in
-                HStack {
-                    StatusDot(status: status, size: 12)
-                    Text(L(status.titleKey)).font(.appBody)
-                    Spacer()
-                    Text("\(counts[status] ?? 0)")
-                        .font(.appBody.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
-                }
-            }
-        }
-        .cardStyle()
+        StatusBreakdownList(counts: counts)
     }
 
     // MARK: - Gruppen-Ranking
@@ -87,14 +73,9 @@ struct MasteryView: View {
     /// statt bei jedem Paarvergleich zweimal.
     private var rankedGroups: [VocabGroup] {
         activeGroups
-            .map { (group: $0, fraction: masteryFraction($0)) }
+            .map { (group: $0, fraction: $0.masteryFraction) }
             .sorted { $0.fraction > $1.fraction }
             .map(\.group)
-    }
-
-    private func masteryFraction(_ group: VocabGroup) -> Double {
-        let learned = group.vocabs.statusCounts()[.learned] ?? 0
-        return group.vocabCount > 0 ? Double(learned) / Double(group.vocabCount) : 0
     }
 
     // MARK: - Leerzustand
@@ -149,8 +130,7 @@ private struct MasteryRankRow: View {
     let group: VocabGroup
 
     var body: some View {
-        let learned = group.vocabs.statusCounts()[.learned] ?? 0
-        let fraction = group.vocabCount > 0 ? Double(learned) / Double(group.vocabCount) : 0
+        let fraction = group.masteryFraction
         return VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             HStack(spacing: Theme.Spacing.s) {
                 GroupColorDot(colorHex: group.colorHex)

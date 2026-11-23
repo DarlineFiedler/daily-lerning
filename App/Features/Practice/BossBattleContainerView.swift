@@ -54,22 +54,9 @@ struct BossBattleContainerView: View {
         .sensoryFeedback(.error, trigger: session.wrongCount)
     }
 
-    @ViewBuilder
     private func card(for item: PracticeItem) -> some View {
-        let onAnswer: (Bool) -> Void = { correct in
+        PracticeModeView(item: item) { correct in
             withAnimation { session.answer(correct: correct) }
-        }
-        switch item.mode {
-        case .multipleChoice:
-            MultipleChoiceView(item: item, onAnswer: onAnswer)
-        case .review:
-            ReviewSwipeView(item: item, onAnswer: onAnswer)
-        case .writing:
-            WritingView(item: item, onAnswer: onAnswer)
-        case .listening:
-            ListeningView(item: item, onAnswer: onAnswer)
-        case .cloze:
-            ClozeView(item: item, onAnswer: onAnswer)
         }
     }
 

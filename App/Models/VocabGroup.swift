@@ -31,4 +31,12 @@ final class VocabGroup {
     // MARK: - Abgeleitete Werte
 
     var vocabCount: Int { vocabs.count }
+
+    /// Anzahl der Wörter mit Status „gelernt".
+    var learnedCount: Int { vocabs.statusCounts()[.learned] ?? 0 }
+
+    /// Beherrschungs-Anteil 0…1 (gelernt / gesamt); leere Gruppe → 0.
+    var masteryFraction: Double {
+        vocabCount > 0 ? Double(learnedCount) / Double(vocabCount) : 0
+    }
 }
