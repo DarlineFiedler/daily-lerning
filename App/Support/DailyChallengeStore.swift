@@ -91,7 +91,6 @@ enum DailyChallengeStore {
     }
 
     private static func save(_ state: DailyChallengeState) {
-        guard let data = try? JSONEncoder().encode(state) else { return }
-        d.set(data, forKey: DailyChallengeKeys.state)
+        d.saveJSON(state, forKey: DailyChallengeKeys.state)
     }
 }

@@ -353,7 +353,6 @@ enum GoalHistoryStore {
     }
 
     private static func save(_ history: GoalHistory) {
-        guard let data = try? JSONEncoder().encode(history) else { return }
-        d.set(data, forKey: GoalHistoryKeys.log)
+        d.saveJSON(history, forKey: GoalHistoryKeys.log)
     }
 }

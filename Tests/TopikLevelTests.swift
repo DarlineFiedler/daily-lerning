@@ -35,4 +35,17 @@ final class TopikLevelTests: XCTestCase {
         XCTAssertEqual(TopikLevel.one.titleKey, "topik.i")
         XCTAssertEqual(TopikLevel.two.titleKey, "topik.ii")
     }
+
+    /// Anzeigetitel für die Prüfungs-Ansicht (`Optional<TopikLevel>.examTitle`): konkrete
+    /// Stufe → lokalisierter Name, keine Stufe → generisches „TOPIK".
+    func testExamTitle() {
+        let one: TopikLevel? = .one
+        let two: TopikLevel? = .two
+        let noLevel: TopikLevel? = nil
+        XCTAssertEqual(one.examTitle, L("topik.i"))
+        XCTAssertEqual(two.examTitle, L("topik.ii"))
+        XCTAssertEqual(noLevel.examTitle, "TOPIK")
+        // Eine gewählte Stufe darf nie auf den generischen Fallback zurückfallen.
+        XCTAssertNotEqual(one.examTitle, "TOPIK")
+    }
 }

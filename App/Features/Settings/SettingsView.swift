@@ -114,11 +114,29 @@ struct SettingsView: View {
                             isPresented: pendingRestoreBinding,
                             titleVisibility: .visible,
                             presenting: pendingRestore) { pending in
-            Button(L("settings.backup.confirm.action"), role: .destructive) { confirmRestore(pending.backup) }
+            if pending.hasLocalOnlyData {
+                // Wahl nötig (Issue #132): Zusammenführen behält lokale Extras,
+                // Ersetzen rollt exakt auf den Sicherungs-Stand zurück.
+                Button(L("settings.backup.confirm.merge")) { confirmRestore(pending, replace: false) }
+                Button(L("settings.backup.confirm.replace"), role: .destructive) {
+                    confirmRestore(pending, replace: true)
+                }
+            } else {
+                // Nichts lokal, das nicht in der Sicherung steckt: beide Modi identisch.
+                Button(L("settings.backup.confirm.action"), role: .destructive) {
+                    confirmRestore(pending, replace: false)
+                }
+            }
             Button(L("common.cancel"), role: .cancel) { pendingRestore = nil }
         } message: { pending in
-            Text(L("settings.backup.confirm",
-                   pending.backup.vocabs.count, pending.backup.groups.count))
+            if pending.hasLocalOnlyData {
+                Text(L("settings.backup.confirm.choice",
+                       pending.backup.vocabs.count, pending.backup.groups.count,
+                       pending.removal.vocabs, pending.removal.groups))
+            } else {
+                Text(L("settings.backup.confirm",
+                       pending.backup.vocabs.count, pending.backup.groups.count))
+            }
         }
         .alert(packMessage ?? "", isPresented: packAlertBinding) {
             Button(L("common.done"), role: .cancel) { packMessage = nil }
@@ -274,7 +292,7 @@ struct SettingsView: View {
         HStack {
             Text(L("settings.about.version")).font(.appBody).foregroundStyle(Theme.inkSecondary)
             Spacer()
-            Text(appVersion).font(.appMono(13)).foregroundStyle(Theme.inkMuted)
+            Text(AppInfo.version).font(.appMono(13)).foregroundStyle(Theme.inkMuted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardStyle()
@@ -353,12 +371,6 @@ struct SettingsView: View {
         minutes < 60 ? L("interval.min", minutes) : L("interval.hour", minutes / 60)
     }
 
-    private var appVersion: String {
-        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-        return "\(v) (\(b))"
-    }
-
     private func refreshWidget() {
         AppContentRefresh.afterVocabChange(context: context)
     }
@@ -435,7 +447,8 @@ struct SettingsView: View {
             let data = try Data(contentsOf: url)
             // Nicht sofort anwenden: erst kurz bestätigen lassen, da vorhandene Wörter
             // per id überschrieben werden (Datensicherheit + Transparenz über die Menge).
-            pendingRestore = PendingRestore(backup: try VocabBackup.decode(data))
+            let backup = try VocabBackup.decode(data)
+            pendingRestore = PendingRestore(backup: backup, removal: backup.removalCounts(in: context))
         } catch VocabBackup.BackupError.tooLarge, VocabBackup.BackupError.fileTooLarge {
             restoreMessage = L("settings.backup.tooLarge")
         } catch VocabBackup.BackupError.unsupportedVersion {
@@ -446,10 +459,17 @@ struct SettingsView: View {
     }
 
     /// Spielt die zuvor eingelesene Sicherung tatsächlich ein (nach Bestätigung).
-    private func confirmRestore(_ backup: VocabBackup) {
-        backup.apply(into: context)
+    /// `replace` = lokale Objekte, die nicht in der Sicherung stehen, werden gelöscht.
+    private func confirmRestore(_ pending: PendingRestore, replace: Bool) {
+        let backup = pending.backup
+        // Tatsächlich gelöschte Anzahl melden (kann von der Vorschau im Dialog abweichen,
+        // falls sich der Store zwischenzeitlich geändert hat).
+        let removed = backup.apply(into: context, deleteMissing: replace)
         AppContentRefresh.afterVocabChange(context: context)
-        let message = L("settings.backup.restored", backup.vocabs.count, backup.groups.count)
+        let message = replace
+            ? L("settings.backup.replaced", backup.vocabs.count, backup.groups.count,
+                removed.vocabs, removed.groups)
+            : L("settings.backup.restored", backup.vocabs.count, backup.groups.count)
         // Erst im nächsten Runloop setzen: der Bestätigungsdialog wird im selben
         // Zyklus geschlossen; ein direkt gesetzter Alert würde von SwiftUI sonst
         // verschluckt und der Nutzer sähe keine Erfolgsmeldung.
@@ -470,7 +490,11 @@ private func settingsAnyVocabDescriptor() -> FetchDescriptor<Vocab> {
 /// (`VocabBackup` ist selbst nicht `Identifiable`) fürs `.confirmationDialog(presenting:)`.
 private struct PendingRestore: Identifiable {
     let backup: VocabBackup
+    /// Lokale Wörter/Gruppen, die beim Ersetzen gelöscht würden (siehe `removalCounts`).
+    let removal: (vocabs: Int, groups: Int)
     let id = UUID()
+
+    var hasLocalOnlyData: Bool { removal.vocabs > 0 || removal.groups > 0 }
 }
 
 /// Identifizierbarer Wrapper um eine zu teilende Datei-URL fürs `.sheet(item:)`

@@ -99,18 +99,13 @@ struct ExamContainerView: View {
         onClose()
     }
 
-    /// Angezeigtes Niveau – konkretes TOPIK-Level oder generisch „TOPIK".
-    private var levelText: String {
-        level.map { L($0.titleKey) } ?? "TOPIK"
-    }
-
     /// Bewertungs-Panel am unteren Rand (Design-Handoff 2c): gestricheltes Kärtchen mit
     /// Bestehensgrenze, Zeit pro Frage und einer grünen Handschrift-Notiz.
     private var examRubric: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             SectionLabel(L("practice.exam.rubric"))
             HStack {
-                Text(L("practice.exam.passMark", levelText))
+                Text(L("practice.exam.passMark", level.examTitle))
                     .font(.appSubheadline).foregroundStyle(Theme.ink)
                 Spacer()
                 Text("\(ExamRules.passMark(for: level))%")
@@ -197,10 +192,6 @@ struct ExamCountdownHeader: View {
         String(format: "%d:%02d", remaining / 60, remaining % 60)
     }
 
-    private var levelText: String {
-        level.map { L($0.titleKey) } ?? "TOPIK"
-    }
-
     var body: some View {
         VStack(spacing: Theme.Spacing.s) {
             // Reihe 1: Abbrechen (links) · gerahmter Timer (rechts).
@@ -225,7 +216,7 @@ struct ExamCountdownHeader: View {
 
             // Reihe 2: Serif-Titel (links) · Fragezähler (rechts).
             HStack(alignment: .firstTextBaseline) {
-                Text(L("practice.exam.titleFormat", levelText))
+                Text(L("practice.exam.titleFormat", level.examTitle))
                     .font(.appTitle)
                     .foregroundStyle(Theme.ink)
                 Spacer()
@@ -270,11 +261,6 @@ struct ExamResultView: View {
         ExamRules.passed(correct: session.correctCount, total: session.total, level: level)
     }
 
-    /// Angezeigtes Niveau – konkret gewähltes TOPIK-Level oder generisch „TOPIK".
-    private var levelText: String {
-        level.map { L($0.titleKey) } ?? "TOPIK"
-    }
-
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.Spacing.l) {
@@ -295,7 +281,7 @@ struct ExamResultView: View {
                     StatTile(value: "\(session.correctCount) / \(session.total)",
                              label: L("practice.exam.stat.correct"),
                              systemImage: "checkmark", tint: LearningStatus.learned.color)
-                    StatTile(value: levelText, label: L("practice.exam.stat.level"),
+                    StatTile(value: level.examTitle, label: L("practice.exam.stat.level"),
                              systemImage: "graduationcap.fill", tint: Theme.brandMid)
                 }
 
