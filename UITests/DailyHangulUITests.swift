@@ -33,10 +33,10 @@ final class DailyHangulUITests: XCTestCase {
     /// Tippt einen Button über seinen Identifier und wiederholt den Tap, bis das Zielelement
     /// erscheint. Buttons werden bewusst als `.buttons` adressiert – über die generische
     /// `.any`-Abfrage lassen sich interaktive Elemente für `tap()` nicht zuverlässig auflösen.
-    /// Der Retry ist nötig, weil direkt nach
-    /// dem Start baut `RootView.task` (Seed, Onboarding → Shell, FAB-Fälligkeitslabel) die
-    /// Oberfläche noch um – ein Tap auf ein zwar existierendes, aber noch nicht bedienbares
-    /// Element verpufft dann sporadisch (#164).
+    /// Der Retry ist nötig, weil `RootView.task` direkt nach dem Start (Seed, Onboarding → Shell,
+    /// FAB-Fälligkeitslabel) die Oberfläche noch umbaut – ein Tap auf ein zwar existierendes,
+    /// aber noch nicht bedienbares Element verpufft dann sporadisch (#164). Jeder Retry wird als
+    /// Activity im Testergebnis vermerkt, damit ein wiederholt nötiger Zweit-Tap auffällt.
     private func tapButton(_ app: XCUIApplication, _ id: String, until targetID: String,
                            file: StaticString = #filePath, line: UInt = #line) {
         let button = app.buttons[id]
@@ -44,11 +44,19 @@ final class DailyHangulUITests: XCTestCase {
                       "Button '\(id)' sollte vorhanden sein.", file: file, line: line)
         let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isHittable == true"),
                                                  object: button)
-        _ = XCTWaiter.wait(for: [hittable], timeout: timeout)
+        guard XCTWaiter.wait(for: [hittable], timeout: timeout) == .completed else {
+            XCTFail("Button '\(id)' wurde nicht bedienbar (isHittable).", file: file, line: line)
+            return
+        }
 
         let target = element(app, targetID)
-        for _ in 0 ..< 3 {
-            if button.isHittable { button.tap() }
+        XCTAssertFalse(target.exists, "'\(targetID)' sollte vor dem Tap auf '\(id)' noch nicht sichtbar sein.",
+                       file: file, line: line)
+        // Erster Tap mit großzügigem Timeout, damit ein langsamer Übergang keinen Zweit-Tap auslöst.
+        button.tap()
+        if target.waitForExistence(timeout: 10) { return }
+        for attempt in 2 ... 3 where button.isHittable {
+            XCTContext.runActivity(named: "Retry \(attempt): Tap auf '\(id)' (#164)") { _ in button.tap() }
             if target.waitForExistence(timeout: 5) { return }
         }
         XCTFail("Nach Tap auf '\(id)' sollte '\(targetID)' erscheinen.", file: file, line: line)
