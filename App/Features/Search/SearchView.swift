@@ -54,7 +54,7 @@ struct SearchView: View {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty || !groups.isEmpty || !statuses.isEmpty || widgetOnly else { return [] }
         return vocabs.filter { vocab in
-            (trimmed.isEmpty || vocab.word.matches(trimmed) || vocab.meaning.matches(trimmed))
+            (vocab.word.containsLoosely(trimmed) || vocab.meaning.containsLoosely(trimmed))
                 && (groups.isEmpty || (vocab.group.map { groups.contains($0.id) } ?? false))
                 && (statuses.isEmpty || statuses.contains(vocab.status))
                 && (!widgetOnly || vocab.includeInWidget)
@@ -177,7 +177,7 @@ struct SearchView: View {
                         tint: status.color,
                         monospaced: true,
                         isSelected: selectedStatuses.contains(status)
-                    ) { toggle(&selectedStatuses, status) }
+                    ) { selectedStatuses.toggle(status) }
                 }
             }
             if groups.count > 1 {
@@ -189,7 +189,7 @@ struct SearchView: View {
                             tint: Color(hex: group.colorHex),
                             monospaced: true,
                             isSelected: selectedGroups.contains(group.id)
-                        ) { toggle(&selectedGroups, group.id) }
+                        ) { selectedGroups.toggle(group.id) }
                     }
                 }
             }
@@ -282,22 +282,11 @@ struct SearchView: View {
         }
     }
 
-    private func toggle<T: Hashable>(_ set: inout Set<T>, _ value: T) {
-        if set.contains(value) { set.remove(value) } else { set.insert(value) }
-    }
-
     private func delete(_ vocab: Vocab) {
         context.delete(vocab)
         context.saveOrLog()
         pendingDelete = nil
         AppContentRefresh.afterVocabChange(context: context)
-    }
-}
-
-private extension String {
-    /// Groß-/Kleinschreibung- und diakritika-unempfindlicher Teilstring-Vergleich.
-    func matches(_ term: String) -> Bool {
-        range(of: term, options: [.caseInsensitive, .diacriticInsensitive]) != nil
     }
 }
 

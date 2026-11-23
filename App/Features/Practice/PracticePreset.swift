@@ -30,10 +30,7 @@ enum PracticePresetStore {
     private static var d: UserDefaults { .standard }
 
     static func all() -> [PracticePreset] {
-        guard let data = d.data(forKey: key),
-              let presets = try? JSONDecoder().decode([PracticePreset].self, from: data)
-        else { return [] }
-        return presets
+        d.decodeJSONOrPreserve([PracticePreset].self, forKey: key) ?? []
     }
 
     /// Fügt ein Preset hinzu oder überschreibt ein vorhandenes mit gleicher `id`.
@@ -65,7 +62,6 @@ enum PracticePresetStore {
     }
 
     private static func persist(_ presets: [PracticePreset]) {
-        guard let data = try? JSONEncoder().encode(presets) else { return }
-        d.set(data, forKey: key)
+        d.saveJSON(presets, forKey: key)
     }
 }

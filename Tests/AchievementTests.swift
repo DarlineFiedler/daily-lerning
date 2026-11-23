@@ -422,6 +422,7 @@ final class AchievementTests: XCTestCase {
     /// danach exakt wieder her, damit der geteilte App-Group-Container nicht leakt.
     private static let storeKeys = [
         AchievementKeys.unlockedIDs, AchievementKeys.unlockDates, AchievementKeys.progress,
+        AchievementKeys.progress + ".corrupt",
         AchievementKeys.modesUsed, AchievementKeys.weekdays, AchievementKeys.sessions,
         AchievementKeys.perfectRounds, AchievementKeys.nightOwl, AchievementKeys.earlyBird
     ]
@@ -559,6 +560,24 @@ extension AchievementTests {
                             maxCombo: 7, calendar: cal)
             AchievementStore.progress = p
             XCTAssertEqual(AchievementStore.progress.bestCombo, 7)
+        }
+    }
+}
+
+// Eigene Extension, damit der Klassenkörper unter dem SwiftLint-`type_body_length`-Limit bleibt.
+extension AchievementTests {
+    /// Ein korrupter Fortschritts-Blob wird unter `<key>.corrupt` gesichert, bevor der nächste
+    /// Save ihn überschreibt – sonst wäre der gesammelte Fortschritt unwiederbringlich weg.
+    func testCorruptProgressIsPreservedBeforeOverwrite() {
+        withCleanStore {
+            let d = AppGroup.defaults
+            let corrupt = Data("kein json".utf8)
+            d.set(corrupt, forKey: AchievementKeys.progress)
+
+            XCTAssertEqual(AchievementStore.progress, AchievementProgress()) // Fallback: leerer Legacy-Stand
+            AchievementStore.progress = AchievementProgress() // nächster Save überschreibt den Key
+
+            XCTAssertEqual(d.data(forKey: AchievementKeys.progress + ".corrupt"), corrupt)
         }
     }
 }
