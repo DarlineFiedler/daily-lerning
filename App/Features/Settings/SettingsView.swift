@@ -302,7 +302,9 @@ struct SettingsView: View {
 
     private var resetSection: some View {
         VStack(spacing: Theme.Spacing.s) {
-            Button(role: .destructive) { showResetConfirm = true } label: {
+            // Kein Reset bei flüchtigem Store (Issue #163): Er löschte nur Wegwerf-Daten, aber die
+            // App-Group-Einstellungen dauerhaft – nach dem Neustart wären Wörter und Stand inkonsistent.
+            Button(role: .destructive) { if ensureWritable() { showResetConfirm = true } } label: {
                 Text(L("settings.reset.button"))
                     .font(.appBody)
                     .foregroundStyle(Theme.vermillion)
@@ -381,8 +383,8 @@ struct SettingsView: View {
     /// schlanke `vocabProbe`-Query (höchstens 1 Treffer), ohne die Tabelle zu materialisieren.
     private var hasVocabs: Bool { !vocabProbe.isEmpty }
 
-    /// Läuft nur der flüchtige Notfall-Store (Issue #163), sind Import, Wortpakete und
-    /// Wiederherstellen gesperrt: Sie wirkten erfolgreich, wären beim Neustart aber weg.
+    /// Läuft nur der flüchtige Notfall-Store (Issue #163), sind Import, Wortpakete,
+    /// Wiederherstellen und Zurücksetzen gesperrt: Sie wirkten erfolgreich, wären beim Neustart aber weg.
     /// Zeigt dann einen Hinweis und gibt `false` zurück.
     private func ensureWritable() -> Bool {
         guard AppContentRefresh.isStoreVolatile() else { return true }
