@@ -54,7 +54,7 @@ struct SearchView: View {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty || !groups.isEmpty || !statuses.isEmpty || widgetOnly else { return [] }
         return vocabs.filter { vocab in
-            (trimmed.isEmpty || vocab.word.matches(trimmed) || vocab.meaning.matches(trimmed))
+            (vocab.word.containsLoosely(trimmed) || vocab.meaning.containsLoosely(trimmed))
                 && (groups.isEmpty || (vocab.group.map { groups.contains($0.id) } ?? false))
                 && (statuses.isEmpty || statuses.contains(vocab.status))
                 && (!widgetOnly || vocab.includeInWidget)

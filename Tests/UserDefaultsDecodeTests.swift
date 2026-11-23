@@ -59,4 +59,19 @@ final class UserDefaultsDecodeTests: XCTestCase {
         XCTAssertNil(d.decodeJSONOrPreserve(Sample.self, forKey: key))
         XCTAssertEqual(d.data(forKey: key + ".corrupt"), first)
     }
+
+    // MARK: - saveJSON
+
+    /// `saveJSON` schreibt so, dass `decodeJSONOrPreserve` den Wert unverändert zurückliest.
+    func testSaveJSONRoundTrip() {
+        d.saveJSON(Sample(value: 7), forKey: key)
+        XCTAssertEqual(d.decodeJSONOrPreserve(Sample.self, forKey: key), Sample(value: 7))
+    }
+
+    /// Schlägt das Encodieren fehl (NaN ist in JSON nicht darstellbar), bleibt der alte Wert stehen.
+    func testSaveJSONKeepsOldValueOnEncodeFailure() {
+        d.saveJSON(Sample(value: 1), forKey: key)
+        d.saveJSON([Double.nan], forKey: key)
+        XCTAssertEqual(d.decodeJSONOrPreserve(Sample.self, forKey: key), Sample(value: 1))
+    }
 }

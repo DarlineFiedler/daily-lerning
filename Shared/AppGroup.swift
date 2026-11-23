@@ -41,7 +41,10 @@ enum AppGroup {
     /// `JSONDecoder` sind die teuersten Foundation-Coder; vorher allozierte jeder
     /// `save`/`load` eine frische Instanz. Default-Konfiguration – Caching ändert die
     /// erzeugten Bytes nicht. Gleiches Muster wie der gecachte DateFormatter aus #143.
-    /// Die Stores laufen main-actor-seriell (kein paralleles Encodieren derselben Instanz).
+    /// Thread-sicher: `JSONEncoder`/`JSONDecoder` sind ab iOS 17 `Sendable` – die Instanzen
+    /// werden auch nebenläufig genutzt (App, Widget-Timeline-Provider, App Intents, da
+    /// `Shared/` in beide Targets kompiliert wird). Deshalb NIE zur Laufzeit umkonfigurieren
+    /// (z.B. `dateEncodingStrategy`); wer andere Einstellungen braucht, nimmt eigene Coder.
     static let jsonEncoder = JSONEncoder()
     static let jsonDecoder = JSONDecoder()
 }

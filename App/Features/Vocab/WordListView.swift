@@ -59,7 +59,7 @@ struct WordListView: View {
     }
 
     private func matchesText(_ vocab: Vocab, _ trimmed: String) -> Bool {
-        trimmed.isEmpty || vocab.word.matches(trimmed) || vocab.meaning.matches(trimmed)
+        vocab.word.containsLoosely(trimmed) || vocab.meaning.containsLoosely(trimmed)
     }
 
     var body: some View {
