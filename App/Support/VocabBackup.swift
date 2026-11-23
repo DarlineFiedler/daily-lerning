@@ -219,7 +219,7 @@ extension VocabBackup {
     /// Idempotenter, id-basierter Upsert in den Kontext: fehlende Objekte werden
     /// eingefügt. Mehrfaches Anwenden derselben Sicherung führt zum gleichen Zustand
     /// (keine Duplikate). Objekte, deren id nicht in der Sicherung vorkommt, bleiben
-    /// unberührt.
+    /// unberührt – außer bei `deleteMissing` (Ersetzen, Issue #132).
     ///
     /// - Parameter overwriteExisting: Steuert, was mit bereits vorhandenen ids passiert.
     ///   `true` (manuelle Wiederherstellung) → vorhandene Objekte werden mit den Werten
@@ -227,8 +227,12 @@ extension VocabBackup {
     ///   `false` ([[StoreMigration]]) → lokal vorhandene Objekte bleiben unangetastet,
     ///   nur fehlende werden ergänzt. So gewinnt beim Rescue aus dem alten App-Group-
     ///   Store der aktuelle lokale Lernstand statt evtl. veralteter App-Group-Daten.
+    /// - Parameter deleteMissing: `true` = **Ersetzen**: lokale Gruppen/Wörter, deren id
+    ///   NICHT in der Sicherung steht, werden gelöscht, sodass danach exakt der
+    ///   Sicherungs-Stand vorliegt (älteren Stand zurückrollen). `false` (Default) =
+    ///   **Zusammenführen**. Löscht Daten – nur nach ausdrücklicher Wahl im UI verwenden.
     @MainActor
-    func apply(into context: ModelContext, overwriteExisting: Bool = true) {
+    func apply(into context: ModelContext, overwriteExisting: Bool = true, deleteMissing: Bool = false) {
         var groupByID: [UUID: VocabGroup] = [:]
         for g in (try? context.fetch(FetchDescriptor<VocabGroup>())) ?? [] {
             groupByID[g.id] = g
@@ -283,6 +287,33 @@ extension VocabBackup {
             vocab.group = dto.groupID.flatMap { groupByID[$0] }
         }
 
+        if deleteMissing {
+            // Erst NACH dem Upsert: Sicherungs-Wörter hängen jetzt an ihren Sicherungs-
+            // Gruppen (oder an keiner), der Cascade einer entfernten Gruppe trifft sie also
+            // nicht. Wörter trotzdem explizit löschen statt sich nur auf den Cascade zu verlassen.
+            let keepVocabs = Set(vocabs.map(\.id))
+            for (id, vocab) in vocabByID where !keepVocabs.contains(id) {
+                context.delete(vocab)
+            }
+            let keepGroups = Set(groups.map(\.id))
+            for (id, group) in groupByID where !keepGroups.contains(id) {
+                context.delete(group)
+            }
+        }
+
         context.saveOrLog()
+    }
+
+    /// Wie viele lokale Wörter/Gruppen beim **Ersetzen** (`apply(…, deleteMissing: true)`)
+    /// gelöscht würden – also deren id nicht in der Sicherung steht. Für die konkrete
+    /// Zahl im Bestätigungsdialog.
+    @MainActor
+    func removalCounts(in context: ModelContext) -> (vocabs: Int, groups: Int) {
+        let backupVocabs = Set(vocabs.map(\.id))
+        let backupGroups = Set(groups.map(\.id))
+        let localVocabs = (try? context.fetch(FetchDescriptor<Vocab>())) ?? []
+        let localGroups = (try? context.fetch(FetchDescriptor<VocabGroup>())) ?? []
+        return (localVocabs.filter { !backupVocabs.contains($0.id) }.count,
+                localGroups.filter { !backupGroups.contains($0.id) }.count)
     }
 }
