@@ -77,13 +77,13 @@ struct ExamContainerView: View {
         deadline = now.addingTimeInterval(TimeInterval(totalSeconds))
     }
 
-    /// Zeit abgelaufen: Runde auswerten (unbeantwortete Wörter zählen als falsch) und den
-    /// gesammelten Fortschritt persistieren – die reguläre Runden-Auswertung läuft nur bei
-    /// vollständig durchlaufener Runde, deshalb hier explizit flushen.
+    /// Zeit abgelaufen: Runde auswerten (unbeantwortete Wörter zählen als falsch). Die Prüfung
+    /// zählt als abgeschlossene, nicht-perfekte Runde (Achievements, Sessions, Tages-Challenge)
+    /// und der gesammelte Fortschritt wird persistiert – siehe `PracticeSession.finishEarly()`.
     private func timeUp() {
         guard !timedOut else { return }
         timedOut = true
-        session.flushProgress()
+        session.finishEarly()
     }
 
     /// Startet dieselbe Prüfung neu und setzt den Countdown zurück.
