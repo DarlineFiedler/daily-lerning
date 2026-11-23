@@ -129,7 +129,7 @@ enum XPStore {
     /// erneuten UserDefaults-Zugriff – für den Dashboard-Hot-Path. Leere/ungültige
     /// Daten ergeben den Startzustand (Level 1), analog zu `load()`.
     static func level(from data: Data) -> XPLevel {
-        let state = (try? JSONDecoder().decode(XPState.self, from: data)) ?? XPState()
+        let state = (try? AppGroup.jsonDecoder.decode(XPState.self, from: data)) ?? XPState()
         return state.level
     }
 
@@ -151,7 +151,6 @@ enum XPStore {
     }
 
     private static func save(_ state: XPState) {
-        guard let data = try? JSONEncoder().encode(state) else { return }
-        d.set(data, forKey: XPKeys.state)
+        d.saveJSON(state, forKey: XPKeys.state)
     }
 }

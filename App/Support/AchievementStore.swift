@@ -25,15 +25,13 @@ enum AchievementStore {
     static var progress: AchievementProgress {
         get {
             // Aktueller Zustand liegt als JSON vor; sonst einmalig aus den Legacy-Keys migrieren.
-            if let data = d.data(forKey: AchievementKeys.progress),
-               let decoded = try? JSONDecoder().decode(AchievementProgress.self, from: data) {
-                return decoded
-            }
-            return legacyProgress()
+            // `decodeJSONOrPreserve` sichert einen korrupten Blob unter `<key>.corrupt`, bevor
+            // der nächste `set` ihn überschreibt – wie bei den übrigen JSON-Stores.
+            d.decodeJSONOrPreserve(AchievementProgress.self, forKey: AchievementKeys.progress)
+                ?? legacyProgress()
         }
         set {
-            guard let data = try? JSONEncoder().encode(newValue) else { return }
-            d.set(data, forKey: AchievementKeys.progress)
+            d.saveJSON(newValue, forKey: AchievementKeys.progress)
         }
     }
 
