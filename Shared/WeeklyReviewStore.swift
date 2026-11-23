@@ -321,7 +321,6 @@ enum WeeklyReviewStore {
     }
 
     private static func save(_ activity: WeeklyActivity) {
-        guard let data = try? JSONEncoder().encode(activity) else { return }
-        d.set(data, forKey: WeeklyReviewKeys.log)
+        d.saveJSON(activity, forKey: WeeklyReviewKeys.log)
     }
 }
