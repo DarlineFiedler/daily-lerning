@@ -64,7 +64,13 @@ enum AppContentRefresh {
         let didReconcile = WidgetResultReconciler.drain(context: context)
         // Ein reiner Widget-Tag kann das Wochenziel erreicht haben, ohne dass je eine
         // `registerSession` lief – darum hier explizit prüfen/verbuchen (idempotent).
-        if didReconcile { AchievementService.checkWeeklyGoalReached(context: context, on: now) }
+        if didReconcile {
+            AchievementService.checkWeeklyGoalReached(context: context, on: now)
+            // Ansichten mit gecachtem Aktivitäts-/Challenge-Snapshot (Garten-Tab, #169)
+            // informieren – synchron NACH dem Drain, damit sie die frisch geschriebenen Werte
+            // lesen. Ein eigener `scenePhase`-Handler dort liefe in unbestimmter Reihenfolge.
+            NotificationCenter.default.post(name: .widgetResultsReconciled, object: nil)
+        }
         guard didReconcile || shouldRefreshOnActive(lastRefreshDay: lastActiveRefreshDay, now: now) else { return }
         lastActiveRefreshDay = Calendar.current.startOfDay(for: now)
         afterVocabChange(context: context)
@@ -88,4 +94,10 @@ enum AppContentRefresh {
         )) ?? []
         return all.filter { $0.group?.isArchived != true }
     }
+}
+
+extension Notification.Name {
+    /// Gepostet von [[AppContentRefresh]] `onAppActive`, nachdem Widget-Ergebnisse in Store,
+    /// Aktivitäts-Log und Challenge verbucht wurden (auf dem Main-Thread).
+    static let widgetResultsReconciled = Notification.Name("AppContentRefresh.widgetResultsReconciled")
 }
