@@ -174,7 +174,8 @@ struct VocabImportView: View {
 
     private func performImport() {
         let rows = filteredRows
-        guard !rows.isEmpty else { return }
+        // Nie in den flüchtigen Notfall-Store importieren (Issue #163) – wäre beim Neustart weg.
+        guard !rows.isEmpty, !AppContentRefresh.isStoreVolatile() else { return }
 
         let groupName: String
         switch target {

@@ -1,4 +1,5 @@
 @testable import DailyHangul
+import SwiftData
 import XCTest
 
 /// Prüft die Change-Detection beim Vordergrund-Wechsel
@@ -8,6 +9,39 @@ import XCTest
 final class AppContentRefreshTests: XCTestCase {
 
     private let calendar = Calendar.current
+
+    override func tearDown() {
+        // Injizierten Store-Zustand immer zurücksetzen, damit andere Tests unberührt bleiben.
+        AppContentRefresh.isStoreVolatile = { PersistenceController.storeOpenFailed }
+        super.tearDown()
+    }
+
+    /// Issue #163: Läuft nur der flüchtige Notfall-Store, darf eine Vokabel-Änderung Widget-
+    /// Snapshot und Badge NICHT auffrischen (sonst Überschreiben mit Wegwerf-Daten).
+    func testAfterVocabChangeSkipsWhenStoreIsVolatile() {
+        // Container festhalten: Ein nur über `mainContext` referenzierter Container wird
+        // sofort freigegeben und der Kontext-Zugriff crasht.
+        let container = PersistenceController.makeContainer(inMemory: true)
+        let context = container.mainContext
+        context.insert(Vocab(word: "가다", meaning: "gehen"))
+        AppContentRefresh.isStoreVolatile = { true }
+        XCTAssertFalse(AppContentRefresh.afterVocabChange(context: context))
+    }
+
+    /// Gegenprobe: Mit intaktem Store wird wie gewohnt aufgefrischt.
+    func testAfterVocabChangeRefreshesWhenStoreIsIntact() {
+        // Container festhalten: Ein nur über `mainContext` referenzierter Container wird
+        // sofort freigegeben und der Kontext-Zugriff crasht.
+        let container = PersistenceController.makeContainer(inMemory: true)
+        let context = container.mainContext
+        AppContentRefresh.isStoreVolatile = { false }
+        XCTAssertTrue(AppContentRefresh.afterVocabChange(context: context))
+    }
+
+    /// Standardmäßig spiegelt der Schalter das echte Store-Flag (im Testlauf: Store ist offen).
+    func testIsStoreVolatileDefaultsToPersistenceFlag() {
+        XCTAssertEqual(AppContentRefresh.isStoreVolatile(), PersistenceController.storeOpenFailed)
+    }
 
     /// Beim ersten Aufruf (kein bekannter letzter Refresh) muss immer aufgefrischt werden,
     /// damit Widget/Badge nach einem Kaltstart garantiert frisch sind.

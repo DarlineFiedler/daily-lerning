@@ -270,7 +270,7 @@ struct SettingsView: View {
 
     private var dataCard: some View {
         card(L("settings.data.section"), note: L("settings.data.hint")) {
-            actionRow(L("settings.data.import")) { showImport = true }
+            actionRow(L("settings.data.import")) { if ensureWritable() { showImport = true } }
             if hasVocabs {
                 hairline
                 actionRow(L("settings.data.export")) { exportCSV() }
@@ -284,7 +284,9 @@ struct SettingsView: View {
                 actionRow(L("settings.backup.export")) { exportBackup() }
                 hairline
             }
-            actionRow(L("settings.backup.restore"), tint: Theme.vermillion) { showRestore = true }
+            actionRow(L("settings.backup.restore"), tint: Theme.vermillion) {
+                if ensureWritable() { showRestore = true }
+            }
         }
     }
 
@@ -385,6 +387,15 @@ struct SettingsView: View {
     /// schlanke `vocabProbe`-Query (höchstens 1 Treffer), ohne die Tabelle zu materialisieren.
     private var hasVocabs: Bool { !vocabProbe.isEmpty }
 
+    /// Läuft nur der flüchtige Notfall-Store (Issue #163), sind Import, Wortpakete und
+    /// Wiederherstellen gesperrt: Sie wirkten erfolgreich, wären beim Neustart aber weg.
+    /// Zeigt dann einen Hinweis und gibt `false` zurück.
+    private func ensureWritable() -> Bool {
+        guard AppContentRefresh.isStoreVolatile() else { return true }
+        restoreMessage = L("store.error.writeBlocked")
+        return false
+    }
+
     // MARK: - Sicherung
 
     /// Bindung, die den Bestätigungs-Alert zeigt, sobald eine Meldung vorliegt.
@@ -407,6 +418,7 @@ struct SettingsView: View {
     /// Importiert die angegebenen Pakete jeweils in eine Gruppe mit dem Paketnamen
     /// (Dubletten werden übersprungen) und zeigt anschließend eine Ergebnis-Meldung.
     private func importPacks(_ packs: [WordPack]) {
+        guard ensureWritable() else { return }
         var total = VocabImporter.Result(added: 0, updated: 0, skipped: 0)
         for pack in packs {
             // Result definiert nur '+', kein '+=' – daher kein Shorthand möglich.
@@ -467,6 +479,12 @@ struct SettingsView: View {
     /// Spielt die zuvor eingelesene Sicherung tatsächlich ein (nach Bestätigung).
     /// `replace` = lokale Objekte, die nicht in der Sicherung stehen, werden gelöscht.
     private func confirmRestore(_ pending: PendingRestore, replace: Bool) {
+        // Doppelte Absicherung (der Einstieg ist schon gesperrt): nie in den Wegwerf-Store
+        // einspielen – die Sicherung wirkte sonst erfolgreich und wäre beim Neustart weg.
+        guard !AppContentRefresh.isStoreVolatile() else {
+            DispatchQueue.main.async { restoreMessage = L("store.error.writeBlocked") }
+            return
+        }
         let backup = pending.backup
         // Tatsächlich gelöschte Anzahl melden (kann von der Vorschau im Dialog abweichen,
         // falls sich der Store zwischenzeitlich geändert hat).
