@@ -28,8 +28,9 @@ extension View {
 ///
 /// Statt pro Canvas-Pass ~N/4 Linien-Rects über die volle Höhe zu füllen (der Hintergrund
 /// liegt via `paperBackground()` auf ~24 Screens), wird die Linierung **einmal** als
-/// 1×4pt-Kachel gerendert und vom System gekachelt – konstante Kosten je Render statt
-/// hunderter Draw-Ops.
+/// 64×4pt-Kachel gerendert und vom System gekachelt – konstante Kosten je Render statt
+/// hunderter Draw-Ops. Die Kachel ist bewusst breit (statt 1pt), damit ein Vollbild nur
+/// ~7 statt ~430 Kacheln pro Zeile braucht; Speicher kostet das kaum (~9 KB @3x).
 struct PaperTexture: View {
     /// Tintenfarbe der Linien (`#211E19` @ 2,2 %). Aus dem gemeinsamen Hex-Parser
     /// ([[HexColorComponents]]) gebaut, damit sie nicht gegenüber `Color(hex:)` driftet.
@@ -39,23 +40,29 @@ struct PaperTexture: View {
         return UIColor(red: c.red, green: c.green, blue: c.blue, alpha: 0.022)
     }()
 
+    /// Kachelgröße in Punkten: 1pt Linie + 3pt Lücke hoch, breit genug für wenige Kacheln.
+    static let tileSize = CGSize(width: 64, height: 4)
+
     /// Einmal gerenderte, kachelbare Linien-Textur (siehe `makeTile()`).
     static let tile: UIImage = makeTile()
 
-    /// Rendert die 1×4pt-Kachel: oberste 1pt in `lineColor`, darunter 3pt transparent –
+    /// Rendert die 64×4pt-Kachel: oberste 1pt in `lineColor`, darunter 3pt transparent –
     /// gekachelt ergibt das dieselbe Linierung (1pt Linie alle 4pt) wie zuvor.
     static func makeTile() -> UIImage {
         let format = UIGraphicsImageRendererFormat.preferred()
         format.opaque = false
-        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 1, height: 4), format: format)
+        let renderer = UIGraphicsImageRenderer(size: tileSize, format: format)
         return renderer.image { ctx in
             lineColor.setFill()
-            ctx.fill(CGRect(x: 0, y: 0, width: 1, height: 1))
+            ctx.fill(CGRect(x: 0, y: 0, width: tileSize.width, height: 1))
         }
     }
 
     var body: some View {
         Image(uiImage: Self.tile)
+            // Kein Glätten beim Umrechnen auf eine andere Display-Skalierung (externes
+            // Display, iPad/Mac): die 1pt-Linie bleibt hart statt auf zwei Zeilen zu verschmieren.
+            .interpolation(.none)
             .resizable(resizingMode: .tile)
             .allowsHitTesting(false)
             // Rein dekorativ: wie das frühere `Canvas` nicht im Accessibility-Baum auftauchen
