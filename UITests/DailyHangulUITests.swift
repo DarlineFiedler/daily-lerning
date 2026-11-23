@@ -30,15 +30,28 @@ final class DailyHangulUITests: XCTestCase {
         app.descendants(matching: .any)[id]
     }
 
-    /// Tippt einen Button über seinen Identifier. Buttons werden bewusst als `.buttons`
-    /// adressiert – über die generische `.any`-Abfrage lassen sich interaktive Elemente
-    /// für `tap()` nicht zuverlässig auflösen.
-    private func tapButton(_ app: XCUIApplication, _ id: String,
+    /// Tippt einen Button über seinen Identifier und wiederholt den Tap, bis das Zielelement
+    /// erscheint. Buttons werden bewusst als `.buttons` adressiert – über die generische
+    /// `.any`-Abfrage lassen sich interaktive Elemente für `tap()` nicht zuverlässig auflösen.
+    /// Der Retry ist nötig, weil direkt nach
+    /// dem Start baut `RootView.task` (Seed, Onboarding → Shell, FAB-Fälligkeitslabel) die
+    /// Oberfläche noch um – ein Tap auf ein zwar existierendes, aber noch nicht bedienbares
+    /// Element verpufft dann sporadisch (#164).
+    private func tapButton(_ app: XCUIApplication, _ id: String, until targetID: String,
                            file: StaticString = #filePath, line: UInt = #line) {
         let button = app.buttons[id]
         XCTAssertTrue(button.waitForExistence(timeout: timeout),
                       "Button '\(id)' sollte vorhanden sein.", file: file, line: line)
-        button.tap()
+        let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isHittable == true"),
+                                                 object: button)
+        _ = XCTWaiter.wait(for: [hittable], timeout: timeout)
+
+        let target = element(app, targetID)
+        for _ in 0 ..< 3 {
+            if button.isHittable { button.tap() }
+            if target.waitForExistence(timeout: 5) { return }
+        }
+        XCTFail("Nach Tap auf '\(id)' sollte '\(targetID)' erscheinen.", file: file, line: line)
     }
 
     private func assertExists(_ app: XCUIApplication, _ id: String,
@@ -60,18 +73,14 @@ final class DailyHangulUITests: XCTestCase {
         let app = launch(["-uiTestSeed"])
         assertExists(app, "screen.garden")
 
-        tapButton(app, "tabButton.me")
-        assertExists(app, "screen.me")
-
-        tapButton(app, "tabButton.garden")
-        assertExists(app, "screen.garden")
+        tapButton(app, "tabButton.me", until: "screen.me")
+        tapButton(app, "tabButton.garden", until: "screen.garden")
     }
 
     /// Der zentrale Üben-FAB öffnet die Rundenkonfiguration (Sheet).
     func testPracticeFABOpensConfig() {
         let app = launch(["-uiTestSeed"])
-        tapButton(app, "practiceFAB")
-        assertExists(app, "screen.practiceConfig")
+        tapButton(app, "practiceFAB", until: "screen.practiceConfig")
     }
 
     /// Das Review-Startargument öffnet die Wiederholungs-Session.
