@@ -7,25 +7,33 @@ import XCTest
 @MainActor
 final class GardenDayChangeTests: XCTestCase {
 
-    private let calendar = Calendar.current
+    /// Fester gregorianischer Kalender: Die Wochentag-Assertions („Montag"/„Dienstag")
+    /// setzen gregorianische Jahre voraus – mit `Calendar.current` wäre „2026" auf einem
+    /// Gerät mit buddhistischem/japanischem Kalender ein anderes Jahr. Zeitzone bleibt die
+    /// des Geräts, damit `headerDateText` (formatiert in `.current`) denselben Tag sieht.
+    private let calendar: Calendar = {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = .current
+        return cal
+    }()
 
     /// Gleicher Kalendertag (nur andere Uhrzeit) → kein Tageswechsel.
     func testSameDayIsNotNewDay() {
         let today = calendar.startOfDay(for: date(2026, 11, 23, hour: 8))
-        XCTAssertFalse(GardenHomeView.isNewDay(current: today, now: date(2026, 11, 23, hour: 23)))
+        XCTAssertFalse(GardenHomeView.isNewDay(current: today, now: date(2026, 11, 23, hour: 23), calendar: calendar))
     }
 
     /// Über Mitternacht (23:59 → 00:01) → Tageswechsel.
     func testCrossingMidnightIsNewDay() {
         let monday = calendar.startOfDay(for: date(2026, 11, 23, hour: 23, minute: 59))
         let tuesday = date(2026, 11, 24, hour: 0, minute: 1)
-        XCTAssertTrue(GardenHomeView.isNewDay(current: monday, now: tuesday))
+        XCTAssertTrue(GardenHomeView.isNewDay(current: monday, now: tuesday, calendar: calendar))
     }
 
     /// Uhr/Zeitzone zurück auf den Vortag zählt ebenfalls als Wechsel (Ungleichheit, nicht „später").
     func testClockMovingBackIsNewDay() {
         let today = calendar.startOfDay(for: date(2026, 11, 23, hour: 12))
-        XCTAssertTrue(GardenHomeView.isNewDay(current: today, now: date(2026, 11, 22, hour: 12)))
+        XCTAssertTrue(GardenHomeView.isNewDay(current: today, now: date(2026, 11, 22, hour: 12), calendar: calendar))
     }
 
     /// Der Header zeigt den Wochentag des übergebenen Tages – nach dem Wechsel also den neuen.

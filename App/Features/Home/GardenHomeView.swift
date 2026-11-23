@@ -69,7 +69,10 @@ struct GardenHomeView: View {
     }
 
     /// `true`, wenn `now` auf einem anderen Kalendertag liegt als `current`. Entscheidend
-    /// ist die Ungleichheit (auch Uhr/Zeitzone zurück zählt), nicht „später".
+    /// ist die Ungleichheit (auch Uhr/Zeitzone zurück zählt), nicht „später". Ein früherer
+    /// Tag ist für die Auffrischung unkritisch: `StreakStore.settle` vergibt bei negativem
+    /// Wochenabstand nichts, und `GoalHistoryStore.snapshotToday` schreibt nur den dann
+    /// geltenden Tageseintrag (wie `onAppear` auch).
     static func isNewDay(current: Date, now: Date, calendar: Calendar = .current) -> Bool {
         !calendar.isDate(current, inSameDayAs: now)
     }
@@ -100,10 +103,12 @@ struct GardenHomeView: View {
             // Tageswechsel bei offenem Garten-Tab (#160): Ohne State-Änderung rendert sonst
             // nichts neu und Header, Ziel-Ring, fällige Karten & Challenge zeigen den Vortag.
             // Die Notifications kommen ggf. auf einem Hintergrund-Thread → auf Main umleiten.
+            // `DispatchQueue.main` statt `RunLoop.main`: Letzteres liefert nur im Default-Mode
+            // und hielte den Refresh zurück, solange die Nutzerin um Mitternacht scrollt.
             .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)
-                .receive(on: RunLoop.main)) { _ in refreshDayIfNeeded() }
+                .receive(on: DispatchQueue.main)) { _ in refreshDayIfNeeded() }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)
-                .receive(on: RunLoop.main)) { _ in refreshDayIfNeeded() }
+                .receive(on: DispatchQueue.main)) { _ in refreshDayIfNeeded() }
             // Lag die App über Mitternacht im Hintergrund, kommt beim Zurückkehren kein onAppear.
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { refreshDayIfNeeded() }
