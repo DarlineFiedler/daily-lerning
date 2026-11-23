@@ -19,6 +19,8 @@ struct VocabImportView: View {
     @State private var newGroupName = ""
     @State private var showFileImporter = false
     @State private var importError = false
+    /// Import bei flüchtigem Notfall-Store abgelehnt (Issue #163) → Hinweis statt stillem No-Op.
+    @State private var writeBlocked = false
     /// Aktiver Niveau-Filter (`nil` = alle Niveaus importieren). Nur relevant, wenn die
     /// eingefügten Daten überhaupt eine TOPIK-Spalte enthalten (siehe `hasLevels`).
     @State private var levelFilter: TopikLevel?
@@ -141,6 +143,9 @@ struct VocabImportView: View {
             .alert(L("import.error"), isPresented: $importError) {
                 Button(L("common.done"), role: .cancel) {}
             }
+            .alert(L("store.error.writeBlocked"), isPresented: $writeBlocked) {
+                Button(L("common.done"), role: .cancel) {}
+            }
         }
     }
 
@@ -175,6 +180,11 @@ struct VocabImportView: View {
     private func performImport() {
         let rows = filteredRows
         guard !rows.isEmpty else { return }
+        // Nie in den flüchtigen Notfall-Store importieren (Issue #163) – wäre beim Neustart weg.
+        guard !AppContentRefresh.isStoreVolatile() else {
+            writeBlocked = true
+            return
+        }
 
         let groupName: String
         switch target {

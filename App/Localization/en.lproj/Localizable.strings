@@ -400,6 +400,7 @@
 "settings.export.error" = "The export could not be created.";
 "store.error.title" = "Database error";
 "store.error.message" = "The database could not be opened. Please don't add words and restart the app.";
+"store.error.writeBlocked" = "The database is currently unavailable. Import and restore are disabled until the app is restarted so nothing gets lost.";
 "import.target" = "Target group";
 "import.newGroup" = "New group";
 "import.paste" = "Paste text";

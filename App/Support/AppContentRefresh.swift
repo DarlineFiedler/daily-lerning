@@ -20,12 +20,24 @@ enum AppContentRefresh {
     /// `BGTaskScheduler`), muss dieses Tag neu überdacht werden.
     private static var lastActiveRefreshDay: Date?
 
+    /// Läuft nur ein flüchtiger Notfall-Store (Store-Open fehlgeschlagen, siehe
+    /// [[PersistenceController]] `storeOpenFailed`)? Als Closure, damit Tests den Zustand
+    /// injizieren können, ohne das (bewusst `private(set)`) Flag selbst zu verändern.
+    static var isStoreVolatile: () -> Bool = { PersistenceController.storeOpenFailed }
+
     /// Nach einer Vokabel-Änderung: aktiven Wortbestand einmal laden und daraus
     /// Widget-Snapshot und Badge ableiten.
-    static func afterVocabChange(context: ModelContext) {
+    ///
+    /// Bei flüchtigem Store (Issue #163) wird NICHTS aufgefrischt: Der Wegwerf-Store würde
+    /// den intakten Widget-Snapshot und das Badge mit Daten überschreiben, die beim nächsten
+    /// Start verschwunden sind. Gibt zurück, ob aufgefrischt wurde.
+    @discardableResult
+    static func afterVocabChange(context: ModelContext) -> Bool {
+        guard !isStoreVolatile() else { return false }
         let active = activeVocabs(context: context)
         WidgetSnapshotWriter.refresh(activeVocabs: active)
         BadgeUpdater.refresh(activeVocabs: active)
+        return true
     }
 
     /// Wie `afterVocabChange`, aber zusätzlich beim App-Start / Vordergrund-Wechsel: Da
@@ -43,7 +55,7 @@ enum AppContentRefresh {
         // Drain würde die Widget-Queue leeren und die Ergebnisse in den Wegwerf-Store buchen
         // (dauerhaft verloren), und `afterVocabChange` würde den intakten Widget-Snapshot mit
         // einem leeren überschreiben. Die echten Daten auf der Platte bleiben so unangetastet.
-        guard !PersistenceController.storeOpenFailed else { return }
+        guard !isStoreVolatile() else { return }
         // Zuerst die vom interaktiven Widget verbuchten „Gewusst"/„Nochmal"-Ergebnisse
         // einspielen (siehe [[WidgetResultReconciler]]). Das läuft bei JEDEM Vordergrund-
         // Wechsel – unabhängig vom Kalendertag-Guard unten –, weil die Nutzerin das Widget
