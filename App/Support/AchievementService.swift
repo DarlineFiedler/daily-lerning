@@ -108,7 +108,7 @@ enum AchievementService {
     static func registerSession(modes: Set<PracticeMode>,
                                 date: Date = .now,
                                 isPerfect: Bool,
-                                isFlawless: Bool = false,
+                                isFlawless: Bool? = false,
                                 selfCorrected: Bool = false,
                                 newlyLearned: Int = 0,
                                 currentStreak: Int = 0,
