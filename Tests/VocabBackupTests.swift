@@ -228,6 +228,61 @@ final class VocabBackupTests: XCTestCase {
         XCTAssertEqual(try vocabCount(), 2)
     }
 
+    /// Zeigt die `groupID` eines Sicherungs-Worts auf eine lokale Gruppe, die NICHT in der
+    /// Sicherung steht (inkonsistente/handbearbeitete Datei), darf das Wort beim Ersetzen
+    /// nicht über den Cascade dieser Gruppe verschwinden.
+    func testApplyReplaceKeepsVocabWhoseGroupIsMissingFromBackup() throws {
+        let (_, vocab) = try makeSampleData()
+        let backup = VocabBackup(from: [], vocabs: [vocab]) // groupID zeigt auf die lokale Gruppe
+
+        XCTAssertEqual(backup.removalCounts(in: context).vocabs, 0)
+        let removed = backup.apply(into: context, deleteMissing: true)
+
+        XCTAssertEqual(removed.vocabs, 0)
+        XCTAssertEqual(removed.groups, 1)
+        let kept = try XCTUnwrap(try context.fetch(FetchDescriptor<Vocab>()).first)
+        XCTAssertEqual(kept.id, vocab.id)
+        XCTAssertNil(kept.group)
+        XCTAssertEqual(try groupCount(), 0)
+    }
+
+    /// Mit `overwriteExisting: false` bleiben vorhandene Wörter unverändert – auch in einer
+    /// lokalen Gruppe, die beim Ersetzen gelöscht wird. Sie müssen trotzdem überleben.
+    func testApplyReplaceWithoutOverwriteDetachesKeptVocab() throws {
+        let (_, vocab) = try makeSampleData()
+        let backup = VocabBackup(from: [], vocabs: [vocab])
+
+        backup.apply(into: context, overwriteExisting: false, deleteMissing: true)
+
+        XCTAssertEqual(try context.fetch(FetchDescriptor<Vocab>()).map(\.id), [vocab.id])
+        XCTAssertEqual(try groupCount(), 0)
+    }
+
+    /// Lokale Duplikate derselben id (kein Unique-Constraint) werden beim Ersetzen
+    /// vollständig entfernt; Vorschau und tatsächlich gelöschte Anzahl stimmen überein.
+    func testApplyReplaceRemovesDuplicateIDs() throws {
+        let (group, vocab) = try makeSampleData()
+        let backup = VocabBackup(from: [group], vocabs: [vocab])
+
+        let dupID = UUID()
+        for word in ["먹다", "먹다"] {
+            let dup = Vocab(word: word, meaning: "essen")
+            dup.id = dupID
+            context.insert(dup)
+        }
+        let backupDup = Vocab(word: "가다", meaning: "Duplikat")
+        backupDup.id = vocab.id
+        context.insert(backupDup)
+        try context.save()
+
+        let preview = backup.removalCounts(in: context)
+        let removed = backup.apply(into: context, deleteMissing: true)
+
+        XCTAssertEqual(preview.vocabs, 3)
+        XCTAssertEqual(removed.vocabs, 3)
+        XCTAssertEqual(try context.fetch(FetchDescriptor<Vocab>()).map(\.id), [vocab.id])
+    }
+
     /// `removalCounts` zählt genau die lokalen Objekte, die beim Ersetzen wegfielen.
     func testRemovalCountsReportsLocalOnlyObjects() throws {
         let (group, vocab) = try makeSampleData()

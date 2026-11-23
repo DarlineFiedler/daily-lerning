@@ -468,11 +468,13 @@ struct SettingsView: View {
     /// `replace` = lokale Objekte, die nicht in der Sicherung stehen, werden gelöscht.
     private func confirmRestore(_ pending: PendingRestore, replace: Bool) {
         let backup = pending.backup
-        backup.apply(into: context, deleteMissing: replace)
+        // Tatsächlich gelöschte Anzahl melden (kann von der Vorschau im Dialog abweichen,
+        // falls sich der Store zwischenzeitlich geändert hat).
+        let removed = backup.apply(into: context, deleteMissing: replace)
         AppContentRefresh.afterVocabChange(context: context)
         let message = replace
             ? L("settings.backup.replaced", backup.vocabs.count, backup.groups.count,
-                pending.removal.vocabs, pending.removal.groups)
+                removed.vocabs, removed.groups)
             : L("settings.backup.restored", backup.vocabs.count, backup.groups.count)
         // Erst im nächsten Runloop setzen: der Bestätigungsdialog wird im selben
         // Zyklus geschlossen; ein direkt gesetzter Alert würde von SwiftUI sonst

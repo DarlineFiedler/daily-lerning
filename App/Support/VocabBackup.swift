@@ -231,16 +231,20 @@ extension VocabBackup {
     ///   NICHT in der Sicherung steht, werden gelöscht, sodass danach exakt der
     ///   Sicherungs-Stand vorliegt (älteren Stand zurückrollen). `false` (Default) =
     ///   **Zusammenführen**. Löscht Daten – nur nach ausdrücklicher Wahl im UI verwenden.
-    @MainActor
-    func apply(into context: ModelContext, overwriteExisting: Bool = true, deleteMissing: Bool = false) {
+    @MainActor @discardableResult
+    func apply(into context: ModelContext, overwriteExisting: Bool = true,
+               deleteMissing: Bool = false) -> (vocabs: Int, groups: Int) {
+        let localGroups = (try? context.fetch(FetchDescriptor<VocabGroup>())) ?? []
+        let localVocabs = (try? context.fetch(FetchDescriptor<Vocab>())) ?? []
         var groupByID: [UUID: VocabGroup] = [:]
-        for g in (try? context.fetch(FetchDescriptor<VocabGroup>())) ?? [] {
+        for g in localGroups {
             groupByID[g.id] = g
         }
         var vocabByID: [UUID: Vocab] = [:]
-        for v in (try? context.fetch(FetchDescriptor<Vocab>())) ?? [] {
+        for v in localVocabs {
             vocabByID[v.id] = v
         }
+        let backupGroupIDs = Set(groups.map(\.id))
 
         for dto in groups {
             let existing = groupByID[dto.id]
@@ -284,36 +288,68 @@ extension VocabBackup {
             vocab.nextReviewAt = dto.nextReviewAt
             vocab.lastCountedAt = dto.lastCountedAt
             vocab.createdAt = dto.createdAt
-            vocab.group = dto.groupID.flatMap { groupByID[$0] }
+            // Beim Ersetzen nur gegen Sicherungs-Gruppen auflösen: eine lokale, nicht
+            // gesicherte Gruppe wird gleich gelöscht und risse das Wort per Cascade mit.
+            vocab.group = dto.groupID.flatMap {
+                deleteMissing && !backupGroupIDs.contains($0) ? nil : groupByID[$0]
+            }
         }
 
+        var removed = (vocabs: 0, groups: 0)
         if deleteMissing {
-            // Erst NACH dem Upsert: Sicherungs-Wörter hängen jetzt an ihren Sicherungs-
-            // Gruppen (oder an keiner), der Cascade einer entfernten Gruppe trifft sie also
-            // nicht. Wörter trotzdem explizit löschen statt sich nur auf den Cascade zu verlassen.
-            let keepVocabs = Set(vocabs.map(\.id))
-            for (id, vocab) in vocabByID where !keepVocabs.contains(id) {
-                context.delete(vocab)
-            }
-            let keepGroups = Set(groups.map(\.id))
-            for (id, group) in groupByID where !keepGroups.contains(id) {
-                context.delete(group)
-            }
+            removed = deleteObjectsMissingFromBackup(
+                localVocabs: localVocabs, localGroups: localGroups,
+                vocabByID: vocabByID, groupByID: groupByID, context: context)
         }
 
         context.saveOrLog()
+        return removed
+    }
+
+    /// Ersetzen-Schritt nach dem Upsert: löscht jedes lokale Objekt, dessen id nicht in
+    /// der Sicherung steht, sowie überzählige Duplikate einer gesicherten id (es bleibt
+    /// genau das Objekt, das der Upsert verwendet hat). Gibt die gelöschte Anzahl zurück.
+    @MainActor
+    private func deleteObjectsMissingFromBackup(
+        localVocabs: [Vocab], localGroups: [VocabGroup],
+        vocabByID: [UUID: Vocab], groupByID: [UUID: VocabGroup],
+        context: ModelContext
+    ) -> (vocabs: Int, groups: Int) {
+        let keepVocabIDs = Set(vocabs.map(\.id))
+        let keepGroupIDs = Set(groups.map(\.id))
+        func keeps(_ vocab: Vocab) -> Bool {
+            keepVocabIDs.contains(vocab.id) && vocabByID[vocab.id] === vocab
+        }
+        func keeps(_ group: VocabGroup) -> Bool {
+            keepGroupIDs.contains(group.id) && groupByID[group.id] === group
+        }
+
+        let doomedVocabs = localVocabs.filter { !keeps($0) }
+        let doomedGroups = localGroups.filter { !keeps($0) }
+        // Verbleibende Wörter von zu löschenden Gruppen lösen (z.B. mit
+        // `overwriteExisting: false` unverändert gebliebene), damit der Cascade sie
+        // nicht mitnimmt. Wörter werden explizit gelöscht, nicht über den Cascade.
+        for vocab in vocabByID.values {
+            if let group = vocab.group, !keeps(group) {
+                vocab.group = nil
+            }
+        }
+        doomedVocabs.forEach { context.delete($0) }
+        doomedGroups.forEach { context.delete($0) }
+        return (doomedVocabs.count, doomedGroups.count)
     }
 
     /// Wie viele lokale Wörter/Gruppen beim **Ersetzen** (`apply(…, deleteMissing: true)`)
-    /// gelöscht würden – also deren id nicht in der Sicherung steht. Für die konkrete
-    /// Zahl im Bestätigungsdialog.
+    /// gelöscht würden: alle, deren id nicht in der Sicherung steht, plus überzählige
+    /// Duplikate einer gesicherten id. Für die konkrete Zahl im Bestätigungsdialog.
     @MainActor
     func removalCounts(in context: ModelContext) -> (vocabs: Int, groups: Int) {
         let backupVocabs = Set(vocabs.map(\.id))
         let backupGroups = Set(groups.map(\.id))
         let localVocabs = (try? context.fetch(FetchDescriptor<Vocab>())) ?? []
         let localGroups = (try? context.fetch(FetchDescriptor<VocabGroup>())) ?? []
-        return (localVocabs.filter { !backupVocabs.contains($0.id) }.count,
-                localGroups.filter { !backupGroups.contains($0.id) }.count)
+        let keptVocabs = Set(localVocabs.map(\.id)).intersection(backupVocabs).count
+        let keptGroups = Set(localGroups.map(\.id)).intersection(backupGroups).count
+        return (localVocabs.count - keptVocabs, localGroups.count - keptGroups)
     }
 }
