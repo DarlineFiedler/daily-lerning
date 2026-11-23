@@ -28,7 +28,10 @@ enum BadgeUpdater {
 
     /// Convenience für Aufrufer ohne bereits geladene Wortliste (lädt sie selbst).
     /// Der Vokabel-Änderungspfad teilt sich den Fetch über [[AppContentRefresh]].
+    /// Bei flüchtigem Notfall-Store bleibt das Badge unangetastet (Issue #163) – sonst
+    /// spiegelte es den leeren Wegwerf-Store statt der echten Daten.
     static func refresh(context: ModelContext) {
+        guard !AppContentRefresh.isStoreVolatile() else { return }
         refresh(activeVocabs: AppContentRefresh.activeVocabs(context: context))
     }
 

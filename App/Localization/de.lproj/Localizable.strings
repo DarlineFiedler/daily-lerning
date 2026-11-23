@@ -400,6 +400,7 @@
 "settings.export.error" = "Der Export konnte nicht erstellt werden.";
 "store.error.title" = "Datenbankfehler";
 "store.error.message" = "Die Datenbank konnte nicht geöffnet werden. Bitte keine Wörter hinzufügen und die App neu starten.";
+"store.error.writeBlocked" = "Die Datenbank ist gerade nicht verfügbar. Import und Wiederherstellung sind bis zum Neustart der App gesperrt, damit nichts verloren geht.";
 "import.target" = "Zielgruppe";
 "import.newGroup" = "Neue Gruppe";
 "import.paste" = "Text einfügen";
