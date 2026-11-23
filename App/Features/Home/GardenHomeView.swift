@@ -22,6 +22,10 @@ struct GardenHomeView: View {
     // GoalStatsView mit seinem @State-Snapshot bereits macht.
     @State private var activity = WeeklyReviewStore.loadActivity()
     @State private var challenge = DailyChallengeStore.snapshot()
+    /// Aktuell angezeigter Kalendertag (Tagesbeginn). Wird bei Tageswechsel fortgeschrieben
+    /// und treibt Header-Datum und Re-Render der tagesabhängigen Werte (#160).
+    @State private var day = Calendar.current.startOfDay(for: .now)
+    @Environment(\.scenePhase) private var scenePhase
 
     // Persönliches Ziel (geteilter Store, wie im Home-Dashboard).
     @AppStorage(GoalKeys.metric, store: AppGroup.defaults) private var goalMetricRaw = GoalMetric.practiced.rawValue
@@ -47,6 +51,32 @@ struct GardenHomeView: View {
         challenge = DailyChallengeStore.snapshot()
     }
 
+    /// Volle Tages-Auffrischung (Streak abrechnen, Ziel-Historie, Snapshots) und den
+    /// angezeigten Kalendertag fortschreiben. Die State-Änderung an `day` erzwingt ein
+    /// Re-Render, wodurch auch alle aus `.now` abgeleiteten Werte neu berechnet werden.
+    private func refreshForToday() {
+        day = Calendar.current.startOfDay(for: .now)
+        StreakStore.settle()
+        GoalHistoryStore.snapshotToday()
+        reloadSnapshots()
+    }
+
+    /// Nur bei tatsächlichem Kalendertag-Wechsel auffrischen – reine App-Switches oder
+    /// mehrfach feuernde Zeit-Notifications am selben Tag bleiben No-Ops.
+    private func refreshDayIfNeeded() {
+        guard Self.isNewDay(current: day, now: .now) else { return }
+        refreshForToday()
+    }
+
+    /// `true`, wenn `now` auf einem anderen Kalendertag liegt als `current`. Entscheidend
+    /// ist die Ungleichheit (auch Uhr/Zeitzone zurück zählt), nicht „später". Ein früherer
+    /// Tag ist für die Auffrischung unkritisch: `StreakStore.settle` vergibt bei negativem
+    /// Wochenabstand nichts, und `GoalHistoryStore.snapshotToday` schreibt nur den dann
+    /// geltenden Tageseintrag (wie `onAppear` auch).
+    static func isNewDay(current: Date, now: Date, calendar: Calendar = .current) -> Bool {
+        !calendar.isDate(current, inSameDayAs: now)
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -69,10 +99,19 @@ struct GardenHomeView: View {
             .paperBackground()
             .navigationBarHidden(true)
             .accessibilityIdentifier("screen.garden")
-            .onAppear {
-                StreakStore.settle()
-                GoalHistoryStore.snapshotToday()
-                reloadSnapshots()
+            .onAppear(perform: refreshForToday)
+            // Tageswechsel bei offenem Garten-Tab (#160): Ohne State-Änderung rendert sonst
+            // nichts neu und Header, Ziel-Ring, fällige Karten & Challenge zeigen den Vortag.
+            // Die Notifications kommen ggf. auf einem Hintergrund-Thread → auf Main umleiten.
+            // `DispatchQueue.main` statt `RunLoop.main`: Letzteres liefert nur im Default-Mode
+            // und hielte den Refresh zurück, solange die Nutzerin um Mitternacht scrollt.
+            .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)
+                .receive(on: DispatchQueue.main)) { _ in refreshDayIfNeeded() }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)
+                .receive(on: DispatchQueue.main)) { _ in refreshDayIfNeeded() }
+            // Lag die App über Mitternacht im Hintergrund, kommt beim Zurückkehren kein onAppear.
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { refreshDayIfNeeded() }
             }
             // Nach der Übungssession (einziger Pfad, der Log/Challenge ändert) neu laden –
             // ein Sheet-Dismiss löst kein onAppear des Präsentierenden aus.
@@ -411,14 +450,19 @@ struct GardenHomeView: View {
 
     // MARK: - Helfer
 
+    /// Liest bewusst den `day`-State (nicht `Date.now`), damit SwiftUI den Header beim
+    /// Tageswechsel neu rendert (#160).
     private var dateText: String {
+        Self.headerDateText(for: day, locale: LocalizationManager.shared.localeForFormatting)
+    }
+
+    static func headerDateText(for date: Date, locale: Locale) -> String {
         // `Date.FormatStyle` ordnet die Felder locale-gerecht (wie zuvor der
         // Template-Formatter) und alloziert – anders als `DateFormatter` je Render –
         // keinen schweren Foundation-Typ (#143). Kalender explizit aus der Locale,
         // sonst nähme `.dateTime` den Gerätekalender (z. B. islamisch) statt des
         // Kalenders der gewählten App-Sprache.
-        let locale = LocalizationManager.shared.localeForFormatting
-        return Date.now.formatted(
+        date.formatted(
             Date.FormatStyle(date: .omitted, time: .omitted, locale: locale, calendar: locale.calendar)
                 .weekday(.wide).day().month(.abbreviated))
     }
