@@ -400,6 +400,7 @@
 "settings.export.error" = "내보내기를 만들 수 없습니다.";
 "store.error.title" = "데이터베이스 오류";
 "store.error.message" = "데이터베이스를 열 수 없습니다. 단어를 추가하지 말고 앱을 다시 시작하세요.";
+"store.error.writeBlocked" = "지금은 데이터베이스를 사용할 수 없습니다. 데이터가 손실되지 않도록 앱을 다시 시작할 때까지 가져오기와 복원이 비활성화됩니다.";
 "import.target" = "대상 그룹";
 "import.newGroup" = "새 그룹";
 "import.paste" = "텍스트 붙여넣기";

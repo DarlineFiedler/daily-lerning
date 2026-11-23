@@ -22,6 +22,8 @@ struct OnboardingView: View {
     @State private var reminderOn = false
     @State private var reminderTime = Calendar.current.date(from: DateComponents(hour: 19, minute: 0)) ?? .now
     @State private var widgetPrepared = false
+    /// Paket-Import bei flüchtigem Notfall-Store abgelehnt (Issue #163).
+    @State private var writeBlocked = false
 
     private let stepCount = 5
 
@@ -47,6 +49,9 @@ struct OnboardingView: View {
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("screen.onboarding")
         .task { packs = await WordPack.loadBundledCached() }
+        .alert(L("store.error.writeBlocked"), isPresented: $writeBlocked) {
+            Button(L("common.done"), role: .cancel) {}
+        }
     }
 
     // MARK: - Kopf (Schrittzähler + Überspringen)
@@ -209,11 +214,20 @@ struct OnboardingView: View {
     }
 
     private func finish() {
-        AppGroup.defaults.set(true, forKey: OnboardingState.completedKey)
+        // Bei flüchtigem Notfall-Store (Issue #163) den Erststart NICHT als erledigt merken:
+        // Alles hier Angelegte ist beim Neustart weg, also soll das Onboarding dann erneut kommen.
+        if !AppContentRefresh.isStoreVolatile() {
+            AppGroup.defaults.set(true, forKey: OnboardingState.completedKey)
+        }
         onFinish()
     }
 
     private func importPack(_ pack: WordPack) {
+        // Nicht in den Wegwerf-Store importieren (Issue #163) – die Wörter wären beim Neustart weg.
+        guard !AppContentRefresh.isStoreVolatile() else {
+            writeBlocked = true
+            return
+        }
         let result = VocabImporter.importRows(pack.rows, intoGroupNamed: pack.name,
                                               context: context, existingGroups: groups)
         context.saveOrLog()
