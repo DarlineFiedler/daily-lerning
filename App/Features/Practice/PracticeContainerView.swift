@@ -67,18 +67,13 @@ struct PracticeContainerView: View {
             if PracticeSession.isComboMilestone(combo) { SoundService.playComboMilestone() }
         }
         // Live-Kombo-Badge: nur während einer laufenden Karte, nicht-interaktiv, unter
-        // dem Fortschritts-Header schwebend (stört den Lernfluss nicht). Weicht dem
-        // Freischalt-Banner, das denselben oberen Bereich belegt, damit sich beide
-        // nicht überlagern.
+        // dem Fortschritts-Header schwebend (stört den Lernfluss nicht).
         .overlay(alignment: .top) {
-            if session.currentItem != nil, session.newlyUnlocked.isEmpty {
+            if session.currentItem != nil {
                 ComboBadge(combo: session.currentCombo)
                     .padding(.top, 72)
                     .allowsHitTesting(false)
             }
-        }
-        .overlay(alignment: .top) {
-            AchievementUnlockBanner(achievements: session.newlyUnlocked)
         }
         // Live Activity: bei Sessionbeginn starten, pro Karte aktualisieren, bei
         // Abschluss/Schließen beenden (keine „hängenden" Activities).
@@ -207,6 +202,7 @@ struct PracticeSummaryView: View {
                 if let newLevel = session.newLevel {
                     XPLevelUpBanner(level: newLevel)
                 }
+                AchievementUnlockCard(achievements: session.newlyUnlocked)
 
                 statRow
                 Text(L("practice.finishedSummary", session.correctCount, session.wrongCount))

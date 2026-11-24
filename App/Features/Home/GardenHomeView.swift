@@ -113,8 +113,13 @@ struct GardenHomeView: View {
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { refreshDayIfNeeded() }
             }
-            // Nach der Übungssession (einziger Pfad, der Log/Challenge ändert) neu laden –
-            // ein Sheet-Dismiss löst kein onAppear des Präsentierenden aus.
+            // Widget-Antworten wurden beim Vordergrund-Wechsel verbucht (#169) – auch am selben
+            // Tag. Kommt nach dem Drain, daher keine Reihenfolge-Abhängigkeit zu `scenePhase`.
+            .onReceive(NotificationCenter.default.publisher(for: .widgetResultsReconciled)) { _ in
+                reloadSnapshots()
+            }
+            // Nach der Übungssession neu laden – ein Sheet-Dismiss löst kein onAppear des
+            // Präsentierenden aus.
             .sheet(isPresented: $showReview, onDismiss: reloadSnapshots) { ReviewSessionView() }
             .sheet(isPresented: $showNewGroup) { GroupEditView(group: nil) }
             .sheet(isPresented: $showGoalStats) { GoalStatsView() }
