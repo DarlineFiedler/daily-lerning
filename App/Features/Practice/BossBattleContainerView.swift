@@ -52,9 +52,6 @@ struct BossBattleContainerView: View {
         .toolbar(.hidden, for: .navigationBar)
         .sensoryFeedback(.success, trigger: session.correctCount)
         .sensoryFeedback(.error, trigger: session.wrongCount)
-        .overlay(alignment: .top) {
-            AchievementUnlockBanner(achievements: session.newlyUnlocked)
-        }
     }
 
     @ViewBuilder
@@ -253,6 +250,8 @@ struct BossResultView: View {
                 Text(L(outcome.titleKey))
                     .font(.appLargeTitle)
                     .multilineTextAlignment(.center)
+
+                AchievementUnlockCard(achievements: session.newlyUnlocked)
 
                 HStack(spacing: Theme.Spacing.s) {
                     StatTile(value: "\(session.correctCount)", label: L("practice.boss.stat.hits"),
