@@ -6,58 +6,30 @@ struct WritingView: View {
     let item: PracticeItem
     let onAnswer: (Bool) -> Void
 
-    @State private var typed = ""
-    @State private var checked = false
-    /// Der Nutzer hat aufgegeben („Weiß ich nicht"), ohne etwas zu tippen. Die Lösung wird
-    /// wie bei einer falschen Antwort gezeigt, das „Trotzdem richtig" entfällt (es gibt
-    /// keine Eingabe, die man nachträglich als richtig werten könnte).
-    @State private var gaveUp = false
     @State private var match: AnswerChecker.AnswerMatch = .wrong
     /// Bei falscher Eingabe: das (andere) Wort des Wortschatzes, das man stattdessen
     /// getippt hat – für den zusätzlichen „Verwechslungs"-Hinweis. `nil`, wenn die Eingabe
     /// keinem bekannten Wort entspricht.
     @State private var confused: WordPair?
-    @FocusState private var focused: Bool
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.l) {
-            PromptCard(text: item.prompt(),
-                       spokenText: item.direction == .wordToMeaning ? item.vocab.word : nil,
-                       isKoreanPrompt: item.direction == .wordToMeaning)
-
-            TextField(L("practice.typeAnswer"), text: $typed)
-                .font(.appDisplay(30, weight: .regular))
-                .multilineTextAlignment(.center)
-                .tint(Theme.vermillion)
-                .padding(.vertical, Theme.Spacing.s)
-                .overlay(alignment: .bottom) {
-                    Rectangle().fill(Theme.ink).frame(height: 2)
-                }
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.never)
-                .focused($focused)
-                .disabled(checked)
-                .onSubmit { if !checked { check() } }
-
-            if checked {
-                resultBanner
-                actionButtons
-            } else {
-                Button(action: check) {
-                    Label(L("practice.check"), systemImage: "checkmark")
-                }
-                .buttonStyle(.primary)
-                .disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
-
-                // Aufgeben ist bewusst NICHT an eine Eingabe gebunden – weiß man das Wort
-                // gar nicht, zeigt der Button direkt die Lösung (zählt als falsch).
-                Button(action: giveUp) {
-                    Label(L("practice.iDontKnow"), systemImage: "questionmark.circle")
-                }
-                .buttonStyle(.secondary(tint: Theme.wrong))
-            }
-        }
-        .onAppear { focused = true }
+        TypedAnswerScaffold(
+            placeholder: L("practice.typeAnswer"),
+            underline: Theme.ink,
+            bannerTint: bannerColor,
+            evaluate: evaluate,
+            onGiveUp: {
+                match = .wrong
+                confused = nil
+            },
+            onAnswer: onAnswer,
+            prompt: {
+                PromptCard(text: item.prompt(),
+                           spokenText: item.direction == .wordToMeaning ? item.vocab.word : nil,
+                           isKoreanPrompt: item.direction == .wordToMeaning)
+            },
+            bannerContent: { bannerContent }
+        )
     }
 
     /// Akzentfarbe des Ergebnis-Banners je nach Bewertung.
@@ -85,89 +57,48 @@ struct WritingView: View {
         }
     }
 
-    private var resultBanner: some View {
-        VStack(spacing: 6) {
-            Label(bannerTitle, systemImage: bannerIcon)
-                .font(.appHeadline)
-                .foregroundStyle(bannerColor)
-
-            // „Fast richtig": erklärt, dass die Bedeutung stimmt, aber ein anderes Wort
-            // gefragt war. „Falsch": zeigt schlicht die gesuchte Antwort.
-            if match == .synonym {
-                Text(L("practice.almostHint", item.answer()))
-                    .font(.appSubheadline)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(Theme.inkSecondary)
-            }
-            if match != .correct {
-                HStack(spacing: Theme.Spacing.s) {
-                    Text(item.answer())
-                        .font(.appTitle3)
-                        .accessibilityLabel(Text.speech(item.answer(), korean: item.direction == .meaningToWord))
-                    if item.direction == .meaningToWord {
-                        SpeakButton(text: item.vocab.word)
-                    }
-                }
-            }
-            // Verwechslungs-Hinweis: die Eingabe gehört zu einem anderen bekannten Wort.
-            if let confused {
-                Text(L("practice.confusedHint", confused.word, confused.meaning))
-                    .font(.appSubheadline)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(Theme.inkSecondary)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(Theme.Spacing.m)
-        .background(bannerColor.opacity(0.14),
-                    in: RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
-    }
-
     @ViewBuilder
-    private var actionButtons: some View {
-        if match == .correct {
-            Button { onAnswer(true) } label: {
-                Label(L("common.next"), systemImage: "arrow.right")
-            }
-            .buttonStyle(.primary)
-        } else if gaveUp {
-            // Aufgegeben: nur weiter (als falsch gewertet), kein „Trotzdem richtig".
-            Button { onAnswer(false) } label: {
-                Label(L("common.next"), systemImage: "arrow.right")
-            }
-            .buttonStyle(.primary)
-        } else {
-            VStack(spacing: Theme.Spacing.s) {
-                Button { onAnswer(true) } label: {
-                    Label(L("practice.markCorrect"), systemImage: "hand.thumbsup")
-                }
-                .buttonStyle(.secondary(tint: LearningStatus.learned.color))
+    private var bannerContent: some View {
+        Label(bannerTitle, systemImage: bannerIcon)
+            .font(.appHeadline)
+            .foregroundStyle(bannerColor)
 
-                Button { onAnswer(false) } label: {
-                    Label(L("common.next"), systemImage: "arrow.right")
+        // „Fast richtig": erklärt, dass die Bedeutung stimmt, aber ein anderes Wort
+        // gefragt war. „Falsch": zeigt schlicht die gesuchte Antwort.
+        if match == .synonym {
+            Text(L("practice.almostHint", item.answer()))
+                .font(.appSubheadline)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Theme.inkSecondary)
+        }
+        if match != .correct {
+            HStack(spacing: Theme.Spacing.s) {
+                Text(item.answer())
+                    .font(.appTitle3)
+                    .accessibilityLabel(Text.speech(item.answer(), korean: item.direction == .meaningToWord))
+                if item.direction == .meaningToWord {
+                    SpeakButton(text: item.vocab.word)
                 }
-                .buttonStyle(.primary)
             }
+        }
+        // Verwechslungs-Hinweis: die Eingabe gehört zu einem anderen bekannten Wort.
+        if let confused {
+            Text(L("practice.confusedHint", confused.word, confused.meaning))
+                .font(.appSubheadline)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Theme.inkSecondary)
         }
     }
 
-    private func check() {
+    /// Bewertet die Eingabe; nur ein exakter Treffer zählt als „voll richtig" (ein
+    /// Synonym bietet wie eine falsche Eingabe „Trotzdem richtig" an).
+    private func evaluate(_ typed: String) -> Bool {
         match = AnswerChecker.evaluate(typed: typed, expected: item.answer(),
                                        synonyms: item.synonymWords)
         // Bei falscher Eingabe prüfen, ob man ein anderes bekanntes Wort getippt hat – dann
         // dessen Bedeutung als Zusatzinfo einblenden. Läuft synchron; die Kandidaten-Varianten
         // sind vorberechnet (siehe `WordPair`), sodass der Abgleich günstig bleibt.
         confused = match == .wrong ? item.confusedPair(forTyped: typed) : nil
-        withAnimation { checked = true }
-        focused = false
-    }
-
-    /// „Weiß ich nicht": Lösung als falsch enthüllen, ohne dass eine Eingabe nötig war.
-    private func giveUp() {
-        match = .wrong
-        confused = nil
-        gaveUp = true
-        withAnimation { checked = true }
-        focused = false
+        return match == .correct
     }
 }
