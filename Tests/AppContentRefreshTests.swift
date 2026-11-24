@@ -10,7 +10,13 @@ final class AppContentRefreshTests: XCTestCase {
 
     private let calendar = Calendar.current
 
+    override func setUp() {
+        super.setUp()
+        resetSharedStores()
+    }
+
     override func tearDown() {
+        resetSharedStores()
         // Injizierten Store-Zustand immer zurücksetzen, damit andere Tests unberührt bleiben.
         AppContentRefresh.isStoreVolatile = { PersistenceController.storeOpenFailed }
         super.tearDown()
@@ -70,6 +76,63 @@ final class AppContentRefreshTests: XCTestCase {
         let today = calendar.startOfDay(for: date(2026, 7, 30, hour: 12))
         let yesterday = date(2026, 7, 29, hour: 12)
         XCTAssertTrue(AppContentRefresh.shouldRefreshOnActive(lastRefreshDay: today, now: yesterday))
+    }
+
+    /// Vom Drain beschriebene, prozess-geteilte Stores zurücksetzen (wie in
+    /// `WidgetResultReconcilerTests`), damit die Tests isoliert laufen.
+    private func resetSharedStores() {
+        WidgetResultQueue.clear()
+        for key in [StreakKeys.current, StreakKeys.longest, StreakKeys.lastActiveDay,
+                    StreakKeys.jokers, StreakKeys.weekAnchor, StreakKeys.jokerUses,
+                    StreakKeys.activeDays, WeeklyReviewKeys.log,
+                    AchievementKeys.unlockedIDs, AchievementKeys.unlockDates, AchievementKeys.progress] {
+            AppGroup.defaults.removeObject(forKey: key)
+        }
+        // `onAppActive` merkt sich prozess-weit den Refresh-Tag → für Folgetests zurücksetzen.
+        AppContentRefresh.lastActiveRefreshDay = nil
+    }
+
+    // MARK: - Signal an den Garten-Tab (#169)
+
+    /// Verbuchte Widget-Ergebnisse → Notification, damit gecachte Snapshots neu laden.
+    func testOnAppActivePostsNotificationAfterReconcile() {
+        let container = PersistenceController.makeContainer(inMemory: true)
+        let context = container.mainContext
+        let vocab = Vocab(word: "가다", meaning: "gehen")
+        context.insert(vocab)
+        WidgetResultQueue.append(PendingWidgetResult(wordID: vocab.id, correct: true, date: .now))
+        AppContentRefresh.isStoreVolatile = { false }
+
+        let posted = XCTNSNotificationExpectation(name: .widgetResultsReconciled)
+        AppContentRefresh.onAppActive(context: context)
+        wait(for: [posted], timeout: 1)
+        XCTAssertTrue(WidgetResultQueue.load().isEmpty)
+    }
+
+    /// Nichts in der Queue → nichts verbucht → keine Notification (kein unnötiger Reload).
+    func testOnAppActiveDoesNotPostWithoutReconcile() {
+        let container = PersistenceController.makeContainer(inMemory: true)
+        let context = container.mainContext
+        AppContentRefresh.isStoreVolatile = { false }
+
+        let posted = XCTNSNotificationExpectation(name: .widgetResultsReconciled)
+        posted.isInverted = true
+        AppContentRefresh.onAppActive(context: context)
+        wait(for: [posted], timeout: 0.2)
+    }
+
+    /// Flüchtiger Notfall-Store → kein Drain, keine Notification; die Queue bleibt erhalten.
+    func testOnAppActiveDoesNotPostWhenStoreIsVolatile() {
+        let container = PersistenceController.makeContainer(inMemory: true)
+        let context = container.mainContext
+        WidgetResultQueue.append(PendingWidgetResult(wordID: UUID(), correct: true, date: .now))
+        AppContentRefresh.isStoreVolatile = { true }
+
+        let posted = XCTNSNotificationExpectation(name: .widgetResultsReconciled)
+        posted.isInverted = true
+        AppContentRefresh.onAppActive(context: context)
+        wait(for: [posted], timeout: 0.2)
+        XCTAssertEqual(WidgetResultQueue.load().count, 1)
     }
 
     private func date(_ year: Int, _ month: Int, _ day: Int, hour: Int) -> Date {
