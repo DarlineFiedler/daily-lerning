@@ -20,9 +20,10 @@ THRESHOLD="${2:-75}"
 #  - Testdateien selbst (immer ~100%, würden die Zahl schönen)
 #  - SwiftUI-Views, App-/Widget-Einstiegspunkte, Design-System
 #  - System-Framework-Wrapper, die ohne UI-/Geräte-Automation nicht unit-testbar
-#    sind: AVSpeechSynthesizer / UNUserNotificationCenter (Scheduler + Badge) / WidgetKit
+#    sind: AVSpeechSynthesizer / UNUserNotificationCenter (Badge) / WidgetKit
+#    (NotificationScheduler ist seit #180 über ein Fake-Center testbar und wird gewertet)
 # Erweiterbar per ERE-Alternation.
-EXCLUDE_REGEX='Tests\.swift$|/Tests/|/Features/|/DesignSystem/|View\.swift$|App\.swift$|WidgetBundle\.swift$|DailyHangulWidget\.swift$|PracticeLiveActivity\.swift$|SpeechService\.swift$|NotificationScheduler\.swift$|BadgeUpdater\.swift$|VocabTimelineProvider\.swift$|StreakTimelineProvider\.swift$|DemoSeed\.swift$'
+EXCLUDE_REGEX='Tests\.swift$|/Tests/|/Features/|/DesignSystem/|View\.swift$|App\.swift$|WidgetBundle\.swift$|DailyHangulWidget\.swift$|PracticeLiveActivity\.swift$|SpeechService\.swift$|BadgeUpdater\.swift$|VocabTimelineProvider\.swift$|StreakTimelineProvider\.swift$|DemoSeed\.swift$'
 
 if ! command -v xcrun >/dev/null 2>&1; then
   echo "xcrun nicht gefunden – läuft dieses Skript auf macOS?" >&2
