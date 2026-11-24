@@ -44,8 +44,9 @@ enum WidgetResultReconciler {
         // die Streak-/Wochen-Buchung hängt an der Tagesreihenfolge.
         let ordered = results.sorted { $0.date < $1.date }
         let calendar = Calendar.current
-        // Wochen-Log EINMAL laden und gebündelt zurückschreiben (wie der Übungs-Hotpath in
-        // [[PracticeSession]]), statt pro Ergebnis zu de/encoden.
+        // Wochen-Log EINMAL laden und am Ende derselben synchronen Einspielung gebündelt
+        // zurückschreiben (load → merge → save), statt pro Ergebnis zu de/encoden. Kein
+        // längerlebiger Cache – sonst überschriebe er Buchungen anderer Schreiber (#175).
         var weekly = WeeklyReviewStore.loadActivity()
         var activeDays: Set<Date> = []
 

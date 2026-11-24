@@ -17,10 +17,12 @@ final class PracticeSessionStoreIOTests: XCTestCase {
         container = PersistenceController.makeContainer(inMemory: true)
         context = container.mainContext
         resetStores()
+        WidgetResultQueue.clear()
     }
 
     override func tearDown() {
         resetStores()
+        WidgetResultQueue.clear()
         context = nil
         container = nil
         super.tearDown()
@@ -104,6 +106,61 @@ final class PracticeSessionStoreIOTests: XCTestCase {
         for _ in 0 ..< 3 { session.submit(correct: true) } // Runde zu Ende → finalizeRound flusht
         XCTAssertTrue(session.isFinished)
         XCTAssertEqual(WeeklyReviewStore.dayProgress(for: .practiced), 5)
+    }
+
+    /// Reiht Widget-Antworten für `vocabs` ein und spielt sie über den echten
+    /// `WidgetResultReconciler.drain` ein (wie `AppContentRefresh.onAppActive`).
+    private func drainWidgetAnswers(for vocabs: [Vocab], correct: Bool = true) {
+        for vocab in vocabs {
+            WidgetResultQueue.append(PendingWidgetResult(wordID: vocab.id, correct: correct, date: .now))
+        }
+        XCTAssertTrue(WidgetResultReconciler.drain(context: context))
+    }
+
+    /// #175: Widget-Antworten, die zwischen zwei Flushes verbucht werden (Drain beim
+    /// Zurückkehren in die App), dürfen vom nächsten Flush nicht überschrieben werden.
+    func testWidgetDrainBetweenFlushesIsNotOverwritten() {
+        let session = makeSession(makeVocabs(3))
+        let widgetWords = makeVocabs(2) // eigene Wörter (IDs), nicht Teil der Session
+        session.submit(correct: true)
+        session.flushProgress() // Backgrounding
+
+        drainWidgetAnswers(for: widgetWords) // Rückkehr in die App
+
+        session.submit(correct: true)
+        session.submit(correct: true) // Runde zu Ende → finalizeRound flusht
+        XCTAssertTrue(session.isFinished)
+        XCTAssertEqual(WeeklyReviewStore.dayProgress(for: .practiced), 5)
+    }
+
+    /// #175 (Prüfungsfall ohne Zwischen-Flush): eine externe Buchung nach der ersten Antwort
+    /// bleibt erhalten, auch wenn die Session erst am Rundenende schreibt.
+    func testExternalWriteWithoutIntermediateFlushIsKept() {
+        let session = makeSession(makeVocabs(2))
+        let widgetWord = Vocab(word: "위젯", meaning: "Widget")
+        context.insert(widgetWord)
+        session.submit(correct: true)
+        drainWidgetAnswers(for: [widgetWord], correct: false)
+        session.submit(correct: true)
+
+        XCTAssertTrue(session.isFinished)
+        XCTAssertEqual(WeeklyReviewStore.dayProgress(for: .practiced), 3)
+    }
+
+    /// Richtig/Falsch-Zähler werden über Zwischen-Flush + Fertigspielen genau einmal
+    /// verbucht (Deltas werden nach dem Flush verworfen).
+    func testCountersAreAppliedOnceAcrossFlushes() throws {
+        let session = makeSession(makeVocabs(3))
+        session.submit(correct: true)
+        session.submit(correct: false)
+        session.flushProgress()
+        session.flushProgress()
+        session.submit(correct: true)
+
+        let today = Calendar.current.startOfDay(for: .now)
+        let entry = try XCTUnwrap(WeeklyReviewStore.loadActivity().days.first { $0.day == today })
+        XCTAssertEqual(entry.correctCount, 2)
+        XCTAssertEqual(entry.wrongCount, 1)
     }
 
     /// `restart()` setzt den gesammelten Wochen-Log nicht zurück: dieselben Wörter noch
