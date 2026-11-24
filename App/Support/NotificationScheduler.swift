@@ -7,11 +7,26 @@ enum ReminderKeys {
     static let minute = "reminder.minute"
 }
 
+/// Die Teile von `UNUserNotificationCenter`, die der Scheduler braucht – als Protokoll,
+/// damit Tests ein Fake-Center einsetzen können (Issue #180).
+protocol NotificationCenterScheduling {
+    func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool
+    func add(_ request: UNNotificationRequest)
+    func removePendingNotificationRequests(withIdentifiers identifiers: [String])
+}
+
+extension UNUserNotificationCenter: NotificationCenterScheduling {
+    func add(_ request: UNNotificationRequest) {
+        add(request, withCompletionHandler: nil)
+    }
+}
+
 /// Plant die tägliche Lern-Erinnerung als lokale Notification.
 /// Lokale Notifications brauchen nur Runtime-Autorisierung – keine Entitlements.
 enum NotificationScheduler {
-    private static let requestID = "daily.reminder"
-    private static var center: UNUserNotificationCenter { .current() }
+    static let requestID = "daily.reminder"
+    /// Austauschbar für Tests; im Betrieb das System-Center.
+    static var center: NotificationCenterScheduling = UNUserNotificationCenter.current()
 
     /// Fragt die Berechtigung an. Liefert `true`, wenn erlaubt.
     static func requestAuthorization() async -> Bool {
@@ -42,8 +57,7 @@ enum NotificationScheduler {
     /// Plant die Erinnerung neu, falls sie aktiviert ist – z.B. nach einem
     /// Sprachwechsel, damit Titel/Body in der neuen Sprache erscheinen.
     /// Nutzt dieselben Defaults (19:00) wie die Einstellungs-`@AppStorage`.
-    static func rescheduleIfEnabled() {
-        let d = AppGroup.defaults
+    static func rescheduleIfEnabled(defaults d: UserDefaults = AppGroup.defaults) {
         guard d.bool(forKey: ReminderKeys.enabled) else { return }
         let hour = d.object(forKey: ReminderKeys.hour) as? Int ?? 19
         let minute = d.object(forKey: ReminderKeys.minute) as? Int ?? 0
