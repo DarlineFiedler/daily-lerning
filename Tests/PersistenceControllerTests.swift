@@ -13,7 +13,7 @@ final class PersistenceControllerTests: XCTestCase {
     private var directory: URL!
     private var storeURL: URL!
     private var defaults: UserDefaults!
-    private let suiteName = "test.persistence.suite"
+    private var suiteName: String!
     // Container MUSS leben, solange sein mainContext benutzt wird – sonst Crash.
     private var container: ModelContainer?
 
@@ -21,6 +21,8 @@ final class PersistenceControllerTests: XCTestCase {
         directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("PersistenceControllerTests-\(UUID().uuidString)")
         storeURL = directory.appendingPathComponent("default.store")
+        // Eindeutig je Test, damit parallele Läufe sich den Marker nicht gegenseitig löschen.
+        suiteName = "test.persistence.\(UUID().uuidString)"
         defaults = UserDefaults(suiteName: suiteName)
         defaults.removePersistentDomain(forName: suiteName)
     }
@@ -32,6 +34,7 @@ final class PersistenceControllerTests: XCTestCase {
         directory = nil
         storeURL = nil
         defaults = nil
+        suiteName = nil
     }
 
     // MARK: - Store öffnen
@@ -78,6 +81,10 @@ final class PersistenceControllerTests: XCTestCase {
         XCTAssertNoThrow(try context.save())
         // Die Originaldatei wurde nicht durch einen frischen, leeren Store ersetzt.
         XCTAssertEqual(try Data(contentsOf: storeURL), garbage)
+        // …und es sind auch keine frischen Sidecar-Dateien (-wal/-shm/-journal) daneben entstanden,
+        // die beim nächsten Start mit der Originaldatei kombiniert würden.
+        let files = try FileManager.default.contentsOfDirectory(atPath: directory.path)
+        XCTAssertEqual(files, ["default.store"])
     }
 
     /// Ein Ziel, das sich gar nicht anlegen lässt (Elternpfad ist eine Datei), endet ebenfalls im
@@ -92,13 +99,6 @@ final class PersistenceControllerTests: XCTestCase {
 
         XCTAssertTrue(result.openFailed)
         XCTAssertEqual(try result.container.mainContext.fetchCount(FetchDescriptor<Vocab>()), 0)
-    }
-
-    /// Ein In-Memory-Container (Tests/Previews) darf das globale Fehler-Flag nie setzen.
-    func testInMemoryContainerDoesNotFlagStoreFailure() {
-        let before = PersistenceController.storeOpenFailed
-        _ = PersistenceController.makeContainer(inMemory: true)
-        XCTAssertEqual(PersistenceController.storeOpenFailed, before)
     }
 
     // MARK: - Fester Speicherort
@@ -142,6 +142,19 @@ final class PersistenceControllerTests: XCTestCase {
 
         XCTAssertTrue(healthy)
         XCTAssertTrue(ran)
+    }
+
+    /// Ohne expliziten Parameter entscheidet das globale `storeOpenFailed` – so ruft RootView auf.
+    func testStartupMaintenanceDefaultReadsGlobalStoreFlag() {
+        let container = PersistenceController.makeContainer(inMemory: true)
+        self.container = container
+        var ran = false
+
+        let healthy = StartupMaintenance.runIfStoreHealthy(
+            context: container.mainContext, maintenance: { _ in ran = true })
+
+        XCTAssertEqual(healthy, !PersistenceController.storeOpenFailed)
+        XCTAssertEqual(ran, !PersistenceController.storeOpenFailed)
     }
 
     // MARK: - App-Group-Fallback der Migration

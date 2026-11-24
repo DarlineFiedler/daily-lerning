@@ -67,8 +67,10 @@ enum PersistenceController {
 
     /// Öffnet den Disk-Store an `url`. Scheitert das, wird der Fehler protokolliert und als
     /// letzter Ausweg ein flüchtiger In-Memory-Store zurückgegeben (`openFailed == true`) –
-    /// kein Crash und kein stiller leerer Disk-Store. Die Datei an `url` wird dabei NICHT
+    /// kein Crash und kein stiller leerer Disk-Store. Im Fehlerfall wird die Datei an `url` NICHT
     /// angefasst (kein Überschreiben, kein Neuanlegen), damit vorhandene Daten erhalten bleiben.
+    /// Im Erfolgsfall legt SwiftData Verzeichnis und Store-Datei bei Bedarf an und setzt die
+    /// Datenschutz-Stufe (siehe [[applyStoreFileProtection]]).
     ///
     /// Setzt bewusst NICHT das globale [[storeOpenFailed]] – das übernimmt [[makeContainer]].
     /// So lassen sich die Fehlerpfade mit Temp-Pfaden testen, ohne den echten Store oder
