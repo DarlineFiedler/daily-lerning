@@ -68,8 +68,11 @@ final class VocabStatusCountsTests: XCTestCase {
 
         XCTAssertEqual(counts.problems, 3)
         XCTAssertEqual(counts.problems, vocabs.filter(\.isProblemWord).count)
-        XCTAssertEqual(counts.status[.learning], 2)
-        XCTAssertEqual(counts.status[.learned], 2)
+        for status in LearningStatus.allCases {
+            let expected = vocabs.filter { $0.status == status }.count
+            XCTAssertEqual(counts.status[status] ?? 0, expected, "Zählung für \(status) weicht ab")
+        }
+        XCTAssertEqual(counts.status.values.reduce(0, +), vocabs.count)
     }
 
     /// Hohe Fehlerquote, aber letzte Antwort richtig ⇒ zählt nicht als Problemwort.
@@ -83,8 +86,8 @@ final class VocabStatusCountsTests: XCTestCase {
 
     func testProgressCountsStatusMatchesStatusCounts() {
         let vocabs = [
-            vocab(status: .new, problem: false), vocab(status: .new, problem: true),
-            vocab(status: .learning, problem: false),
+            vocab(status: .new, problem: false), vocab(status: .new, problem: false),
+            vocab(status: .learning, problem: true),
             vocab(status: .almostLearned, problem: true),
             vocab(status: .learned, problem: false)
         ]
