@@ -47,11 +47,9 @@ struct RootView: View {
         .environment(sessionStore)
         .environment(\.locale, localization.localeForFormatting)
         .task {
-            if PersistenceController.storeOpenFailed {
+            if !StartupMaintenance.runIfStoreHealthy(context: context) {
                 showStoreError = true
             } else {
-                StoreMigration.runIfNeeded(into: context)
-                SeedData.removeLegacySeedIfNeeded(from: context)
                 #if DEBUG
                 DemoSeed.insertIfRequestedAndEmpty(into: context)
                 if CommandLine.arguments.contains("-uiTestOnboarding") {
