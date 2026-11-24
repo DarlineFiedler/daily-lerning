@@ -436,4 +436,52 @@ final class VocabBackupTests: XCTestCase {
         let restored = try XCTUnwrap(try freshContext.fetch(FetchDescriptor<Vocab>()).first)
         XCTAssertEqual(restored.meaningsByLanguage, [:]) // nil → [:] beim Anwenden
     }
+
+    /// Regression #189: Sicherungen von vor #42/#46/#60 enthalten weder `isArchived`
+    /// (Gruppe) noch `totalWrongCount` (Vokabel). Sie müssen sich trotzdem decodieren
+    /// lassen und mit den Defaults `false`/`0` wiederhergestellt werden.
+    func testDecodesOldBackupWithoutArchivedAndWrongCount() throws {
+        let groupID = UUID()
+        let json = """
+        {
+          "schemaVersion": 1,
+          "exportedAt": "2024-01-01T00:00:00.000Z",
+          "groups": [
+            {
+              "id": "\(groupID.uuidString)",
+              "name": "Tiere",
+              "colorHex": "#FF0000",
+              "sortOrder": 0,
+              "createdAt": "2024-01-01T00:00:00.000Z"
+            }
+          ],
+          "vocabs": [
+            {
+              "id": "\(UUID().uuidString)",
+              "word": "개",
+              "meaning": "Hund",
+              "statusRaw": 0,
+              "successCounter": 0,
+              "includeInWidget": false,
+              "timesPracticed": 3,
+              "createdAt": "2024-01-01T00:00:00.000Z",
+              "groupID": "\(groupID.uuidString)"
+            }
+          ]
+        }
+        """
+        let backup = try VocabBackup.decode(Data(json.utf8))
+        XCTAssertNil(backup.groups.first?.isArchived)
+        XCTAssertNil(backup.vocabs.first?.totalWrongCount)
+
+        let freshContainer = PersistenceController.makeContainer(inMemory: true)
+        let freshContext = freshContainer.mainContext
+        backup.apply(into: freshContext)
+        let group = try XCTUnwrap(try freshContext.fetch(FetchDescriptor<VocabGroup>()).first)
+        XCTAssertFalse(group.isArchived)
+        let vocab = try XCTUnwrap(try freshContext.fetch(FetchDescriptor<Vocab>()).first)
+        XCTAssertEqual(vocab.totalWrongCount, 0)
+        XCTAssertEqual(vocab.timesPracticed, 3)
+        XCTAssertEqual(vocab.group?.id, groupID)
+    }
 }
