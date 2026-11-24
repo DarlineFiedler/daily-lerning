@@ -162,7 +162,8 @@ final class PracticeSession {
     /// je Kalendertag verbucht (spart den vollen UserDefaults-load+save je Folgekarte),
     /// läuft eine Runde über Mitternacht aber auch für den neuen Tag (Issue #178).
     private var lastStreakDay: Date?
-    /// Uhr für Streak/Wochen-Log/Rundenauswertung – in Tests injizierbar (z.B. Mitternacht).
+    /// Uhr nur für Streak, Wochen-Log und Rundenauswertung – in Tests injizierbar (z.B. Mitternacht).
+    /// `Vocab.registerResult` (Fälligkeit/lastPracticedAt) nutzt weiterhin die echte Uhr.
     var now: () -> Date = { .now }
     /// Wochen-Log der laufenden Session: im Speicher gesammelt und gebündelt persistiert
     /// (statt den ganzen Log je Karte zu de/encoden). Lazy beim ersten Ergebnis geladen.

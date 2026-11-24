@@ -2,8 +2,8 @@
 import SwiftData
 import XCTest
 
-/// Prüft die gebündelte Store-Persistenz im Übungs-Hotpath (#70): Streak wird pro
-/// Session nur einmal verbucht, der Wochen-Log im Speicher gesammelt und gebündelt
+/// Prüft die gebündelte Store-Persistenz im Übungs-Hotpath (#70): Streak wird je
+/// Kalendertag nur einmal verbucht, der Wochen-Log im Speicher gesammelt und gebündelt
 /// zurückgeschrieben – das Ergebnis muss identisch zum Per-Karte-Schreiben bleiben.
 /// Schreibt in `AppGroup.defaults`; die betroffenen Keys werden je Test zurückgesetzt.
 @MainActor
@@ -68,7 +68,9 @@ final class PracticeSessionStoreIOTests: XCTestCase {
         let beforeMidnight = try XCTUnwrap(calendar.date(byAdding: .minute, value: -1, to: tomorrow))
         let afterMidnight = try XCTUnwrap(calendar.date(byAdding: .minute, value: 1, to: tomorrow))
 
-        let session = makeSession(makeVocabs(3))
+        // 4 Wörter, nur 3 beantwortet: Runde bleibt offen, damit `finalizeRound` keine
+        // auf morgen datierten Badges/Tages-Challenge in den geteilten Defaults hinterlässt.
+        let session = makeSession(makeVocabs(4))
         session.now = { beforeMidnight }
         session.submit(correct: true)
         session.submit(correct: false)
