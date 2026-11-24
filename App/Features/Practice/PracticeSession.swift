@@ -165,9 +165,19 @@ final class PracticeSession {
     /// Uhr nur für Streak, Wochen-Log und Rundenauswertung – in Tests injizierbar (z.B. Mitternacht).
     /// `Vocab.registerResult` (Fälligkeit/lastPracticedAt) nutzt weiterhin die echte Uhr.
     var now: () -> Date = { .now }
-    /// Wochen-Log der laufenden Session: im Speicher gesammelt und gebündelt persistiert
-    /// (statt den ganzen Log je Karte zu de/encoden). Lazy beim ersten Ergebnis geladen.
-    private var weeklyActivity: WeeklyActivity?
+    /// Noch nicht persistierte Wochen-Log-Buchungen dieser Session. Bewusst nur die Deltas
+    /// statt eines gecachten Vollstands: `flushProgress()` lädt den Log frisch, wendet sie an
+    /// und verwirft sie danach – so überschreibt die Session keine zwischenzeitlich (z.B. vom
+    /// Widget-Drain) verbuchten Einträge (Issue #175).
+    private var pendingWeekly: [PendingWeeklyEntry] = []
+
+    /// Eine im Speicher gesammelte Wochen-Log-Buchung (siehe `pendingWeekly`).
+    private struct PendingWeeklyEntry {
+        let wordID: UUID
+        let becameLearned: Bool
+        let correct: Bool
+        let date: Date
+    }
 
     init(vocabs: [Vocab], distractorPool: [Vocab], config: PracticeConfig, context: ModelContext) {
         self.context = context
@@ -283,9 +293,8 @@ final class PracticeSession {
         // Wochenrückblick füttern: distinct geübtes Wort + Erstaufstieg auf „Gelernt"
         // (`becameLearned`, oben erstmalig-only berechnet).
         // Nur im Speicher aggregieren – die Persistenz läuft gebündelt über `flushProgress()`.
-        let log = weeklyActivity ?? WeeklyReviewStore.loadActivity()
-        weeklyActivity = log.recording(wordID: vocab.id, becameLearned: becameLearned,
-                                       correct: correct, on: date, calendar: .current)
+        pendingWeekly.append(PendingWeeklyEntry(wordID: vocab.id, becameLearned: becameLearned,
+                                                correct: correct, date: date))
         context.saveOrLog()
         index += 1
         if isFinished { finalizeRound() }
@@ -346,8 +355,10 @@ final class PracticeSession {
 
     /// Persistiert den in dieser Session gesammelten Wochen-Log. Wird am Rundenende
     /// und beim Verlassen der Ansicht (Schließen/Hintergrund) aufgerufen, damit der
-    /// Fortschritt auch einen früh abgebrochenen Durchgang übersteht. No-op, solange
-    /// nichts gesammelt wurde; wiederholte Aufrufe schreiben nur denselben Stand.
+    /// Fortschritt auch einen früh abgebrochenen Durchgang übersteht. Der Log wird frisch
+    /// geladen und nur um die gesammelten Deltas ergänzt (load → merge → save), damit
+    /// zwischenzeitlich verbuchte Widget-Antworten erhalten bleiben (#175). No-op, solange
+    /// nichts gesammelt wurde; wiederholte Aufrufe zählen nichts doppelt.
     func flushProgress() {
         // Gesammelte XP zuerst schreiben (ein load+save je Flush statt je Karte) und den
         // persistierten Stand fortschreiben – wiederholte Aufrufe sind dadurch idempotent.
@@ -356,8 +367,13 @@ final class PracticeSession {
             xpFlushedTotal += pendingXP
             pendingXP = 0
         }
-        guard let weeklyActivity else { return }
-        WeeklyReviewStore.saveActivity(weeklyActivity)
+        guard !pendingWeekly.isEmpty else { return }
+        let merged = pendingWeekly.reduce(WeeklyReviewStore.loadActivity()) { log, entry in
+            log.recording(wordID: entry.wordID, becameLearned: entry.becameLearned,
+                          correct: entry.correct, on: entry.date, calendar: .current)
+        }
+        WeeklyReviewStore.saveActivity(merged)
+        pendingWeekly.removeAll()
     }
 
     /// Startet denselben Satz Wörter erneut.
