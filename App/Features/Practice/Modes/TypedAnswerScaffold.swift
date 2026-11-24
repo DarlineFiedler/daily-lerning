@@ -61,7 +61,12 @@ struct TypedAnswerScaffold<Prompt: View, BannerContent: View>: View {
                 .textInputAutocapitalization(.never)
                 .focused($focused)
                 .disabled(checked)
-                .onSubmit { if !checked { check() } }
+                // Return mit leerem Feld prüft nicht – Fokus halten, damit die Tastatur
+                // nicht verschwindet und man direkt weitertippen kann.
+                .onSubmit {
+                    guard !checked else { return }
+                    if canCheck { check() } else { focused = true }
+                }
 
             if checked {
                 resultBanner
@@ -71,7 +76,7 @@ struct TypedAnswerScaffold<Prompt: View, BannerContent: View>: View {
                     Label(L("practice.check"), systemImage: "checkmark")
                 }
                 .buttonStyle(.primary)
-                .disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
+                .disabled(!canCheck)
 
                 // Aufgeben ist bewusst NICHT an eine Eingabe gebunden – weiß man das Wort
                 // gar nicht, zeigt der Button direkt die Lösung (zählt als falsch).
@@ -115,6 +120,12 @@ struct TypedAnswerScaffold<Prompt: View, BannerContent: View>: View {
                 .buttonStyle(.primary)
             }
         }
+    }
+
+    /// Prüfen erst mit echter Eingabe – gilt für Button und Return-Taste gleichermaßen,
+    /// sonst würde ein leeres Feld als falsch gewertet (mit „Trotzdem richtig").
+    private var canCheck: Bool {
+        !typed.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     private func check() {

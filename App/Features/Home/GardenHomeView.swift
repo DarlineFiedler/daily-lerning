@@ -296,9 +296,9 @@ struct GardenHomeView: View {
     }
 
     private func bedRow(_ group: VocabGroup, showNote: Bool) -> some View {
-        let fallow = isFallow(group)
-        let color = Color(hex: group.colorHex)
         let learned = group.learnedCount
+        let fallow = isFallow(group, learned: learned)
+        let color = Color(hex: group.colorHex)
         return VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline) {
                 Text(group.name)
@@ -476,8 +476,10 @@ struct GardenHomeView: View {
 
     /// Ein Beet liegt „brach", wenn es Wörter hat, nicht komplett gelernt ist und
     /// seit ≥7 Tagen nicht geübt wurde.
-    private func isFallow(_ group: VocabGroup) -> Bool {
-        let learned = group.learnedCount
+    /// - Parameter learned: bereits gezählte gelernte Wörter, damit Aufrufer, die den Wert
+    ///   ohnehin brauchen, die Status nicht ein zweites Mal zählen.
+    private func isFallow(_ group: VocabGroup, learned: Int? = nil) -> Bool {
+        let learned = learned ?? group.learnedCount
         guard group.vocabCount > 0, learned < group.vocabCount else { return false }
         return daysWaiting(group) >= 7
     }
