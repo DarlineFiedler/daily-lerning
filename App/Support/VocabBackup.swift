@@ -49,9 +49,11 @@ struct VocabBackup: Codable {
         var colorHex: String
         var sortOrder: Int
         var createdAt: Date
-        /// Archiviert-Zustand der Gruppe. Fehlt der Schlüssel in einer älteren Sicherung,
-        /// greift der Inline-Default `false` – kein Versionssprung nötig (analog `totalWrongCount`).
-        var isArchived: Bool = false
+        /// Archiviert-Zustand der Gruppe. Bewusst optional: ältere Sicherungen (vor #46/#60)
+        /// haben diesen Schlüssel nicht, und das synthetisierte `Codable` ignoriert Inline-
+        /// Defaults beim Decode (→ `keyNotFound`, Issue #189). Als Optional liest es einen
+        /// fehlenden Schlüssel per `decodeIfPresent` als `nil`; `apply` macht daraus `false`.
+        var isArchived: Bool?
     }
 
     struct VocabDTO: Codable {
@@ -76,9 +78,11 @@ struct VocabBackup: Codable {
         var successCounter: Int
         var includeInWidget: Bool
         var timesPracticed: Int
-        /// Lebenszeit-Fehleranzahl (siehe [[Vocab]] `totalWrongCount`). Fehlt der Schlüssel
-        /// in einer älteren Sicherung, greift der Inline-Default 0 – kein Versionssprung nötig.
-        var totalWrongCount: Int = 0
+        /// Lebenszeit-Fehleranzahl (siehe [[Vocab]] `totalWrongCount`). Bewusst optional:
+        /// ältere Sicherungen (vor #42) haben diesen Schlüssel nicht; ein non-optionaler
+        /// Inline-Default würde beim Decode `keyNotFound` werfen (Issue #189). `apply` macht
+        /// aus `nil` eine 0.
+        var totalWrongCount: Int?
         var lastPracticedAt: Date?
         var nextReviewAt: Date?
         var lastCountedAt: Date?
@@ -257,7 +261,7 @@ extension VocabBackup {
             group.colorHex = dto.colorHex
             group.sortOrder = dto.sortOrder
             group.createdAt = dto.createdAt
-            group.isArchived = dto.isArchived
+            group.isArchived = dto.isArchived ?? false
         }
 
         for dto in vocabs {
@@ -280,7 +284,7 @@ extension VocabBackup {
             vocab.successCounter = dto.successCounter
             vocab.includeInWidget = dto.includeInWidget
             vocab.timesPracticed = dto.timesPracticed
-            vocab.totalWrongCount = dto.totalWrongCount
+            vocab.totalWrongCount = dto.totalWrongCount ?? 0
             vocab.lastPracticedAt = dto.lastPracticedAt
             vocab.nextReviewAt = dto.nextReviewAt
             vocab.lastCountedAt = dto.lastCountedAt
