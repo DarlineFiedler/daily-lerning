@@ -63,21 +63,7 @@ struct StatisticsView: View {
                 StatTile(value: "\(rate)%", label: L("home.stat.rate"),
                          systemImage: "chart.pie.fill", tint: Theme.brandEnd)
             }
-            VStack(alignment: .leading, spacing: Theme.Spacing.s) {
-                StatusDistributionBar(counts: counts, height: 14)
-                ForEach(LearningStatus.allCases) { status in
-                    HStack {
-                        StatusDot(status: status, size: 12)
-                        Text(L(status.titleKey)).font(.appBody)
-                        Spacer()
-                        Text("\(counts[status] ?? 0)")
-                            .font(.appBody.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .monospacedDigit()
-                    }
-                }
-            }
-            .cardStyle()
+            StatusBreakdownList(counts: counts)
         }
     }
 
