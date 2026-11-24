@@ -2,8 +2,8 @@
 import SwiftData
 import XCTest
 
-/// Prüft die gebündelte Store-Persistenz im Übungs-Hotpath (#70): Streak wird pro
-/// Session nur einmal verbucht, der Wochen-Log im Speicher gesammelt und gebündelt
+/// Prüft die gebündelte Store-Persistenz im Übungs-Hotpath (#70): Streak wird je
+/// Kalendertag nur einmal verbucht, der Wochen-Log im Speicher gesammelt und gebündelt
 /// zurückgeschrieben – das Ergebnis muss identisch zum Per-Karte-Schreiben bleiben.
 /// Schreibt in `AppGroup.defaults`; die betroffenen Keys werden je Test zurückgesetzt.
 @MainActor
@@ -59,6 +59,28 @@ final class PracticeSessionStoreIOTests: XCTestCase {
         XCTAssertEqual(StreakStore.current, 1)
         let today = Calendar.current.startOfDay(for: .now)
         XCTAssertEqual(StreakStore.activeDays, [today])
+    }
+
+    /// Runde über Mitternacht (Issue #178): Antworten vor und nach 0 Uhr verbuchen beide
+    /// Kalendertage als Streak-Aktivität – nicht nur den Tag der ersten Antwort.
+    func testSessionAcrossMidnightRegistersBothDays() throws {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let tomorrow = try XCTUnwrap(calendar.date(byAdding: .day, value: 1, to: today))
+        let beforeMidnight = try XCTUnwrap(calendar.date(byAdding: .minute, value: -1, to: tomorrow))
+        let afterMidnight = try XCTUnwrap(calendar.date(byAdding: .minute, value: 1, to: tomorrow))
+
+        // 4 Wörter, nur 3 beantwortet: Runde bleibt offen, damit `finalizeRound` keine
+        // auf morgen datierten Badges/Tages-Challenge in den geteilten Defaults hinterlässt.
+        let session = makeSession(makeVocabs(4))
+        session.now = { beforeMidnight }
+        session.submit(correct: true)
+        session.submit(correct: false)
+        session.now = { afterMidnight }
+        session.submit(correct: true)
+
+        XCTAssertEqual(StreakStore.activeDays, [today, tomorrow])
+        XCTAssertEqual(StreakStore.current, 2)
     }
 
     /// Fertige Runde: der Wochen-Log ist gebündelt persistiert – der Tagesfortschritt

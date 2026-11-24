@@ -158,9 +158,13 @@ final class PracticeSession {
     private var newlyLearnedCount = 0
     /// Verhindert, dass die Runden-Auswertung (Achievements) mehrfach läuft.
     private var didFinalize = false
-    /// Streak-Aktivität wird pro Session nur einmal verbucht (ist ohnehin idempotent
-    /// pro Kalendertag) – spart den vollen UserDefaults-load+save je Folgekarte.
-    private var didRegisterStreak = false
+    /// Start des zuletzt verbuchten Streak-Kalendertags. Streak-Aktivität wird nur einmal
+    /// je Kalendertag verbucht (spart den vollen UserDefaults-load+save je Folgekarte),
+    /// läuft eine Runde über Mitternacht aber auch für den neuen Tag (Issue #178).
+    private var lastStreakDay: Date?
+    /// Uhr nur für Streak, Wochen-Log und Rundenauswertung – in Tests injizierbar (z.B. Mitternacht).
+    /// `Vocab.registerResult` (Fälligkeit/lastPracticedAt) nutzt weiterhin die echte Uhr.
+    var now: () -> Date = { .now }
     /// Noch nicht persistierte Wochen-Log-Buchungen dieser Session. Bewusst nur die Deltas
     /// statt eines gecachten Vollstands: `flushProgress()` lädt den Log frisch, wendet sie an
     /// und verwirft sie danach – so überschreibt die Session keine zwischenzeitlich (z.B. vom
@@ -276,18 +280,21 @@ final class PracticeSession {
             currentCombo = 0 // ein Fehler reißt die laufende Kombo ab
             missedVocabs.append(vocab)
         }
-        // Streak nur einmal je Session verbuchen; die Idempotenz pro Kalendertag macht
-        // weitere load+save-Runden je Karte überflüssig. Schon der erste Treffer
-        // persistiert die Aktivität (überlebt einen früh abgebrochenen Durchgang).
-        if !didRegisterStreak {
-            StreakStore.registerActivity() // idempotent pro Kalendertag
-            didRegisterStreak = true
+        // Streak nur einmal je Kalendertag verbuchen; die Idempotenz pro Tag macht weitere
+        // load+save-Runden je Karte überflüssig. Schon der erste Treffer persistiert die
+        // Aktivität (überlebt einen früh abgebrochenen Durchgang). Wechselt der Tag während
+        // der Runde (über Mitternacht), wird der neue Tag ebenfalls verbucht (Issue #178).
+        let date = now()
+        let day = Calendar.current.startOfDay(for: date)
+        if lastStreakDay != day {
+            StreakStore.registerActivity(on: date)
+            lastStreakDay = day
         }
         // Wochenrückblick füttern: distinct geübtes Wort + Erstaufstieg auf „Gelernt"
         // (`becameLearned`, oben erstmalig-only berechnet).
         // Nur im Speicher aggregieren – die Persistenz läuft gebündelt über `flushProgress()`.
         pendingWeekly.append(PendingWeeklyEntry(wordID: vocab.id, becameLearned: becameLearned,
-                                                correct: correct, date: .now))
+                                                correct: correct, date: date))
         context.saveOrLog()
         index += 1
         if isFinished { finalizeRound() }
@@ -315,7 +322,7 @@ final class PracticeSession {
         guard !didFinalize else { return }
         didFinalize = true
         flushProgress() // gesammelten Wochen-Log am Rundenende persistieren
-        let now = Date.now
+        let roundDate = now()
         // Fehlerfreie Runde mit genug Wörtern → „Makellos". `isFlawless` gilt für die
         // Fehlerfrei-Serie schon ohne Mindestwortzahl. Vorzeitig beendet: nie „Makellos";
         // die Fehlerfrei-Serie bricht nur bei einem echten Fehler, sonst bleibt sie neutral.
@@ -328,7 +335,7 @@ final class PracticeSession {
         let counted = incomplete ? Array(items.prefix(index)) : items
         newlyUnlocked = AchievementService.registerSession(
             modes: Set(counted.map(\.mode)),
-            date: now,
+            date: roundDate,
             isPerfect: isPerfect,
             isFlawless: isFlawless,
             selfCorrected: didSelfCorrect,
