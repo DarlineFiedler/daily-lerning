@@ -59,6 +59,26 @@ final class PracticeSessionStoreIOTests: XCTestCase {
         XCTAssertEqual(StreakStore.activeDays, [today])
     }
 
+    /// Runde über Mitternacht (Issue #178): Antworten vor und nach 0 Uhr verbuchen beide
+    /// Kalendertage als Streak-Aktivität – nicht nur den Tag der ersten Antwort.
+    func testSessionAcrossMidnightRegistersBothDays() throws {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let tomorrow = try XCTUnwrap(calendar.date(byAdding: .day, value: 1, to: today))
+        let beforeMidnight = try XCTUnwrap(calendar.date(byAdding: .minute, value: -1, to: tomorrow))
+        let afterMidnight = try XCTUnwrap(calendar.date(byAdding: .minute, value: 1, to: tomorrow))
+
+        let session = makeSession(makeVocabs(3))
+        session.now = { beforeMidnight }
+        session.submit(correct: true)
+        session.submit(correct: false)
+        session.now = { afterMidnight }
+        session.submit(correct: true)
+
+        XCTAssertEqual(StreakStore.activeDays, [today, tomorrow])
+        XCTAssertEqual(StreakStore.current, 2)
+    }
+
     /// Fertige Runde: der Wochen-Log ist gebündelt persistiert – der Tagesfortschritt
     /// zählt jedes distinct geübte Wort (identisch zum vorherigen Per-Karte-Schreiben).
     func testFinishedSessionPersistsWeeklyProgress() {
