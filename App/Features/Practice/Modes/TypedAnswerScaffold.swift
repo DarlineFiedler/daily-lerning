@@ -61,11 +61,16 @@ struct TypedAnswerScaffold<Prompt: View, BannerContent: View>: View {
                 .textInputAutocapitalization(.never)
                 .focused($focused)
                 .disabled(checked)
-                // Return mit leerem Feld prüft nicht – Fokus halten, damit die Tastatur
-                // nicht verschwindet und man direkt weitertippen kann.
+                // Return mit leerem Feld prüft nicht – Fokus zurückholen, damit die Tastatur
+                // bleibt. Erst im nächsten Runloop: während `onSubmit` gibt das Feld den Fokus
+                // gerade ab, ein synchrones `focused = true` würde SwiftUI ignorieren.
                 .onSubmit {
                     guard !checked else { return }
-                    if canCheck { check() } else { focused = true }
+                    if canCheck {
+                        check()
+                    } else {
+                        DispatchQueue.main.async { focused = true }
+                    }
                 }
 
             if checked {
