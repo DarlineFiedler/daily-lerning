@@ -112,4 +112,57 @@ final class ClozeTextTests: XCTestCase {
         XCTAssertEqual(ClozeText.blanked(example: "학교에 가요", word: "  "), "학교에 가요")
         XCTAssertFalse(ClozeText.canCloze(Vocab(word: " ", meaning: "x", example: "학교에 가요")))
     }
+
+    // MARK: - Review-Nachträge (#133)
+
+    func testMultiWordEntryIsClozed() {
+        let vocab = Vocab(word: "두 번째", meaning: "zweite", example: "두 번째 집이에요")
+        XCTAssertTrue(ClozeText.canCloze(vocab))
+        XCTAssertEqual(ClozeText.blanked(example: "두 번째 집이에요", word: "두 번째"),
+                       "\(ClozeText.blank) 집이에요")
+        // Letzter Teil darf Partikel tragen, vordere müssen exakt passen.
+        XCTAssertEqual(ClozeText.blanked(example: "여러 가지를 샀어요", word: "여러 가지"),
+                       "\(ClozeText.blank) 샀어요")
+        XCTAssertFalse(ClozeText.canCloze(Vocab(word: "더 이상", meaning: "x", example: "더 크게 이상해요")))
+    }
+
+    func testNonParticleEndingsDoNotMatchOtherWords() {
+        XCTAssertFalse(ClozeText.canCloze(Vocab(word: "바", meaning: "Bar", example: "바다에 가요")))
+        XCTAssertFalse(ClozeText.canCloze(Vocab(word: "차", meaning: "Auto", example: "차고에 세워요")))
+        XCTAssertFalse(ClozeText.canCloze(Vocab(word: "가", meaning: "x", example: "학교에 가요")))
+        XCTAssertFalse(ClozeText.canCloze(Vocab(word: "사", meaning: "vier", example: "사랑해요")))
+    }
+
+    func testParticleChainsAndPlural() {
+        XCTAssertTrue(ClozeText.matches(core: "친구들이", word: "친구"))
+        XCTAssertTrue(ClozeText.matches(core: "친구와는", word: "친구"))
+        XCTAssertTrue(ClozeText.matches(core: "친구들로", word: "친구"))
+        XCTAssertTrue(ClozeText.matches(core: "학교에만", word: "학교"))
+        XCTAssertTrue(ClozeText.matches(core: "학교만큼", word: "학교"))
+        XCTAssertTrue(ClozeText.matches(core: "선생님께서는", word: "선생님"))
+        XCTAssertTrue(ClozeText.matches(core: "학생이지만", word: "학생"))
+        XCTAssertTrue(ClozeText.matches(core: "의사예요", word: "의사"))
+        XCTAssertFalse(ClozeText.matches(core: "의사이에요", word: "의사"))
+        // `들` nur direkt am Wort, nicht hinter einer Partikel.
+        XCTAssertFalse(ClozeText.matches(core: "친구에들", word: "친구"))
+    }
+
+    func testWordWithPunctuationMatches() {
+        XCTAssertTrue(ClozeText.canCloze(Vocab(word: "괜찮아?", meaning: "ok?", example: "정말 괜찮아?")))
+        XCTAssertEqual(ClozeText.blanked(example: "정말 괜찮아?", word: "괜찮아?"), "정말 \(ClozeText.blank)?")
+    }
+
+    func testInnerPunctuationSeparatesTokens() {
+        XCTAssertEqual(ClozeText.blanked(example: "학교(school)에 가요", word: "학교"),
+                       "\(ClozeText.blank)(school)에 가요")
+        XCTAssertEqual(ClozeText.blanked(example: "학교/회사", word: "회사"), "학교/\(ClozeText.blank)")
+    }
+
+    func testDecomposedHangulIsNormalized() {
+        let nfdWord = "차".decomposedStringWithCanonicalMapping
+        let nfdSentence = "차이가 있어요".decomposedStringWithCanonicalMapping
+        XCTAssertFalse(ClozeText.canCloze(Vocab(word: nfdWord, meaning: "Auto", example: nfdSentence)))
+        XCTAssertTrue(ClozeText.canCloze(Vocab(word: nfdWord, meaning: "Auto",
+                                               example: "차가 빨라요".decomposedStringWithCanonicalMapping)))
+    }
 }
