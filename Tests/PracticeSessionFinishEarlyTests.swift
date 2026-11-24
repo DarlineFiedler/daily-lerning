@@ -88,6 +88,37 @@ final class PracticeSessionFinishEarlyTests: XCTestCase {
         XCTAssertEqual(AchievementStore.progress.sessionsCompleted, 0)
     }
 
+    /// Timeout schaltet Badges frei → die Session gibt sie für das Freischalt-Banner heraus (#168).
+    func testFinishEarlyExposesNewlyUnlockedBadges() {
+        let session = makeSession(5)
+        session.submit(correct: true)
+
+        session.finishEarly()
+
+        XCTAssertTrue(session.newlyUnlocked.map(\.id).contains("sessions1"))
+    }
+
+    /// Neustart nach Timeout setzt die frisch freigeschalteten Badges zurück (kein Banner-Rest).
+    func testRestartAfterFinishEarlyClearsNewlyUnlocked() {
+        let session = makeSession(5)
+        session.submit(correct: true)
+        session.finishEarly()
+        XCTAssertFalse(session.newlyUnlocked.isEmpty)
+
+        session.restart()
+
+        XCTAssertTrue(session.newlyUnlocked.isEmpty)
+    }
+
+    /// Timeout ohne Antwort schaltet nichts frei → kein Banner.
+    func testFinishEarlyWithoutAnswersUnlocksNothing() {
+        let session = makeSession(5)
+
+        session.finishEarly()
+
+        XCTAssertTrue(session.newlyUnlocked.isEmpty)
+    }
+
     /// Mehrfaches vorzeitiges Beenden zählt nur einmal.
     func testFinishEarlyIsIdempotent() {
         let session = makeSession(5)
