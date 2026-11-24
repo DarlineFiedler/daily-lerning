@@ -18,7 +18,8 @@ enum AppContentRefresh {
     /// Vordergrund (lokaler SwiftData-Store, KEIN CloudKit/Hintergrund-Sync – siehe
     /// [[PersistenceController]]). Käme je eine Hintergrund-Mutation dazu (CloudKit-Sync,
     /// `BGTaskScheduler`), muss dieses Tag neu überdacht werden.
-    private static var lastActiveRefreshDay: Date?
+    /// Nicht `private`, damit Tests (`@testable`) den prozess-weiten Zustand zurücksetzen können.
+    static var lastActiveRefreshDay: Date?
 
     /// Läuft nur ein flüchtiger Notfall-Store (Store-Open fehlgeschlagen, siehe
     /// [[PersistenceController]] `storeOpenFailed`)? Als Closure, damit Tests den Zustand
@@ -66,7 +67,7 @@ enum AppContentRefresh {
         // `registerSession` lief – darum hier explizit prüfen/verbuchen (idempotent).
         if didReconcile {
             AchievementService.checkWeeklyGoalReached(context: context, on: now)
-            // Ansichten mit gecachtem Aktivitäts-/Challenge-Snapshot (Garten-Tab, #169)
+            // Ansichten mit gecachtem Aktivitäts-Snapshot (Garten-Tab, Ziel-Statistik; #169)
             // informieren – synchron NACH dem Drain, damit sie die frisch geschriebenen Werte
             // lesen. Ein eigener `scenePhase`-Handler dort liefe in unbestimmter Reihenfolge.
             NotificationCenter.default.post(name: .widgetResultsReconciled, object: nil)
@@ -97,7 +98,8 @@ enum AppContentRefresh {
 }
 
 extension Notification.Name {
-    /// Gepostet von [[AppContentRefresh]] `onAppActive`, nachdem Widget-Ergebnisse in Store,
-    /// Aktivitäts-Log und Challenge verbucht wurden (auf dem Main-Thread).
+    /// Gepostet von [[AppContentRefresh]] `onAppActive`, nachdem Widget-Ergebnisse in Store
+    /// und Aktivitäts-Log verbucht wurden (auf dem Main-Thread). Den Challenge-Fortschritt
+    /// berühren Widget-Antworten nicht.
     static let widgetResultsReconciled = Notification.Name("AppContentRefresh.widgetResultsReconciled")
 }

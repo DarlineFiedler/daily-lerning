@@ -39,6 +39,11 @@ struct GoalStatsView: View {
                     }
                 }
             }
+            // Widget-Antworten beim Vordergrund-Wechsel verbucht (#169) → Momentaufnahme
+            // auffrischen, sonst zeigt ein offenes Sheet den alten Tages-/Wochenstand.
+            .onReceive(NotificationCenter.default.publisher(for: .widgetResultsReconciled)) { _ in
+                stats = GoalStats.current()
+            }
             .sheet(isPresented: $showSettings) {
                 NavigationStack {
                     GoalSettingsView()

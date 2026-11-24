@@ -84,9 +84,12 @@ final class AppContentRefreshTests: XCTestCase {
         WidgetResultQueue.clear()
         for key in [StreakKeys.current, StreakKeys.longest, StreakKeys.lastActiveDay,
                     StreakKeys.jokers, StreakKeys.weekAnchor, StreakKeys.jokerUses,
-                    StreakKeys.activeDays, WeeklyReviewKeys.log] {
+                    StreakKeys.activeDays, WeeklyReviewKeys.log,
+                    AchievementKeys.unlockedIDs, AchievementKeys.unlockDates, AchievementKeys.progress] {
             AppGroup.defaults.removeObject(forKey: key)
         }
+        // `onAppActive` merkt sich prozess-weit den Refresh-Tag → für Folgetests zurücksetzen.
+        AppContentRefresh.lastActiveRefreshDay = nil
     }
 
     // MARK: - Signal an den Garten-Tab (#169)
