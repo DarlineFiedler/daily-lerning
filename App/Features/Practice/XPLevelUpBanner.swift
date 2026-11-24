@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Feiert einen Levelaufstieg am Rundenende: eine hervorgehobene Karte im Stil des
-/// [[AchievementUnlockBanner]] (Marken-Verlauf, Stern-Symbol), die das neu erreichte
+/// [[AchievementUnlockCard]] (Marken-Verlauf, Stern-Symbol), die das neu erreichte
 /// Level und den zugehörigen Rangnamen zeigt.
 struct XPLevelUpBanner: View {
     let level: XPLevel

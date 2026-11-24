@@ -277,6 +277,10 @@ struct ExamResultView: View {
                     .font(.appDisplay(52))
                     .foregroundStyle(Theme.brandGradient)
 
+                // Neu freigeschaltete Badges als eigene Sektion unter dem Score –
+                // kein Overlay, das das Ergebnis verdeckt (#174).
+                AchievementUnlockCard(achievements: session.newlyUnlocked)
+
                 HStack(spacing: Theme.Spacing.s) {
                     StatTile(value: "\(session.correctCount) / \(session.total)",
                              label: L("practice.exam.stat.correct"),
