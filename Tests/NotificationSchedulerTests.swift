@@ -5,6 +5,7 @@ import XCTest
 /// Prüft die Planung der täglichen Erinnerung (Issue #180) gegen ein Fake-Center:
 /// richtiger Kalender-Auslöser, Ersetzen statt Duplizieren, Abbrechen und
 /// Neuplanung nur bei aktivierter Erinnerung.
+@MainActor
 final class NotificationSchedulerTests: XCTestCase {
 
     private var fake: FakeNotificationCenter!
@@ -47,6 +48,10 @@ final class NotificationSchedulerTests: XCTestCase {
         NotificationScheduler.schedule(hour: 8, minute: 30)
         NotificationScheduler.schedule(hour: 21, minute: 5)
 
+        // Der Scheduler selbst muss vor jedem Planen aufräumen – nicht erst das Fake,
+        // das gleiche Kennungen ohnehin ersetzt.
+        let id = NotificationScheduler.requestID
+        XCTAssertEqual(fake.removedIdentifiers, [[id], [id]])
         XCTAssertEqual(fake.pending.count, 1)
         let trigger = try XCTUnwrap(fake.pending.first?.trigger as? UNCalendarNotificationTrigger)
         XCTAssertEqual(trigger.dateComponents.hour, 21)
