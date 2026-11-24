@@ -59,36 +59,36 @@ struct WritingView: View {
 
     @ViewBuilder
     private var bannerContent: some View {
-            Label(bannerTitle, systemImage: bannerIcon)
-                .font(.appHeadline)
-                .foregroundStyle(bannerColor)
+        Label(bannerTitle, systemImage: bannerIcon)
+            .font(.appHeadline)
+            .foregroundStyle(bannerColor)
 
-            // „Fast richtig": erklärt, dass die Bedeutung stimmt, aber ein anderes Wort
-            // gefragt war. „Falsch": zeigt schlicht die gesuchte Antwort.
-            if match == .synonym {
-                Text(L("practice.almostHint", item.answer()))
-                    .font(.appSubheadline)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(Theme.inkSecondary)
-            }
-            if match != .correct {
-                HStack(spacing: Theme.Spacing.s) {
-                    Text(item.answer())
-                        .font(.appTitle3)
-                        .accessibilityLabel(Text.speech(item.answer(), korean: item.direction == .meaningToWord))
-                    if item.direction == .meaningToWord {
-                        SpeakButton(text: item.vocab.word)
-                    }
+        // „Fast richtig": erklärt, dass die Bedeutung stimmt, aber ein anderes Wort
+        // gefragt war. „Falsch": zeigt schlicht die gesuchte Antwort.
+        if match == .synonym {
+            Text(L("practice.almostHint", item.answer()))
+                .font(.appSubheadline)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Theme.inkSecondary)
+        }
+        if match != .correct {
+            HStack(spacing: Theme.Spacing.s) {
+                Text(item.answer())
+                    .font(.appTitle3)
+                    .accessibilityLabel(Text.speech(item.answer(), korean: item.direction == .meaningToWord))
+                if item.direction == .meaningToWord {
+                    SpeakButton(text: item.vocab.word)
                 }
             }
-            // Verwechslungs-Hinweis: die Eingabe gehört zu einem anderen bekannten Wort.
-            if let confused {
-                Text(L("practice.confusedHint", confused.word, confused.meaning))
-                    .font(.appSubheadline)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(Theme.inkSecondary)
-            }
         }
+        // Verwechslungs-Hinweis: die Eingabe gehört zu einem anderen bekannten Wort.
+        if let confused {
+            Text(L("practice.confusedHint", confused.word, confused.meaning))
+                .font(.appSubheadline)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Theme.inkSecondary)
+        }
+    }
 
     /// Bewertet die Eingabe; nur ein exakter Treffer zählt als „voll richtig" (ein
     /// Synonym bietet wie eine falsche Eingabe „Trotzdem richtig" an).

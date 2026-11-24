@@ -245,8 +245,7 @@ struct GroupCard: View {
     let group: VocabGroup
 
     var body: some View {
-        let learned = group.learnedCount
-        let fraction = group.masteryFraction
+        let (learned, fraction) = group.mastery
         return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline) {
                 Text(group.name)

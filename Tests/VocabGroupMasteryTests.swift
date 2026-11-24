@@ -45,6 +45,14 @@ final class VocabGroupMasteryTests: XCTestCase {
         XCTAssertEqual(group.masteryFraction, 0.5, accuracy: 0.0001)
     }
 
+    func testMasteryTupleMatchesSingleValues() {
+        let group = makeGroup(statuses: [.learned, .almostLearned, .new])
+        let (learned, fraction) = group.mastery
+        XCTAssertEqual(learned, group.learnedCount)
+        XCTAssertEqual(fraction, group.masteryFraction, accuracy: 0.0001)
+        XCTAssertEqual(fraction, 1.0 / 3.0, accuracy: 0.0001)
+    }
+
     func testFullyLearnedGroup() {
         let group = makeGroup(statuses: [.learned, .learned, .learned])
         XCTAssertEqual(group.learnedCount, 3)

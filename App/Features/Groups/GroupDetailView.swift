@@ -264,8 +264,7 @@ struct GroupDetailView: View {
     // MARK: - Kopf-Karte & Filter
 
     private var header: some View {
-        let learned = group.vocabs.statusCounts()[.learned] ?? 0
-        let fraction = group.vocabCount > 0 ? Double(learned) / Double(group.vocabCount) : 0
+        let (learned, fraction) = group.mastery
         return VStack(alignment: .leading, spacing: Theme.Spacing.s) {
             HStack(alignment: .firstTextBaseline) {
                 Text(group.name)
