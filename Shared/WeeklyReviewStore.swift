@@ -304,10 +304,11 @@ enum WeeklyReviewStore {
     /// sammeln und gebündelt via `saveActivity(_:)` zurückschreiben – so entfällt der
     /// volle JSON-Decode/Encode je Übungsantwort.
     ///
-    /// Load-once/flush-later ist nur sicher, solange während der Sammelphase kein
-    /// zweiter Schreiber den Log anfasst (sonst überschreibt das spätere `saveActivity`
-    /// dessen Änderung). Aktuell ist die laufende Übungssession der einzige Schreiber –
-    /// diese Invariante halten, falls je ein weiterer Aufrufer dazukommt.
+    /// Es gibt mehrere Schreiber (Übungssession, Widget-Reconciler). Deshalb nie einen
+    /// geladenen Vollstand über längere Zeit cachen und später zurückschreiben – das
+    /// überschreibt zwischenzeitliche Buchungen (#175). Stattdessen unmittelbar vor dem
+    /// Schreiben laden, Änderungen anwenden und sofort speichern (load → merge → save),
+    /// wie `PracticeSession.flushProgress()` mit seinen gesammelten Deltas.
     static func loadActivity() -> WeeklyActivity { load() }
 
     /// Schreibt einen im Speicher gesammelten Log gebündelt zurück.

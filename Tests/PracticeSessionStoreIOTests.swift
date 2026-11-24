@@ -17,10 +17,12 @@ final class PracticeSessionStoreIOTests: XCTestCase {
         container = PersistenceController.makeContainer(inMemory: true)
         context = container.mainContext
         resetStores()
+        WidgetResultQueue.clear()
     }
 
     override func tearDown() {
         resetStores()
+        WidgetResultQueue.clear()
         context = nil
         container = nil
         super.tearDown()
@@ -106,16 +108,24 @@ final class PracticeSessionStoreIOTests: XCTestCase {
         XCTAssertEqual(WeeklyReviewStore.dayProgress(for: .practiced), 5)
     }
 
+    /// Reiht Widget-Antworten für `vocabs` ein und spielt sie über den echten
+    /// `WidgetResultReconciler.drain` ein (wie `AppContentRefresh.onAppActive`).
+    private func drainWidgetAnswers(for vocabs: [Vocab], correct: Bool = true) {
+        for vocab in vocabs {
+            WidgetResultQueue.append(PendingWidgetResult(wordID: vocab.id, correct: correct, date: .now))
+        }
+        XCTAssertTrue(WidgetResultReconciler.drain(context: context))
+    }
+
     /// #175: Widget-Antworten, die zwischen zwei Flushes verbucht werden (Drain beim
     /// Zurückkehren in die App), dürfen vom nächsten Flush nicht überschrieben werden.
     func testWidgetDrainBetweenFlushesIsNotOverwritten() {
         let session = makeSession(makeVocabs(3))
+        let widgetWords = makeVocabs(2) // eigene Wörter (IDs), nicht Teil der Session
         session.submit(correct: true)
         session.flushProgress() // Backgrounding
 
-        // Drain schreibt zwei Widget-Antworten in denselben Log.
-        WeeklyReviewStore.record(wordID: UUID(), becameLearned: false, correct: true)
-        WeeklyReviewStore.record(wordID: UUID(), becameLearned: false, correct: true)
+        drainWidgetAnswers(for: widgetWords) // Rückkehr in die App
 
         session.submit(correct: true)
         session.submit(correct: true) // Runde zu Ende → finalizeRound flusht
@@ -127,8 +137,10 @@ final class PracticeSessionStoreIOTests: XCTestCase {
     /// bleibt erhalten, auch wenn die Session erst am Rundenende schreibt.
     func testExternalWriteWithoutIntermediateFlushIsKept() {
         let session = makeSession(makeVocabs(2))
+        let widgetWord = Vocab(word: "위젯", meaning: "Widget")
+        context.insert(widgetWord)
         session.submit(correct: true)
-        WeeklyReviewStore.record(wordID: UUID(), becameLearned: false, correct: false)
+        drainWidgetAnswers(for: [widgetWord], correct: false)
         session.submit(correct: true)
 
         XCTAssertTrue(session.isFinished)
