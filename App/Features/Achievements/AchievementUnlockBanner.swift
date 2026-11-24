@@ -59,6 +59,9 @@ struct AchievementUnlockBanner: View {
         .padding(.top, Theme.Spacing.s)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isStaticText)
+        // Rein informativ: Tippen/Scrollen auf der Seite darunter nicht blockieren,
+        // solange das Banner sichtbar ist.
+        .allowsHitTesting(false)
     }
 
     /// Einblenden und nach kurzer Zeit automatisch wieder ausblenden. Ein evtl.
