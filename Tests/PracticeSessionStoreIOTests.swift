@@ -106,6 +106,51 @@ final class PracticeSessionStoreIOTests: XCTestCase {
         XCTAssertEqual(WeeklyReviewStore.dayProgress(for: .practiced), 5)
     }
 
+    /// #175: Widget-Antworten, die zwischen zwei Flushes verbucht werden (Drain beim
+    /// Zurückkehren in die App), dürfen vom nächsten Flush nicht überschrieben werden.
+    func testWidgetDrainBetweenFlushesIsNotOverwritten() {
+        let session = makeSession(makeVocabs(3))
+        session.submit(correct: true)
+        session.flushProgress() // Backgrounding
+
+        // Drain schreibt zwei Widget-Antworten in denselben Log.
+        WeeklyReviewStore.record(wordID: UUID(), becameLearned: false, correct: true)
+        WeeklyReviewStore.record(wordID: UUID(), becameLearned: false, correct: true)
+
+        session.submit(correct: true)
+        session.submit(correct: true) // Runde zu Ende → finalizeRound flusht
+        XCTAssertTrue(session.isFinished)
+        XCTAssertEqual(WeeklyReviewStore.dayProgress(for: .practiced), 5)
+    }
+
+    /// #175 (Prüfungsfall ohne Zwischen-Flush): eine externe Buchung nach der ersten Antwort
+    /// bleibt erhalten, auch wenn die Session erst am Rundenende schreibt.
+    func testExternalWriteWithoutIntermediateFlushIsKept() {
+        let session = makeSession(makeVocabs(2))
+        session.submit(correct: true)
+        WeeklyReviewStore.record(wordID: UUID(), becameLearned: false, correct: false)
+        session.submit(correct: true)
+
+        XCTAssertTrue(session.isFinished)
+        XCTAssertEqual(WeeklyReviewStore.dayProgress(for: .practiced), 3)
+    }
+
+    /// Richtig/Falsch-Zähler werden über Zwischen-Flush + Fertigspielen genau einmal
+    /// verbucht (Deltas werden nach dem Flush verworfen).
+    func testCountersAreAppliedOnceAcrossFlushes() throws {
+        let session = makeSession(makeVocabs(3))
+        session.submit(correct: true)
+        session.submit(correct: false)
+        session.flushProgress()
+        session.flushProgress()
+        session.submit(correct: true)
+
+        let today = Calendar.current.startOfDay(for: .now)
+        let entry = try XCTUnwrap(WeeklyReviewStore.loadActivity().days.first { $0.day == today })
+        XCTAssertEqual(entry.correctCount, 2)
+        XCTAssertEqual(entry.wrongCount, 1)
+    }
+
     /// `restart()` setzt den gesammelten Wochen-Log nicht zurück: dieselben Wörter noch
     /// einmal zu üben bleibt distinct-dedupliziert (identisch zum Per-Karte-Schreiben).
     func testRestartKeepsWeeklyProgressDeduplicated() {
