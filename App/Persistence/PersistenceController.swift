@@ -60,39 +60,52 @@ enum PersistenceController {
             return try! ModelContainer(for: schema, configurations: config)
         }
 
-        // Application-Support-Verzeichnis sicherstellen (bei Neuinstallation fehlt es).
-        try? FileManager.default.createDirectory(
-            at: URL.applicationSupportDirectory, withIntermediateDirectories: true)
+        let result = openDiskContainer(at: localStoreURL)
+        storeOpenFailed = result.openFailed
+        return result.container
+    }
 
-        let config = ModelConfiguration(schema: schema, url: localStoreURL)
+    /// Öffnet den Disk-Store an `url`. Scheitert das, wird der Fehler protokolliert und als
+    /// letzter Ausweg ein flüchtiger In-Memory-Store zurückgegeben (`openFailed == true`) –
+    /// kein Crash und kein stiller leerer Disk-Store. Die Datei an `url` wird dabei NICHT
+    /// angefasst (kein Überschreiben, kein Neuanlegen), damit vorhandene Daten erhalten bleiben.
+    ///
+    /// Setzt bewusst NICHT das globale [[storeOpenFailed]] – das übernimmt [[makeContainer]].
+    /// So lassen sich die Fehlerpfade mit Temp-Pfaden testen, ohne den echten Store oder
+    /// globalen Zustand zu berühren (Issue #183).
+    static func openDiskContainer(at url: URL) -> (container: ModelContainer, openFailed: Bool) {
+        // Zielverzeichnis sicherstellen (bei Neuinstallation fehlt Application Support).
+        try? FileManager.default.createDirectory(
+            at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+
+        let config = ModelConfiguration(schema: schema, url: url)
         do {
             let container = try ModelContainer(for: schema, configurations: config)
-            applyStoreFileProtection()
-            return container
+            applyStoreFileProtection(storeURL: url)
+            return (container, false)
         } catch {
             // Keinen stillen leeren Disk-Store vortäuschen: Fehler protokollieren,
-            // Flag setzen und als letzten Ausweg In-Memory öffnen (kein Crash).
+            // Fehlschlag melden und als letzten Ausweg In-Memory öffnen (kein Crash).
             storeLog.fault("Öffnen des Stores fehlgeschlagen: \(error.localizedDescription, privacy: .public)")
-            storeOpenFailed = true
             let memoryConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
             // Letzter Ausweg; In-Memory-Store kann praktisch nicht scheitern.
             // swiftlint:disable:next force_try
-            return try! ModelContainer(for: schema, configurations: memoryConfig)
+            return (try! ModelContainer(for: schema, configurations: memoryConfig), true)
         }
     }
 
     /// Hebt die Datenschutz-Stufe der Store-Dateien auf [[storeFileProtection]] an (Issue #104).
     /// Best-effort (`try?`): Das Setzen der Schutzstufe darf den App-Start niemals crashen.
-    /// Das Attribut wird auf das Application-Support-Verzeichnis gesetzt (damit später erzeugte
+    /// Das Attribut wird auf das Verzeichnis des Stores gesetzt (damit später erzeugte
     /// `-wal`/`-shm`-Sidecar-Dateien die Stufe erben) sowie auf alle bereits existierenden
-    /// `default.store*`-Dateien.
-    private static func applyStoreFileProtection() {
+    /// Store-Dateien (`default.store*`).
+    private static func applyStoreFileProtection(storeURL: URL) {
         let fm = FileManager.default
         let attributes: [FileAttributeKey: Any] = [.protectionKey: storeFileProtection]
-        let directory = URL.applicationSupportDirectory
+        let directory = storeURL.deletingLastPathComponent()
         try? fm.setAttributes(attributes, ofItemAtPath: directory.path)
 
-        let storeName = localStoreURL.lastPathComponent
+        let storeName = storeURL.lastPathComponent
         let names = (try? fm.contentsOfDirectory(atPath: directory.path)) ?? []
         for name in names where name.hasPrefix(storeName) {
             try? fm.setAttributes(attributes, ofItemAtPath: directory.appendingPathComponent(name).path)

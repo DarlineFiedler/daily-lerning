@@ -11,14 +11,20 @@ enum StoreMigration {
     /// Versionierter Marker: erst gesetzt, NACHDEM der App-Group-Store erfolgreich
     /// geöffnet wurde. So „verbraucht" ein Start ohne verfügbare App-Group die
     /// Migration nicht – sie wird beim nächsten erreichbaren Start nachgeholt.
-    private static let doneKey = "migratedFromAppGroup.v1"
+    static let doneKey = "migratedFromAppGroup.v1"
 
+    /// - Parameters:
+    ///   - appGroupAvailable: Ist der App-Group-Container diesen Start erreichbar? Injizierbar,
+    ///     damit Tests den Fallback ohne App-Group prüfen können (Issue #183).
+    ///   - defaults: Ablage des Erledigt-Markers (Tests nutzen eine eigene Suite).
     @MainActor
-    static func runIfNeeded(into context: ModelContext) {
-        guard !UserDefaults.standard.bool(forKey: doneKey) else { return }
+    static func runIfNeeded(into context: ModelContext,
+                            appGroupAvailable: Bool = PersistenceController.appGroupIsAvailable,
+                            defaults: UserDefaults = .standard) {
+        guard !defaults.bool(forKey: doneKey) else { return }
 
         // App-Group diesen Start nicht erreichbar → später erneut versuchen.
-        guard PersistenceController.appGroupIsAvailable else { return }
+        guard appGroupAvailable else { return }
 
         let oldConfig = ModelConfiguration(
             schema: PersistenceController.schema,
@@ -41,6 +47,6 @@ enum StoreMigration {
         }
 
         // Erst jetzt (App-Group war erreichbar & geöffnet) als erledigt markieren.
-        UserDefaults.standard.set(true, forKey: doneKey)
+        defaults.set(true, forKey: doneKey)
     }
 }
