@@ -103,6 +103,8 @@ final class RegisterWidgetResultIntentTests: XCTestCase {
         let vocab = insert("가다")
 
         _ = try await RegisterWidgetResultIntent(wordID: vocab.id, correct: true).perform()
+        // Tap-Zeitpunkt aus der Queue als Bezugstag – so bleibt der Test auch um Mitternacht stabil.
+        let tapDate = try XCTUnwrap(WidgetResultQueue.load().first?.date)
         let changed = WidgetResultReconciler.drain(context: context)
 
         XCTAssertTrue(changed)
@@ -110,6 +112,9 @@ final class RegisterWidgetResultIntentTests: XCTestCase {
         XCTAssertEqual(vocab.timesPracticed, 1)
         XCTAssertFalse(vocab.lastAnswerWasWrong)
         XCTAssertTrue(WidgetResultQueue.load().isEmpty, "Queue muss nach dem Drain leer sein")
+        // Auch die geteilten Zähler müssen den Widget-Tipp sehen (Streak + Wochenrückblick).
+        XCTAssertEqual(StreakStore.displayStreak(asOf: tapDate), 1)
+        XCTAssertEqual(WeeklyReviewStore.dayProgress(for: .practiced, asOf: tapDate), 1)
     }
 
     /// Ein Tipp auf ein inzwischen gelöschtes/unbekanntes Wort verbucht nichts, die Queue
@@ -135,12 +140,16 @@ final class RegisterWidgetResultIntentTests: XCTestCase {
 
         _ = try await intent.perform()
         _ = try await intent.perform()
-        XCTAssertEqual(WidgetResultQueue.load().count, 2)
+        let queued = WidgetResultQueue.load()
+        XCTAssertEqual(queued.count, 2)
+        // Jeder Tap stempelt seine eigene Uhrzeit. Fallen beide (selten) auf verschiedene
+        // Kalendertage – Testlauf genau um Mitternacht –, zählen beide; sonst nur einer.
+        let sameDay = Calendar.current.isDate(queued[0].date, inSameDayAs: queued[1].date)
 
         WidgetResultReconciler.drain(context: context)
 
         XCTAssertEqual(vocab.timesPracticed, 2)
-        XCTAssertEqual(vocab.successCounter, 1)
+        XCTAssertEqual(vocab.successCounter, sameDay ? 1 : 2)
         XCTAssertTrue(WidgetResultQueue.load().isEmpty)
     }
 }
